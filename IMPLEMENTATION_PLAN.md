@@ -102,7 +102,9 @@ All specifications have been authored. No blockers remain at the spec level.
 > Tilemap rendering, player movement, camera — the overworld.
 > **Blocked by:** Phase 1; tileset art assets (can use placeholder colored rectangles initially).
 
-- [ ] **2.1 Tilemap system** (per `specs/tilemap-format.md`)
+> **Status: COMPLETE** — All Phase 2 items implemented and tested (91 tests total, 11 suites).
+
+- [x] **2.1 Tilemap system** (per `specs/tilemap-format.md`)
   - Tile-based map renderer: 16×16 tiles, flat row-major layer arrays
   - 5 layers: ground, detail, above-player, collision, event
   - Render order: ground → detail → entities → above
@@ -110,24 +112,24 @@ All specifications have been authored. No blockers remain at the spec level.
   - Tileset loader: JS modules with `PALETTE` + `TILES` exports
   - **Art needed:** Create at least one starter tileset (`src/tilesets/overworld.js`) with grass, path, water, wall tiles
 
-- [ ] **2.2 Camera system**
+- [x] **2.2 Camera system**
   - Follow-player camera centered on active character
   - Pixel-unit camera position, clamp to map bounds
   - Camera formula: `cameraX = clamp(playerX - 112, 0, mapW*16 - 240)`
 
-- [ ] **2.3 Player movement**
+- [x] **2.3 Player movement**
   - 4-directional grid-based movement (tile-snapping, 16px steps)
   - Single-frame directional sprites initially (walk cycle animation deferred)
   - Collision detection against tilemap collision layer
   - Direction-facing updates: swap front/back/left sprite; mirror left for right
 
-- [ ] **2.4 NPC placement & interaction**
+- [x] **2.4 NPC placement & interaction**
   - NPCs defined per-map: id, sprite, x, y, facing, dialogue key, movement pattern
   - Static NPCs + wandering NPCs (radius-bounded, interval-based steps)
   - Interaction: face NPC + press A → NPC turns toward player → open dialogue
   - NPCs block collision layer dynamically
 
-- [ ] **2.5 Map transitions**
+- [x] **2.5 Map transitions**
   - Event layer triggers warps on player step
   - Fade-to-black transition (30-frame fade out → swap map → 30-frame fade in)
   - Spawn at target tile coordinates
@@ -355,12 +357,11 @@ All specifications have been authored. No blockers remain at the spec level.
 
 ## Missing Art Assets (needed before or during implementation)
 
-- [ ] **Tilesets** — No tilemap tiles exist. Needed for Phase 2.
-  - Overworld: grass, path, water, trees, bushes, fences
-  - Interior: stone floor, walls, pillars, doors, furniture
-  - Desert: sand, rock, dunes, sparse vegetation
-  - Temple: marble floor, columns, scrolls, ornate walls
-  - Shoreline: sand-to-water transition, docks, boats
+- [x] **Tilesets** — Overworld tileset created (`src/tilesets/overworld.js`) with 5 tiles: grass, stone path, water, sand, wall. Remaining tilesets needed for content phases:
+  - Interior: stone floor, walls, pillars, doors, furniture — needed for Phase 7
+  - Desert: sand, rock, dunes, sparse vegetation — needed for Phase 8
+  - Temple: marble floor, columns, scrolls, ornate walls — needed for Phase 7
+  - Shoreline: sand-to-water transition, docks, boats — needed for Phase 9
 - [ ] **Bitmap font** — 5×7 pixel glyphs for `src/font/fontData.js`. Needed for Phase 3.
 - [ ] **Battle sprites (64×64)** — Front-facing battle sprites for Jesus, disciples, Satan, enemies. Needed for Phase 5. Can prototype with 4x-scaled overworld sprites.
 - [ ] **Walk cycle animation frames** — Only static directional sprites exist. Deferred for MVP (single-frame per direction works initially).

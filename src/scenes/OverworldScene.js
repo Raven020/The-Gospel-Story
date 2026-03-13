@@ -1,0 +1,342 @@
+/**
+ * Overworld scene: ties together tilemap rendering, camera, player, NPCs,
+ * dialogue system, and pause menu.
+ */
+
+import { Camera } from '../engine/Camera.js';
+import {
+  renderGroundLayers,
+  renderAboveLayer,
+  isBlocked,
+  getEvent,
+  TILE_SIZE,
+} from '../engine/TilemapRenderer.js';
+import { renderSprite, renderSpriteMirrored } from '../lib/renderSprite.js';
+import { drawText, measureText } from '../lib/drawText.js';
+import { Player } from '../systems/Player.js';
+import { NPCManager } from '../systems/NPCManager.js';
+import { DialogueSystem } from '../systems/DialogueSystem.js';
+import { PauseMenu } from '../ui/PauseMenu.js';
+import { Colors } from '../ui/Colors.js';
+import { Actions, InputContext } from '../systems/InputSystem.js';
+import { SCREEN_WIDTH } from '../engine/Display.js';
+
+// Location name display per specs/ui-hud.md §6
+const LOC_FADE_IN = 20;
+const LOC_HOLD = 120;
+const LOC_FADE_OUT = 20;
+
+export class OverworldScene {
+  constructor({ input, transitions, sceneManager, spriteRegistry, questFlags, frameCountFn }) {
+    this.input = input;
+    this.transitions = transitions;
+    this.sceneManager = sceneManager;
+    this.spriteRegistry = spriteRegistry || {};
+    this.getFrameCount = frameCountFn || (() => 0);
+
+    this.camera = new Camera();
+    this.player = new Player(9, 5);
+    this.npcManager = new NPCManager();
+
+    // Dialogue system
+    this.dialogue = new DialogueSystem({
+      questFlags: questFlags || {},
+      onEffect: (effect) => this._handleDialogueEffect(effect),
+    });
+
+    // Pause menu
+    this.pauseMenu = new PauseMenu({
+      input,
+      onSelect: (option) => this._handleMenuSelect(option),
+      onClose: () => { this.input.context = InputContext.OVERWORLD; },
+    });
+
+    // Dialogue data cache (loaded modules)
+    this._dialogueCache = {};
+
+    this.map = null;
+    this.tileset = null;
+    this.tilesetId = null;
+
+    // Location name display
+    this._locNameFrame = 0;
+    this._locNameTotal = LOC_FADE_IN + LOC_HOLD + LOC_FADE_OUT;
+    this._showLocName = false;
+    this._locName = '';
+
+    this._pendingWarp = null;
+  }
+
+  loadMap(map, tileset, spawnX, spawnY) {
+    this.map = map;
+    this.tileset = tileset;
+    this.tilesetId = map.tileset;
+    this.npcManager.loadFromMap(map);
+    this.player.teleport(
+      spawnX !== undefined ? spawnX : 9,
+      spawnY !== undefined ? spawnY : 5
+    );
+    this.camera.follow(this.player.pixelX, this.player.pixelY, map.width, map.height);
+
+    this._locName = map.name || '';
+    this._locNameFrame = 0;
+    this._showLocName = !!this._locName;
+  }
+
+  /**
+   * Register dialogue data so NPCs can trigger it.
+   */
+  registerDialogue(key, data) {
+    this._dialogueCache[key] = data;
+  }
+
+  enter() {
+    this.input.context = InputContext.OVERWORLD;
+  }
+
+  exit() {}
+
+  update(dt) {
+    if (!this.map) return;
+
+    // Pause menu takes priority
+    if (this.pauseMenu.active) {
+      this.pauseMenu.update();
+      return;
+    }
+
+    // Dialogue takes priority
+    if (this.dialogue.isOpen) {
+      this.dialogue.update();
+
+      if (this.input.pressed(Actions.CONFIRM)) {
+        this.dialogue.onActionPress();
+      }
+      const dir = this.input.getDirectionalPressed();
+      if (dir === Actions.UP || dir === Actions.DOWN) {
+        this.dialogue.onDirectional(dir === Actions.UP ? 'up' : 'down');
+      }
+
+      if (!this.dialogue.isOpen) {
+        this.input.context = InputContext.OVERWORLD;
+      }
+      return;
+    }
+
+    if (this.transitions.active) return;
+
+    // Player movement
+    if (!this.player.moving) {
+      const dir = this.input.getDirectionalHeld();
+      if (dir) {
+        const isTileBlocked = (tx, ty) => {
+          return isBlocked(this.map, tx, ty) || this.npcManager.isNPCAt(tx, ty);
+        };
+        this.player.tryMove(dir, isTileBlocked);
+      }
+
+      // NPC interaction
+      if (this.input.pressed(Actions.CONFIRM)) {
+        const { x, y } = this.player.getFacingTile();
+        const npc = this.npcManager.getNPCAt(x, y);
+        if (npc) {
+          npc.faceToward(this.player.tileX, this.player.tileY);
+          this._openNPCDialogue(npc);
+        }
+      }
+
+      // Pause menu
+      if (this.input.pressed(Actions.START)) {
+        this.pauseMenu.open();
+      }
+    }
+
+    this.player.update(dt);
+
+    if (this.player.justArrived) {
+      const evt = getEvent(this.map, this.player.tileX, this.player.tileY);
+      if (evt) {
+        this._handleEvent(evt);
+      }
+    }
+
+    this.npcManager.update(dt, (tx, ty) => {
+      return (
+        isBlocked(this.map, tx, ty) ||
+        (this.player.tileX === tx && this.player.tileY === ty)
+      );
+    });
+
+    this.camera.follow(this.player.pixelX, this.player.pixelY, this.map.width, this.map.height);
+
+    if (this._showLocName) {
+      this._locNameFrame++;
+      if (this._locNameFrame >= this._locNameTotal) {
+        this._showLocName = false;
+      }
+    }
+  }
+
+  render(ctx) {
+    if (!this.map || !this.tileset) return;
+
+    const cx = this.camera.x;
+    const cy = this.camera.y;
+
+    renderGroundLayers(ctx, this.map, this.tileset, this.tilesetId, cx, cy);
+    this._renderEntities(ctx, cx, cy);
+    renderAboveLayer(ctx, this.map, this.tileset, this.tilesetId, cx, cy);
+
+    if (this._showLocName) {
+      this._renderLocationName(ctx);
+    }
+
+    // Dialogue box renders on top of everything
+    this.dialogue.render(ctx, this.getFrameCount());
+
+    // Pause menu renders on top of everything
+    this.pauseMenu.render(ctx, this.getFrameCount());
+  }
+
+  _renderEntities(ctx, cameraX, cameraY) {
+    const entities = [];
+
+    entities.push({
+      pixelX: this.player.pixelX,
+      pixelY: this.player.pixelY,
+      facing: this.player.facing,
+      type: 'player',
+    });
+
+    for (const npc of this.npcManager.npcs) {
+      entities.push({
+        pixelX: npc.pixelX,
+        pixelY: npc.pixelY,
+        facing: npc.facing,
+        type: 'npc',
+        npc,
+      });
+    }
+
+    entities.sort((a, b) => a.pixelY - b.pixelY);
+
+    for (const ent of entities) {
+      const screenX = Math.round(ent.pixelX - cameraX);
+      const screenY = Math.round(ent.pixelY - cameraY - TILE_SIZE);
+
+      if (ent.type === 'player') {
+        this._renderCharacterSprite(ctx, 'jesus', ent.facing, screenX, screenY);
+      } else if (ent.type === 'npc') {
+        this._renderCharacterSprite(ctx, ent.npc.sprite, ent.facing, screenX, screenY);
+      }
+    }
+  }
+
+  _renderCharacterSprite(ctx, spriteKey, facing, screenX, screenY) {
+    const reg = this.spriteRegistry[spriteKey];
+    if (!reg) {
+      ctx.fillStyle = spriteKey === 'jesus' ? '#E8E0D0' : '#A090C0';
+      ctx.fillRect(screenX + 2, screenY + 2, 12, 28);
+      return;
+    }
+
+    const { sprites, palette } = reg;
+    let spriteData;
+    let mirrored = false;
+
+    switch (facing) {
+      case Actions.DOWN: spriteData = sprites.front; break;
+      case Actions.UP: spriteData = sprites.back; break;
+      case Actions.LEFT: spriteData = sprites.left; break;
+      case Actions.RIGHT: spriteData = sprites.left; mirrored = true; break;
+      default: spriteData = sprites.front;
+    }
+
+    if (!spriteData) {
+      ctx.fillStyle = '#A090C0';
+      ctx.fillRect(screenX + 2, screenY + 2, 12, 28);
+      return;
+    }
+
+    if (mirrored) {
+      renderSpriteMirrored(ctx, spriteData, palette, screenX, screenY);
+    } else {
+      renderSprite(ctx, spriteData, palette, screenX, screenY);
+    }
+  }
+
+  _renderLocationName(ctx) {
+    const f = this._locNameFrame;
+    let alpha = 1;
+
+    if (f < LOC_FADE_IN) {
+      alpha = f / LOC_FADE_IN;
+    } else if (f >= LOC_FADE_IN + LOC_HOLD) {
+      alpha = 1 - (f - LOC_FADE_IN - LOC_HOLD) / LOC_FADE_OUT;
+    }
+
+    if (alpha <= 0) return;
+
+    ctx.globalAlpha = alpha;
+    const textW = measureText(this._locName);
+    ctx.fillStyle = Colors.BG_DARK;
+    ctx.fillRect(2, 2, textW + 4, 12);
+    drawText(ctx, this._locName, 4, 4, Colors.TEXT_LIGHT);
+    ctx.globalAlpha = 1;
+  }
+
+  _openNPCDialogue(npc) {
+    const dialogueData = this._dialogueCache[npc.dialogue];
+    if (dialogueData) {
+      this.input.context = InputContext.DIALOGUE;
+      this.dialogue.open(dialogueData);
+    } else {
+      // Fallback: simple greeting
+      this.input.context = InputContext.DIALOGUE;
+      this.dialogue.open({
+        start: {
+          speaker: npc.id,
+          text: '...',
+          next: null,
+        },
+      });
+    }
+  }
+
+  _handleDialogueEffect(effect) {
+    // Effects like giveItem, recruitMember etc. will be handled by game state in Phase 4
+    console.log('[Effect]', effect.type, effect);
+  }
+
+  _handleMenuSelect(option) {
+    // Sub-screens will be implemented as needed (Party, Items, Save, Load, Options)
+    console.log('[Menu] Selected:', option);
+  }
+
+  _handleEvent(evt) {
+    if (evt.type === 'warp') {
+      this._pendingWarp = evt;
+      this.transitions.fadeToBlack(
+        () => {
+          if (this._pendingWarp) {
+            this.player.teleport(this._pendingWarp.targetX, this._pendingWarp.targetY);
+            this.camera.follow(
+              this.player.pixelX,
+              this.player.pixelY,
+              this.map.width,
+              this.map.height
+            );
+            this._locName = this.map.name || '';
+            this._locNameFrame = 0;
+            this._showLocName = !!this._locName;
+          }
+        },
+        () => {
+          this._pendingWarp = null;
+        }
+      );
+    } else if (evt.type === 'cutscene') {
+      console.log(`[Cutscene] Trigger: ${evt.script}`);
+    }
+  }
+}
