@@ -1,0 +1,174 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GameState } from '../GameState.js';
+
+// Mock localStorage
+const storage = {};
+const localStorageMock = {
+  getItem: vi.fn((key) => storage[key] || null),
+  setItem: vi.fn((key, value) => { storage[key] = value; }),
+  removeItem: vi.fn((key) => { delete storage[key]; }),
+};
+vi.stubGlobal('localStorage', localStorageMock);
+
+describe('GameState', () => {
+  beforeEach(() => {
+    Object.keys(storage).forEach(k => delete storage[k]);
+    vi.clearAllMocks();
+  });
+
+  it('creates with default state', () => {
+    const gs = new GameState();
+    expect(gs.party.active).toEqual([]);
+    expect(gs.questFlags.current_arc).toBe(1);
+  });
+
+  describe('newGame', () => {
+    it('initializes with Jesus in party', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.party.active).toHaveLength(1);
+      expect(gs.party.active[0].id).toBe('jesus');
+      expect(gs.party.active[0].isJesus).toBe(true);
+    });
+  });
+
+  describe('recruitMember', () => {
+    it('adds to active party when under 5', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      expect(gs.party.active).toHaveLength(2);
+      expect(gs.party.active[1].id).toBe('peter');
+    });
+
+    it('adds to bench when active is full', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      gs.recruitMember('andrew');
+      gs.recruitMember('james');
+      gs.recruitMember('john');
+      expect(gs.party.active).toHaveLength(5);
+
+      gs.recruitMember('philip');
+      expect(gs.party.bench).toHaveLength(1);
+      expect(gs.party.bench[0].id).toBe('philip');
+    });
+
+    it('prevents duplicate recruitment', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      const result = gs.recruitMember('peter');
+      expect(result).toBe(false);
+      expect(gs.party.active).toHaveLength(2);
+    });
+  });
+
+  describe('swapMember', () => {
+    it('swaps active and bench members', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      gs.recruitMember('andrew');
+      gs.recruitMember('james');
+      gs.recruitMember('john');
+      gs.recruitMember('philip'); // goes to bench
+
+      gs.swapMember(1, 0); // swap peter (active[1]) with philip (bench[0])
+      expect(gs.party.active[1].id).toBe('philip');
+      expect(gs.party.bench[0].id).toBe('peter');
+    });
+
+    it('cannot swap Jesus to bench', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      gs.recruitMember('andrew');
+      gs.recruitMember('james');
+      gs.recruitMember('john');
+      gs.recruitMember('philip');
+
+      const result = gs.swapMember(0, 0); // try to swap Jesus
+      expect(result).toBe(false);
+      expect(gs.party.active[0].id).toBe('jesus');
+    });
+  });
+
+  describe('removeMember', () => {
+    it('removes from active', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('judas');
+      gs.removeMember('judas');
+      expect(gs.getMember('judas')).toBeNull();
+    });
+  });
+
+  describe('save/load', () => {
+    it('serializes and deserializes correctly', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      gs.inventory.add('bread', 5);
+      gs.questFlags.arc1_started = true;
+      gs.currentMap = 'jerusalem';
+      gs.playerX = 10;
+      gs.playerY = 7;
+
+      gs.save(0);
+
+      const gs2 = new GameState();
+      const loaded = gs2.load(0);
+      expect(loaded).toBe(true);
+      expect(gs2.party.active).toHaveLength(2);
+      expect(gs2.party.active[0].id).toBe('jesus');
+      expect(gs2.party.active[1].id).toBe('peter');
+      expect(gs2.inventory.count('bread')).toBe(5);
+      expect(gs2.questFlags.arc1_started).toBe(true);
+      expect(gs2.currentMap).toBe('jerusalem');
+    });
+
+    it('returns false for empty slot', () => {
+      const gs = new GameState();
+      expect(gs.load(0)).toBe(false);
+    });
+
+    it('rejects invalid slot numbers', () => {
+      const gs = new GameState();
+      expect(() => gs.save(-1)).toThrow();
+      expect(() => gs.save(3)).toThrow();
+    });
+  });
+
+  describe('static methods', () => {
+    it('hasSave returns false for empty slot', () => {
+      expect(GameState.hasSave(0)).toBe(false);
+    });
+
+    it('hasSave returns true after save', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.save(1);
+      expect(GameState.hasSave(1)).toBe(true);
+    });
+
+    it('getSaveInfo returns metadata', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.save(2);
+      const info = GameState.getSaveInfo(2);
+      expect(info).not.toBeNull();
+      expect(info.slot).toBe(2);
+      expect(info.level).toBe(1);
+    });
+
+    it('deleteSave removes save', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.save(0);
+      GameState.deleteSave(0);
+      expect(GameState.hasSave(0)).toBe(false);
+    });
+  });
+});
