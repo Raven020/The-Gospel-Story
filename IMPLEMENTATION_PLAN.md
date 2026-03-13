@@ -103,92 +103,40 @@ All specifications have been authored. No blockers remain at the spec level.
 ### Phase 5 — Combat Systems
 > Turn-based battle engine, Scripture combat, Wisdom Q&A.
 > **Blocked by:** Phases 1-4 (rendering, input, UI, party data, inventory).
-> **Art blocker:** 64×64 battle sprites needed. Can prototype with scaled-up overworld sprites.
 
-- [ ] **5.1 Battle transition**
-  - Random encounter trigger: check encounter zones on player tile step (per `specs/tilemap-format.md` §8)
-  - White flash transition (8 frames per `specs/ui-hud.md` §8)
-  - Battle scene setup: load enemy group, initialize turn order
+> **Status: COMPLETE** — BattleEngine, BattleHUD, BattleScene, Scripture selection, enemies, and abilities all implemented.
 
-- [ ] **5.2 Turn-based combat engine**
-  - Active party (Jesus + 4) vs enemy group (1-3 enemies)
-  - Turn order based on Speed stat
-  - Action menu: Prayer, Miracles, Truth, Scripture, Items, Defend
-  - Damage calculation, HP/SP tracking, defeat/victory conditions
-  - Experience/stat growth on victory
-  - Enemy AI: simple pattern-based (attack, special, random target)
-  - **Design needed:** Stat formulas — damage calc, HP scaling, level-up curves
-
-- [ ] **5.3 Battle sprites & UI**
-  - **Art needed:** 64×64 front-facing battle sprites for all MVP characters and enemies
-  - Enemy sprite display (top area), party status (bottom strip)
-  - Action selection menus, target selection cursor
-  - Attack animations: simple flash/shake effects via screen shake + white overlay
-  - Damage number floaters (rise + fade)
-  - Victory screen: XP gained, level-up notices; Defeat screen: retry/title options
-
-- [ ] **5.4 Scripture-selection combat**
-  - Present 3-4 Scripture verse options in dialogue-style choice menu
-  - Correct verse counters the enemy's challenge: bonus damage + morale boost
-  - Wrong choice: stat/morale penalty (not failure — combat continues)
-  - Used for Satan boss fights (Arc 2 ×3 temptations) and Pharisee debates
-  - **Design needed:** Specific verse options and correct answers for each encounter
-
-- [ ] **5.5 Wisdom Q&A mini-game**
-  - Dialogue-battle format for Temple teachers (Arc 1)
-  - Multiple-choice questions with Scripture-based answers
-  - Witnessed event: player watches young Jesus answer, doesn't control him
-  - Uses dialogue system for presentation; outcome is scripted (Jesus always succeeds)
+- [x] **5.1 Battle transition**
+- [x] **5.2 Turn-based combat engine**
+- [x] **5.3 Battle sprites & UI**
+- [x] **5.4 Scripture-selection combat**
+- [x] **5.5 Wisdom Q&A mini-game**
 
 ### Phase 6 — Narrative & Events
 > Cutscenes, scripted events, story progression.
 > **Blocked by:** Phases 2-3 (maps, dialogue, NPC movement).
 
-- [ ] **6.1 Event/cutscene system**
-  - Scripted sequences: move NPCs along paths, show dialogue, change maps, play effects
-  - Event triggers: step-on tile (event layer), interact with NPC, quest flag threshold
-  - Camera control during cutscenes: pan to target, hold, return
-  - Screen effects: fade, flash, shake (reuse TransitionManager)
-  - Cutscenes use `DialogueSystem.open()` with `startNodeId` for mid-tree entry
+> **Status: PARTIALLY COMPLETE** — Event/cutscene system implemented. Visual effects deferred.
 
-- [ ] **6.2 Visual effects**
-  - Baptism transformation glow (Arc 2): white radial glow around Jesus, palette brightening
-  - Heaven-opens effect: dove sprite descending, vertical light beam (white translucent rect)
-  - Wilderness atmosphere: palette shift to desaturated/warm tones, sand particle overlay
+- [x] **6.1 Event/cutscene system**
+- [ ] **6.2 Visual effects** (deferred)
 
 ### Phase 7 — Arc 1 Content: The Boy Jesus
 > First playable arc — tutorial, exploration, dialogue, find-the-boy puzzle.
 > **Blocked by:** Phases 2-4, 5.5, 6.1.
 
-- [ ] **7.1 Jerusalem tilemap(s)**
-  - Town map: Jerusalem streets, market, residential (~30×25 tiles)
-  - Temple of Jerusalem interior (~20×15 tiles)
-  - Route: road from Jerusalem (departure/return path, ~40×10 tiles)
-  - **Art needed:** Interior tileset for Temple (marble, pillars, scrolls)
+> **Status: COMPLETE** — Jerusalem map, Temple map, interior tileset, NPC dialogues all implemented.
 
-- [ ] **7.2 Arc 1 NPCs & dialogue**
-  - Mary and Joseph as player characters (controlled by player, not Jesus)
-  - Townspeople NPCs with branching dialogue (Miriam example in `specs/dialogue-system.md`)
-  - Temple teachers with breadcrumb dialogue ("a boy with wondrous knowledge")
-  - Temple guard NPC (unlocks conditional dialogue branches)
-  - Young Jesus NPC in the Temple inner court
-
-- [ ] **7.3 Arc 1 gameplay**
-  - "Find the boy" puzzle: explore Jerusalem, talk to NPCs, gather clues pointing to Temple
-  - Quest flags drive progression: heard_about_temple_boy → talked_to_temple_guard → found_jesus_in_temple
-  - No full combat in Arc 1 (tutorial arc)
-  - Temple wisdom Q&A witnessed scene (Phase 5.5)
-  - Mary/Jesus confrontation dialogue ("Son, why have you treated us so?")
-
-- [ ] **7.4 Arc 1 cutscenes**
-  - Opening: family traveling to Jerusalem for Passover (NPC movement + dialogue)
-  - Discovery that Jesus is missing (Mary/Joseph panic, quest begins)
-  - Finding Jesus in the Temple (cutscene with camera pan to young Jesus among teachers)
-  - Closing: Jesus growing up in Nazareth (time-skip montage, transition to adult Jesus sprite)
+- [x] **7.1 Jerusalem tilemap(s)**
+- [x] **7.2 Arc 1 NPCs & dialogue**
+- [x] **7.3 Arc 1 gameplay**
+- [x] **7.4 Arc 1 cutscenes**
 
 ### Phase 8 — Arc 2 Content: Baptism & Temptation
 > John the Baptist, baptism event, wilderness dungeon, Satan boss fights.
 > **Blocked by:** Phases 5.1-5.4, 6.
+
+> **Status: IN PROGRESS**
 
 - [ ] **8.1 Jordan River & wilderness tilemaps**
   - Jordan River area: outdoor, river bank, John's preaching spot (~30×20 tiles)
@@ -211,6 +159,8 @@ All specifications have been authored. No blockers remain at the spec level.
 ### Phase 9 — Arc 3 Content: Calling of the Disciples
 > Sea of Galilee, Capernaum, disciple recruitment, party building.
 > **Blocked by:** Phases 4.1, 6, 8.
+
+> **Status: IN PROGRESS**
 
 - [ ] **9.1 Sea of Galilee & Capernaum tilemaps**
   - Galilee shoreline / fishing docks (~30×20 tiles)
@@ -236,10 +186,9 @@ All specifications have been authored. No blockers remain at the spec level.
 > Testing, balancing, title screen, flow.
 > **Blocked by:** Phases 7-9 (content must exist to polish).
 
-- [ ] **10.1 Title screen & new game flow**
-  - Title screen with pixel art logo (bitmap font "THE GOSPEL STORY")
-  - New Game / Continue menu (using pause menu system)
-  - Continue loads last save; New Game starts Arc 1 intro
+> **Status: PARTIALLY COMPLETE** — Title screen, save/load UI, party/item menus implemented.
+
+- [x] **10.1 Title screen & new game flow**
 
 - [ ] **10.2 Random encounter balancing**
   - Encounter rate tuning per zone (wilderness ~8%, roads ~3%)
@@ -265,7 +214,7 @@ All specifications have been authored. No blockers remain at the spec level.
   - Temple: marble floor, columns, scrolls, ornate walls — needed for Phase 7
   - Shoreline: sand-to-water transition, docks, boats — needed for Phase 9
 - [x] **Bitmap font** — 5×7 pixel glyphs created in `src/font/fontData.js` with full A-Z, a-z, 0-9, and punctuation glyphs. Completed in Phase 3.
-- [ ] **Battle sprites (64×64)** — Front-facing battle sprites for Jesus, disciples, Satan, enemies. Needed for Phase 5. Can prototype with 4x-scaled overworld sprites.
+- [x] **Battle sprites (64×64)** — Front-facing battle sprites for Jesus, disciples, Satan, enemies. Implemented for Phase 5.
 - [ ] **Walk cycle animation frames** — Only static directional sprites exist. Deferred for MVP (single-frame per direction works initially).
 - [ ] **UI chrome** — Per `specs/ui-hud.md`, all UI uses `fillRect` calls with defined color tokens — no sprite assets needed for UI. Text box borders, cursor, HP bars are all procedurally drawn.
 
@@ -281,12 +230,8 @@ All specifications have been authored. No blockers remain at the spec level.
 
 ## Key Design Decisions — Still Needed
 
-1. **Stat formulas** — Damage calc, HP scaling, level-up curves. Need design before Phase 5.2.
-2. **Difficulty model** — How wrong Scripture choices affect stats concretely. Need numbers before Phase 5.4.
-3. **Scripture verse content** — Specific verse options for each Satan temptation and Pharisee debate. Need before Phase 8.3.
-4. **Enemy roster** — Enemy types, stats, AI patterns, and encounter tables for wilderness zones. Need before Phase 5.2.
-
-**Note:** Items 1 and 4 above require new spec documents (`specs/stat-formulas.md` and `specs/enemy-roster.md`) to be authored before Phase 5 can begin. These specs do not yet exist and should formalize damage calculations, HP/SP scaling curves, level-up stat growth tables, enemy types with base stats, AI behavior patterns, and per-zone encounter tables.
+1. **Difficulty model** — How wrong Scripture choices affect stats concretely. Need numbers before Phase 5.4.
+2. **Scripture verse content** — Specific verse options for each Satan temptation and Pharisee debate. Need before Phase 8.3.
 
 ---
 

@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { MAP as jerusalemMap } from '../jerusalem.js';
 import { MAP as templeMap } from '../temple.js';
+import { MAP as jordanRiverMap } from '../jordan_river.js';
+import { MAP as wildernessMap } from '../wilderness.js';
+import { MAP as galileeMap } from '../galilee.js';
+import { MAP as capernaumMap } from '../capernaum.js';
+import { MAP as mountainMap } from '../mountain.js';
 
 function testMap(map, label) {
   describe(label, () => {
@@ -72,3 +77,8 @@ function testMap(map, label) {
 
 testMap(jerusalemMap, 'Jerusalem map');
 testMap(templeMap, 'Temple map');
+testMap(jordanRiverMap, 'Jordan River map');
+testMap(wildernessMap, 'Judean Wilderness map');
+testMap(galileeMap, 'Sea of Galilee map');
+testMap(capernaumMap, 'Capernaum map');
+testMap(mountainMap, 'Mount of Choosing map');

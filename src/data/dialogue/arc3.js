@@ -1,0 +1,210 @@
+/**
+ * Dialogue trees for Arc 3 - "Calling of the Disciples."
+ * Covers fishermen recruitment at Galilee, Capernaum townspeople,
+ * and disciple recruitment events for Peter, Andrew, James, John,
+ * Philip, Nathanael, and Matthew.
+ */
+
+export const ARC3_DIALOGUE = {
+  // --- Fishermen at the Sea of Galilee ---
+
+  peter_recruit: {
+    start: {
+      speaker: 'Simon Peter',
+      text: 'We have toiled all night and caught nothing...',
+      choices: [
+        { text: 'Follow me, and I will make you fishers of men.', next: 'peter_response' },
+        { text: 'How is the fishing?', next: 'fishing' },
+      ],
+    },
+    fishing: {
+      speaker: 'Simon Peter',
+      text: 'Nothing today. The nets come up empty.',
+      next: null,
+    },
+    peter_response: {
+      speaker: 'Simon Peter',
+      text: 'Master... we will leave everything and follow you.',
+      effects: [
+        { type: 'recruitMember', memberId: 'peter' },
+        { type: 'setFlag', flag: 'recruited_peter', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  andrew_recruit: {
+    start: {
+      speaker: 'Andrew',
+      text: 'My brother Simon speaks of you. Are you truly the one John spoke of?',
+      choices: [
+        { text: 'Come and see.', next: 'andrew_response' },
+        { text: 'Tell me about John.', next: 'about_john' },
+      ],
+    },
+    about_john: {
+      speaker: 'Andrew',
+      text: 'John the Baptist. He said one greater than him was coming. I was his disciple.',
+      next: null,
+    },
+    andrew_response: {
+      speaker: 'Andrew',
+      text: 'We have found the Messiah! I will follow you, Teacher.',
+      effects: [
+        { type: 'recruitMember', memberId: 'andrew' },
+        { type: 'setFlag', flag: 'recruited_andrew', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  james_recruit: {
+    start: {
+      speaker: 'James',
+      text: 'We are mending our nets. Our father Zebedee needs us here.',
+      choices: [
+        { text: 'Come, follow me.', next: 'james_response' },
+        { text: 'Your nets look worn.', next: 'nets' },
+      ],
+    },
+    nets: {
+      speaker: 'James',
+      text: 'A fisherman\'s life is hard work. These nets have seen many seasons.',
+      next: null,
+    },
+    james_response: {
+      speaker: 'James',
+      text: 'There is something about you... Yes. I will come.',
+      effects: [
+        { type: 'recruitMember', memberId: 'james' },
+        { type: 'setFlag', flag: 'recruited_james', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  john_disciple_recruit: {
+    start: {
+      speaker: 'John',
+      text: 'My brother James and I are sons of thunder! Where he goes, I follow.',
+      choices: [
+        { text: 'Will you follow me as well?', next: 'john_response' },
+        { text: 'Sons of thunder?', next: 'thunder' },
+      ],
+    },
+    thunder: {
+      speaker: 'John',
+      text: 'Ha! Our father gave us that name. We are... passionate.',
+      next: null,
+    },
+    john_response: {
+      speaker: 'John',
+      text: 'With all my heart, Teacher. I will be with you always.',
+      effects: [
+        { type: 'recruitMember', memberId: 'john' },
+        { type: 'setFlag', flag: 'recruited_john', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  // --- Capernaum recruitment ---
+
+  philip_recruit: {
+    start: {
+      speaker: 'Philip',
+      text: 'I am from Bethsaida, the same town as Peter and Andrew. They told me about you.',
+      choices: [
+        { text: 'Follow me.', next: 'philip_response' },
+        { text: 'What did they say?', next: 'what_said' },
+      ],
+    },
+    what_said: {
+      speaker: 'Philip',
+      text: 'That you are the one Moses wrote about! The one the prophets foretold!',
+      next: null,
+    },
+    philip_response: {
+      speaker: 'Philip',
+      text: 'I must tell Nathanael! We have found him!',
+      effects: [
+        { type: 'recruitMember', memberId: 'philip' },
+        { type: 'setFlag', flag: 'recruited_philip', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  nathanael_recruit: {
+    start: {
+      speaker: 'Nathanael',
+      text: 'Can anything good come out of Nazareth?',
+      choices: [
+        { text: 'Come and see.', next: 'nathanael_response' },
+        { text: 'You speak plainly.', next: 'plainly' },
+      ],
+    },
+    plainly: {
+      speaker: 'Nathanael',
+      text: 'I say what I think. Philip says you are special, but I have doubts.',
+      next: null,
+    },
+    nathanael_response: {
+      speaker: 'Jesus',
+      text: 'Before Philip called you, I saw you under the fig tree.',
+      next: 'nathanael_amazed',
+    },
+    nathanael_amazed: {
+      speaker: 'Nathanael',
+      text: 'Rabbi! You are the Son of God! You are the King of Israel!',
+      effects: [
+        { type: 'recruitMember', memberId: 'nathanael' },
+        { type: 'setFlag', flag: 'recruited_nathanael', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  matthew_recruit: {
+    start: {
+      speaker: 'Matthew',
+      text: 'I am Levi the tax collector. Most people avoid me. Why do you approach?',
+      choices: [
+        { text: 'Follow me.', next: 'matthew_response' },
+        { text: 'Why do they avoid you?', next: 'avoid' },
+      ],
+    },
+    avoid: {
+      speaker: 'Matthew',
+      text: 'Tax collectors are despised. We work for Rome. But I am tired of this life.',
+      next: null,
+    },
+    matthew_response: {
+      speaker: 'Matthew',
+      text: 'You would have me? A tax collector? ... I will leave everything. I will follow you.',
+      effects: [
+        { type: 'recruitMember', memberId: 'matthew' },
+        { type: 'setFlag', flag: 'recruited_matthew', value: true },
+      ],
+      next: null,
+    },
+  },
+
+  // --- Capernaum townspeople ---
+
+  townsperson_cap_1: {
+    start: {
+      speaker: 'Townsperson',
+      text: 'Capernaum is a busy town. Fishermen, traders, and tax collectors all pass through.',
+      next: null,
+    },
+  },
+
+  townsperson_cap_2: {
+    start: {
+      speaker: 'Elder',
+      text: 'A new teacher has arrived from Nazareth. Some say he heals the sick.',
+      next: null,
+    },
+  },
+};
