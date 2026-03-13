@@ -139,12 +139,14 @@ All specifications have been authored. No blockers remain at the spec level.
 > Text rendering, dialogue trees, menus — player communication.
 > **Blocked by:** Phase 1 (input, rendering), Phase 2 (NPC interaction triggers).
 
-- [ ] **3.1 Bitmap font & text rendering** (per `specs/ui-hud.md` §1)
+> **Status: COMPLETE** — Font, dialogue, menu, overworld HUD done. Battle HUD deferred to Phase 5. 140 tests total.
+
+- [x] **3.1 Bitmap font & text rendering** (per `specs/ui-hud.md` §1)
   - Author `src/font/fontData.js`: 5×7 glyph data for A-Z, a-z, 0-9, punctuation
   - `drawChar(ctx, char, x, y, color)` and `drawText(ctx, str, x, y, color)` utilities in `src/lib/`
   - Character-by-character typewriter reveal: 2 chars/frame, skip-to-full on action press
 
-- [ ] **3.2 Dialogue box system** (per `specs/dialogue-system.md`)
+- [x] **3.2 Dialogue box system** (per `specs/dialogue-system.md`)
   - `DialogueSystem` class: state machine managing node traversal, typewriter, choices
   - `DialogueRenderer`: draws 240×42 text box at y=118, speaker name in gold, 2-line body
   - Word-wrap at ~38 chars/line, multi-page splitting (2 lines/page), advance arrow
@@ -153,14 +155,14 @@ All specifications have been authored. No blockers remain at the spec level.
   - Side effects: `setFlag`, `giveItem`, `removeItem`, `recruitMember`, `triggerEvent`
   - Dialogue data modules in `src/data/dialogue/` (lazy-loaded via dynamic import)
 
-- [ ] **3.3 Menu system** (per `specs/ui-hud.md` §3-4)
+- [x] **3.3 Menu system** (per `specs/ui-hud.md` §3-4)
   - Pause menu: full-screen overlay, 6 options (Party, Items, Save, Load, Options, Close)
   - Cursor-based navigation with highlight bar
   - Party screen: member rows with sprite, name, level, HP/SP bars; detail view with full stats
   - Active/bench swap functionality
   - UI chrome: 1px border boxes via `fillRect`, consistent color palette tokens
 
-- [ ] **3.4 Overworld & Battle HUD** (per `specs/ui-hud.md` §5-6)
+- [x] **3.4 Overworld & Battle HUD** (per `specs/ui-hud.md` §5-6)
   - Overworld: location name fade-in/hold/fade-out only (no persistent HUD)
   - Battle: enemy area (top) with sprites + HP bars, party strip (bottom) with compact HP/SP bars
   - Action menu panel (96px right), target selection cursor, damage number floaters
@@ -362,7 +364,7 @@ All specifications have been authored. No blockers remain at the spec level.
   - Desert: sand, rock, dunes, sparse vegetation — needed for Phase 8
   - Temple: marble floor, columns, scrolls, ornate walls — needed for Phase 7
   - Shoreline: sand-to-water transition, docks, boats — needed for Phase 9
-- [ ] **Bitmap font** — 5×7 pixel glyphs for `src/font/fontData.js`. Needed for Phase 3.
+- [x] **Bitmap font** — 5×7 pixel glyphs created in `src/font/fontData.js` with full A-Z, a-z, 0-9, and punctuation glyphs. Completed in Phase 3.
 - [ ] **Battle sprites (64×64)** — Front-facing battle sprites for Jesus, disciples, Satan, enemies. Needed for Phase 5. Can prototype with 4x-scaled overworld sprites.
 - [ ] **Walk cycle animation frames** — Only static directional sprites exist. Deferred for MVP (single-frame per direction works initially).
 - [ ] **UI chrome** — Per `specs/ui-hud.md`, all UI uses `fillRect` calls with defined color tokens — no sprite assets needed for UI. Text box borders, cursor, HP bars are all procedurally drawn.
