@@ -12,6 +12,7 @@ import { Colors } from '../ui/Colors.js';
 import { drawText, wordWrap } from '../lib/drawText.js';
 import { drawPanel, drawCursor } from '../ui/UIChrome.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
+import { audioManager } from '../audio/AudioManager.js';
 
 const INTRO_FRAMES = 30;
 const EXECUTE_FRAMES = 30;
@@ -121,6 +122,9 @@ export class BattleScene {
       }
 
       case BattlePhase.VICTORY:
+        if (this._stateFrames === 1) {
+          audioManager.playBGM('victory');
+        }
         if (this._stateFrames >= VICTORY_DISPLAY_FRAMES || this.input.pressed(Actions.CONFIRM)) {
           if (this._onComplete) this._onComplete('victory', this.engine.expGained);
         }
@@ -438,10 +442,12 @@ export class BattleScene {
     if (!result) return;
 
     if (result.type === 'damage' && result.damage !== undefined) {
+      audioManager.playSFX('hit');
       const x = 100 + Math.floor(Math.random() * 40);
       const y = result.targetType === 'party' ? 110 : 40;
       this.hud.addFloater(x, y, String(result.damage), Colors.DMG_NORMAL);
     } else if (result.type === 'heal') {
+      audioManager.playSFX('heal');
       this.hud.addFloater(100, 110, `+${result.heal}`, Colors.DMG_HEAL);
     } else if (result.type === 'scripture') {
       const color = result.correct ? Colors.DMG_HEAL : Colors.DMG_CRIT;

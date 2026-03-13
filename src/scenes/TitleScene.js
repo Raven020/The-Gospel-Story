@@ -10,6 +10,7 @@ import { drawCursor } from '../ui/UIChrome.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
 import { GameState } from '../systems/GameState.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
+import { audioManager } from '../audio/AudioManager.js';
 
 const PHASE_PRESS_START = 0;
 const PHASE_MENU = 1;
@@ -41,6 +42,7 @@ export class TitleScene {
     this._input.context = InputContext.MENU;
     this._phase = PHASE_PRESS_START;
     this._cursor = 0;
+    audioManager.playBGM('title');
   }
 
   exit() {

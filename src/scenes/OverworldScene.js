@@ -24,6 +24,7 @@ import { PauseMenu } from '../ui/PauseMenu.js';
 import { Colors } from '../ui/Colors.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
 import { SCREEN_WIDTH } from '../engine/Display.js';
+import { audioManager } from '../audio/AudioManager.js';
 
 // Location name display per specs/ui-hud.md §6
 const LOC_FADE_IN = 20;
@@ -58,6 +59,9 @@ export class OverworldScene {
       questFlags: questFlags || {},
     });
 
+    // Map registry: maps map IDs to { map, tileset } for cross-map warps
+    this._mapRegistry = {};
+
     // Script registry for cutscene events
     this._cutsceneScripts = {};
 
@@ -90,6 +94,13 @@ export class OverworldScene {
     this._inBattle = false;
   }
 
+  /**
+   * Register a map in the registry for cross-map warps.
+   */
+  registerMap(mapId, map, tileset) {
+    this._mapRegistry[mapId] = { map, tileset };
+  }
+
   loadMap(map, tileset, spawnX, spawnY) {
     this.map = map;
     this.tileset = tileset;
@@ -104,6 +115,22 @@ export class OverworldScene {
     this._locName = map.name || '';
     this._locNameFrame = 0;
     this._showLocName = !!this._locName;
+
+    // Update game state with current map info
+    if (this.gameState) {
+      this.gameState.currentMap = map.id || '';
+      this.gameState.playerX = this.player.tileX;
+      this.gameState.playerY = this.player.tileY;
+    }
+
+    // Auto-register dialogue for NPCs on this map
+    if (map.npcs) {
+      for (const npc of map.npcs) {
+        if (npc.dialogue && !this._dialogueCache[npc.dialogue]) {
+          // Dialogue will be registered externally if not already cached
+        }
+      }
+    }
   }
 
   /**
@@ -122,6 +149,7 @@ export class OverworldScene {
 
   enter() {
     this.input.context = InputContext.OVERWORLD;
+    audioManager.playBGM('overworld');
   }
 
   exit() {}
@@ -222,6 +250,12 @@ export class OverworldScene {
     this.player.update(dt);
 
     if (this.player.justArrived) {
+      // Track player position in game state
+      if (this.gameState) {
+        this.gameState.playerX = this.player.tileX;
+        this.gameState.playerY = this.player.tileY;
+      }
+
       const evt = getEvent(this.map, this.player.tileX, this.player.tileY);
       if (evt) {
         this._handleEvent(evt);
@@ -377,8 +411,24 @@ export class OverworldScene {
   }
 
   _handleDialogueEffect(effect) {
-    // Effects like giveItem, recruitMember etc. will be handled by game state in Phase 4
-    console.log('[Effect]', effect.type, effect);
+    if (!this.gameState) return;
+
+    switch (effect.type) {
+      case 'setFlag':
+        this.gameState.questFlags[effect.flag] = effect.value;
+        break;
+      case 'recruitMember':
+        this.gameState.recruitMember(effect.memberId);
+        break;
+      case 'giveItem':
+        this.gameState.inventory.add(effect.itemId, effect.count || 1);
+        break;
+      case 'removeItem':
+        this.gameState.inventory.remove(effect.itemId, effect.count || 1);
+        break;
+      default:
+        console.log('[Effect] Unhandled:', effect.type, effect);
+    }
   }
 
   _handleMenuSelect(option) {
@@ -388,6 +438,7 @@ export class OverworldScene {
 
   _triggerEncounter(enemyId) {
     this._inBattle = true;
+    audioManager.stopBGM();
     this.transitions.flashWhite(() => {
       this._startBattle(enemyId);
     });
@@ -420,6 +471,7 @@ export class OverworldScene {
     }
 
     this.sceneManager.switch('battle');
+    audioManager.playBGM('battle');
     this.battleScene.startBattle(party, enemies, (result, expGained) => {
       if (result === 'victory') {
         // Award EXP to all living party members
@@ -456,7 +508,18 @@ export class OverworldScene {
       this.transitions.fadeToBlack(
         () => {
           if (this._pendingWarp) {
-            this.player.teleport(this._pendingWarp.targetX, this._pendingWarp.targetY);
+            // Cross-map warp: load the target map if different
+            if (this._pendingWarp.targetMap) {
+              const entry = this._mapRegistry[this._pendingWarp.targetMap];
+              if (entry) {
+                this.loadMap(entry.map, entry.tileset, this._pendingWarp.targetX, this._pendingWarp.targetY);
+              } else {
+                // Fallback: same-map teleport
+                this.player.teleport(this._pendingWarp.targetX, this._pendingWarp.targetY);
+              }
+            } else {
+              this.player.teleport(this._pendingWarp.targetX, this._pendingWarp.targetY);
+            }
             this.camera.follow(
               this.player.pixelX,
               this.player.pixelY,
