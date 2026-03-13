@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sprite Preview — All MVP Characters (All Directions)</title>
+  <style>
+    body {
+      background: #2a2a3a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 32px;
+      font-family: monospace;
+      color: #ccc;
+    }
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 1px solid #555;
+      margin: 4px;
+    }
+    .label { margin-top: 4px; font-size: 13px; text-align: center; }
+    .dir-label { font-size: 10px; color: #888; text-align: center; }
+    .row { display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
+    .sprite-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
+    .directions { display: flex; gap: 4px; }
+    h2 { margin-top: 32px; color: #eee; }
+    h3 { margin-top: 16px; color: #aaa; font-weight: normal; }
+    hr { width: 80%; border-color: #555; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <h1 style="color:#eee">The Gospel Story — Sprite Sheet (All Directions)</h1>
+  <div id="content"></div>
+
+  <script type="module">
+    // === IMPORTS ===
+    import { PALETTE as JESUS_PAL, JESUS_FRONT, JESUS_BACK, JESUS_LEFT } from './jesus-overworld.js';
+    import { PALETTE as YJ_PAL, YOUNG_JESUS, YOUNG_JESUS_BACK, YOUNG_JESUS_LEFT } from './young-jesus.js';
+    import { PALETTE as MJ_PAL, MARY, MARY_BACK, MARY_LEFT, JOSEPH, JOSEPH_BACK, JOSEPH_LEFT } from './mary-joseph.js';
+    import { PALETTE as JB_PAL, JOHN_BAPTIST, JOHN_BAPTIST_BACK, JOHN_BAPTIST_LEFT } from './john-baptist.js';
+    import { PALETTE as SAT_PAL, SATAN, SATAN_BACK, SATAN_LEFT } from './satan.js';
+    import { PALETTE as ANG_PAL, ANGEL, ANGEL_BACK, ANGEL_LEFT, DOVE } from './angel-dove.js';
+    import {
+      PALETTE as DISC_PAL,
+      PETER, PETER_BACK, PETER_LEFT,
+      ANDREW, ANDREW_BACK, ANDREW_LEFT,
+      JAMES_ZEBEDEE, JAMES_ZEBEDEE_BACK, JAMES_ZEBEDEE_LEFT,
+      JOHN, JOHN_BACK, JOHN_LEFT,
+      PHILIP, PHILIP_BACK, PHILIP_LEFT,
+      BARTHOLOMEW, BARTHOLOMEW_BACK, BARTHOLOMEW_LEFT,
+      MATTHEW, MATTHEW_BACK, MATTHEW_LEFT,
+      THOMAS, THOMAS_BACK, THOMAS_LEFT,
+      JAMES_ALPHAEUS, JAMES_ALPHAEUS_BACK, JAMES_ALPHAEUS_LEFT,
+      THADDAEUS, THADDAEUS_BACK, THADDAEUS_LEFT,
+      SIMON_ZEALOT, SIMON_ZEALOT_BACK, SIMON_ZEALOT_LEFT,
+      JUDAS, JUDAS_BACK, JUDAS_LEFT,
+    } from './disciples.js';
+    import {
+      PALETTE as PHAR_PAL,
+      PHARISEE_OLD_GREY, PHARISEE_OLD_GREY_BACK, PHARISEE_OLD_GREY_LEFT,
+      PHARISEE_OLD_BALD, PHARISEE_OLD_BALD_BACK, PHARISEE_OLD_BALD_LEFT,
+      PHARISEE_BROWN, PHARISEE_BROWN_BACK, PHARISEE_BROWN_LEFT,
+      PHARISEE_YOUNG_BROWN, PHARISEE_YOUNG_BROWN_BACK, PHARISEE_YOUNG_BROWN_LEFT,
+      PHARISEE_YOUNG_BLACK, PHARISEE_YOUNG_BLACK_BACK, PHARISEE_YOUNG_BLACK_LEFT,
+    } from './pharisees.js';
+    import {
+      PALETTE as TOWN_PAL,
+      TOWNSMAN_1, TOWNSMAN_1_BACK, TOWNSMAN_1_LEFT,
+      TOWNSMAN_2, TOWNSMAN_2_BACK, TOWNSMAN_2_LEFT,
+      TOWNSWOMAN_1, TOWNSWOMAN_1_BACK, TOWNSWOMAN_1_LEFT,
+      TOWNSWOMAN_2, TOWNSWOMAN_2_BACK, TOWNSWOMAN_2_LEFT,
+      TEMPLE_TEACHER, TEMPLE_TEACHER_BACK, TEMPLE_TEACHER_LEFT,
+    } from './townspeople.js';
+
+    const S = 8; // scale
+    const W = 16; // sprite width in pixels
+    const H = 32; // sprite height in pixels
+
+    // === UNIVERSAL RENDER FUNCTIONS ===
+    function renderSprite(ctx, palette, data, x, y, scale) {
+      for (let row = 0; row < data.length; row++) {
+        for (let col = 0; col < data[row].length; col++) {
+          const key = data[row][col];
+          if (key === '_') continue;
+          ctx.fillStyle = palette[key];
+          ctx.fillRect(x + col * scale, y + row * scale, scale, scale);
+        }
+      }
+    }
+
+    function renderMirrored(ctx, palette, data, x, y, scale) {
+      const w = data[0].length;
+      for (let row = 0; row < data.length; row++) {
+        for (let col = 0; col < data[row].length; col++) {
+          const key = data[row][col];
+          if (key === '_') continue;
+          ctx.fillStyle = palette[key];
+          ctx.fillRect(x + (w - 1 - col) * scale, y + row * scale, scale, scale);
+        }
+      }
+    }
+
+    // === BUILD UI ===
+    const content = document.getElementById('content');
+
+    function createCharGroup(name, palette, front, back, left, canvasH = H) {
+      const group = document.createElement('div');
+      group.className = 'sprite-group';
+
+      const dirs = document.createElement('div');
+      dirs.className = 'directions';
+
+      const views = [
+        { data: front, label: 'F', render: renderSprite },
+        { data: back, label: 'B', render: renderSprite },
+        { data: left, label: 'L', render: renderSprite },
+        { data: left, label: 'R', render: renderMirrored },
+      ];
+
+      for (const v of views) {
+        const wrap = document.createElement('div');
+        wrap.style.textAlign = 'center';
+        const canvas = document.createElement('canvas');
+        canvas.width = W * S;
+        canvas.height = canvasH * S;
+        const ctx = canvas.getContext('2d');
+        v.render(ctx, palette, v.data, 0, 0, S);
+        wrap.appendChild(canvas);
+        const lbl = document.createElement('div');
+        lbl.className = 'dir-label';
+        lbl.textContent = v.label;
+        wrap.appendChild(lbl);
+        dirs.appendChild(wrap);
+      }
+
+      group.appendChild(dirs);
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = name;
+      group.appendChild(label);
+      return group;
+    }
+
+    function addSection(title, subtitle) {
+      if (title) {
+        const h2 = document.createElement('h2');
+        h2.textContent = title;
+        content.appendChild(h2);
+      }
+      if (subtitle) {
+        const h3 = document.createElement('h3');
+        h3.textContent = subtitle;
+        content.appendChild(h3);
+      }
+    }
+
+    function addRow(groups) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      for (const g of groups) row.appendChild(g);
+      content.appendChild(row);
+    }
+
+    function addHr() {
+      content.appendChild(document.createElement('hr'));
+    }
+
+    // === JESUS ===
+    addSection('Jesus (Adult)');
+    addRow([createCharGroup('Jesus', JESUS_PAL, JESUS_FRONT, JESUS_BACK, JESUS_LEFT)]);
+
+    addSection('Young Jesus (12 years old)');
+    addRow([createCharGroup('Young Jesus', YJ_PAL, YOUNG_JESUS, YOUNG_JESUS_BACK, YOUNG_JESUS_LEFT)]);
+
+    addHr();
+
+    // === HOLY FAMILY ===
+    addSection('Holy Family');
+    addRow([
+      createCharGroup('Mary', MJ_PAL, MARY, MARY_BACK, MARY_LEFT),
+      createCharGroup('Joseph', MJ_PAL, JOSEPH, JOSEPH_BACK, JOSEPH_LEFT),
+    ]);
+
+    addHr();
+
+    // === KEY NPCs ===
+    addSection('Key NPCs');
+    addRow([
+      createCharGroup('John the Baptist', JB_PAL, JOHN_BAPTIST, JOHN_BAPTIST_BACK, JOHN_BAPTIST_LEFT),
+      createCharGroup('Satan', SAT_PAL, SATAN, SATAN_BACK, SATAN_LEFT),
+      createCharGroup('Angel', ANG_PAL, ANGEL, ANGEL_BACK, ANGEL_LEFT),
+    ]);
+
+    // Dove (front only, 16x16)
+    {
+      const group = document.createElement('div');
+      group.className = 'sprite-group';
+      const canvas = document.createElement('canvas');
+      canvas.width = W * S;
+      canvas.height = 16 * S;
+      const ctx = canvas.getContext('2d');
+      renderSprite(ctx, ANG_PAL, DOVE, 0, 0, S);
+      group.appendChild(canvas);
+      const lbl = document.createElement('div');
+      lbl.className = 'label';
+      lbl.textContent = 'Dove (Holy Spirit)';
+      group.appendChild(lbl);
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.appendChild(group);
+      content.appendChild(row);
+    }
+
+    addHr();
+
+    // === DISCIPLES ===
+    addSection('The Twelve Disciples', 'Peter & Andrew (brothers)');
+    addRow([
+      createCharGroup('Peter', DISC_PAL, PETER, PETER_BACK, PETER_LEFT),
+      createCharGroup('Andrew', DISC_PAL, ANDREW, ANDREW_BACK, ANDREW_LEFT),
+    ]);
+
+    addSection(null, 'James & John (brothers)');
+    addRow([
+      createCharGroup('James', DISC_PAL, JAMES_ZEBEDEE, JAMES_ZEBEDEE_BACK, JAMES_ZEBEDEE_LEFT),
+      createCharGroup('John', DISC_PAL, JOHN, JOHN_BACK, JOHN_LEFT),
+    ]);
+
+    addSection(null, 'Philip & Bartholomew (olive robes)');
+    addRow([
+      createCharGroup('Philip', DISC_PAL, PHILIP, PHILIP_BACK, PHILIP_LEFT),
+      createCharGroup('Bartholomew', DISC_PAL, BARTHOLOMEW, BARTHOLOMEW_BACK, BARTHOLOMEW_LEFT),
+    ]);
+
+    addSection(null, 'Matthew (maroon)');
+    addRow([
+      createCharGroup('Matthew', DISC_PAL, MATTHEW, MATTHEW_BACK, MATTHEW_LEFT),
+    ]);
+
+    addSection(null, 'Thomas, James the Less, Thaddaeus (tan/earth)');
+    addRow([
+      createCharGroup('Thomas', DISC_PAL, THOMAS, THOMAS_BACK, THOMAS_LEFT),
+      createCharGroup('James the Less', DISC_PAL, JAMES_ALPHAEUS, JAMES_ALPHAEUS_BACK, JAMES_ALPHAEUS_LEFT),
+      createCharGroup('Thaddaeus', DISC_PAL, THADDAEUS, THADDAEUS_BACK, THADDAEUS_LEFT),
+    ]);
+
+    addSection(null, 'Simon the Zealot (dark earth)');
+    addRow([
+      createCharGroup('Simon the Zealot', DISC_PAL, SIMON_ZEALOT, SIMON_ZEALOT_BACK, SIMON_ZEALOT_LEFT),
+    ]);
+
+    addSection(null, 'Judas Iscariot (dirty robe, rat-like)');
+    addRow([
+      createCharGroup('Judas', DISC_PAL, JUDAS, JUDAS_BACK, JUDAS_LEFT),
+    ]);
+
+    addHr();
+
+    // === PHARISEES ===
+    addSection('Pharisee NPCs');
+    addRow([
+      createCharGroup('Old Grey', PHAR_PAL, PHARISEE_OLD_GREY, PHARISEE_OLD_GREY_BACK, PHARISEE_OLD_GREY_LEFT),
+      createCharGroup('Old Bald', PHAR_PAL, PHARISEE_OLD_BALD, PHARISEE_OLD_BALD_BACK, PHARISEE_OLD_BALD_LEFT),
+      createCharGroup('Mid-age Brown', PHAR_PAL, PHARISEE_BROWN, PHARISEE_BROWN_BACK, PHARISEE_BROWN_LEFT),
+      createCharGroup('Young Brown', PHAR_PAL, PHARISEE_YOUNG_BROWN, PHARISEE_YOUNG_BROWN_BACK, PHARISEE_YOUNG_BROWN_LEFT),
+      createCharGroup('Young Black', PHAR_PAL, PHARISEE_YOUNG_BLACK, PHARISEE_YOUNG_BLACK_BACK, PHARISEE_YOUNG_BLACK_LEFT),
+    ]);
+
+    addHr();
+
+    // === TOWNSPEOPLE ===
+    addSection('Generic Townspeople & Temple Teacher');
+    addRow([
+      createCharGroup('Townsman 1', TOWN_PAL, TOWNSMAN_1, TOWNSMAN_1_BACK, TOWNSMAN_1_LEFT),
+      createCharGroup('Townsman 2', TOWN_PAL, TOWNSMAN_2, TOWNSMAN_2_BACK, TOWNSMAN_2_LEFT),
+      createCharGroup('Townswoman 1', TOWN_PAL, TOWNSWOMAN_1, TOWNSWOMAN_1_BACK, TOWNSWOMAN_1_LEFT),
+      createCharGroup('Townswoman 2', TOWN_PAL, TOWNSWOMAN_2, TOWNSWOMAN_2_BACK, TOWNSWOMAN_2_LEFT),
+      createCharGroup('Temple Teacher', TOWN_PAL, TEMPLE_TEACHER, TEMPLE_TEACHER_BACK, TEMPLE_TEACHER_LEFT),
+    ]);
+  </script>
+</body>
+</html>
