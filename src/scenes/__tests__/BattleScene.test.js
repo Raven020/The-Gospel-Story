@@ -123,7 +123,7 @@ describe('BattleScene', () => {
     expect(() => scene.render(ctx)).not.toThrow();
   });
 
-  it('processActionSelection sets up target selection for scripture', () => {
+  it('processActionSelection opens scripture selection for scripture', () => {
     const party = [makeMember()];
     const enemies = [createEnemy('doubt')];
     scene.startBattle(party, enemies, vi.fn());
@@ -131,8 +131,10 @@ describe('BattleScene', () => {
     scene.engine.nextTurn();
 
     scene._processActionSelection('scripture');
-    expect(scene._selectingTarget).toBe(true);
-    expect(scene.engine.pendingAction.type).toBe('scripture');
+    expect(scene._selectingScripture).toBe(true);
+    expect(scene._scriptureChallenge).not.toBeNull();
+    expect(scene._scriptureChallenge.id).toBe('doubt_challenge');
+    expect(scene._scriptureCursor).toBe(0);
   });
 
   it('processActionSelection opens ability menu for prayer', () => {

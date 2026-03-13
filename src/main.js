@@ -10,6 +10,9 @@ import { TransitionManager } from './engine/TransitionManager.js';
 import { InputSystem } from './systems/InputSystem.js';
 import { audioManager } from './audio/AudioManager.js';
 import { OverworldScene } from './scenes/OverworldScene.js';
+import { BattleScene } from './scenes/BattleScene.js';
+import { TitleScene } from './scenes/TitleScene.js';
+import { GameState } from './systems/GameState.js';
 import { MAP as demoMap } from './maps/demo.js';
 import * as overworldTileset from './tilesets/overworld.js';
 
@@ -31,25 +34,42 @@ const spriteRegistry = {
   },
 };
 
-// Title scene (placeholder until Phase 10)
-scenes.register('title', {
-  enter() {},
-  update(_dt) {
-    if (input.pressed('confirm') || input.pressed('start')) {
-      scenes.switch('overworld');
+// Title scene
+const titleScene = new TitleScene({
+  input,
+  sceneManager: scenes,
+  frameCountFn: () => loop.frameCount,
+  onNewGame: () => {
+    gameState.newGame();
+    overworld.loadMap(demoMap, overworldTileset, 9, 5);
+    scenes.switch('overworld');
+  },
+  onContinue: () => {
+    // Load the most recent save (first occupied slot)
+    for (let i = 0; i < 3; i++) {
+      if (GameState.hasSave(i)) {
+        gameState.load(i);
+        overworld.loadMap(demoMap, overworldTileset, gameState.playerX, gameState.playerY);
+        scenes.switch('overworld');
+        return;
+      }
     }
   },
-  render(ctx) {
-    ctx.fillStyle = '#181018';
-    ctx.fillRect(0, 0, 240, 160);
-    ctx.fillStyle = '#FFD878';
-    ctx.fillRect(60, 60, 120, 2);
-    ctx.fillStyle = '#F8F8F8';
-    ctx.fillRect(90, 72, 60, 8);
-    ctx.fillStyle = '#FFD878';
-    ctx.fillRect(60, 90, 120, 2);
-  },
 });
+scenes.register('title', titleScene);
+
+// Game state
+const gameState = new GameState();
+gameState.newGame();
+
+// Battle scene
+const battleScene = new BattleScene({
+  input,
+  transitions,
+  sceneManager: scenes,
+  frameCountFn: () => loop.frameCount,
+});
+scenes.register('battle', battleScene);
 
 // Overworld scene
 const overworld = new OverworldScene({
@@ -57,11 +77,14 @@ const overworld = new OverworldScene({
   transitions,
   sceneManager: scenes,
   spriteRegistry,
+  gameState,
+  battleScene,
+  frameCountFn: () => loop.frameCount,
 });
 overworld.loadMap(demoMap, overworldTileset, 9, 5);
 scenes.register('overworld', overworld);
 
-scenes.switch('overworld');
+scenes.switch('title');
 
 const loop = new GameLoop(
   (dt) => {
@@ -78,4 +101,4 @@ const loop = new GameLoop(
 
 loop.start();
 
-export { display, input, scenes, transitions, loop, audioManager };
+export { display, input, scenes, transitions, loop, audioManager, gameState, battleScene };

@@ -6,9 +6,11 @@
 import { BattleEngine, BattlePhase, ActionType } from '../systems/BattleEngine.js';
 import { BattleHUD } from '../ui/BattleHUD.js';
 import { ABILITIES, AbilityCategory } from '../data/abilities.js';
+import { SCRIPTURE_CHALLENGES, ENEMY_SCRIPTURE } from '../data/scriptures.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
 import { Colors } from '../ui/Colors.js';
-import { drawText } from '../lib/drawText.js';
+import { drawText, wordWrap } from '../lib/drawText.js';
+import { drawPanel, drawCursor } from '../ui/UIChrome.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
 
 const INTRO_FRAMES = 30;
@@ -32,6 +34,11 @@ export class BattleScene {
     this._abilityList = [];
     this._abilityCursor = 0;
 
+    // Sub-state for scripture selection
+    this._selectingScripture = false;
+    this._scriptureChallenge = null;
+    this._scriptureCursor = 0;
+
     // Target selection
     this._selectingTarget = false;
     this._targetType = 'enemy'; // 'enemy' or 'ally'
@@ -47,6 +54,9 @@ export class BattleScene {
     this._onComplete = onComplete;
     this._stateFrames = 0;
     this._selectingAbility = false;
+    this._selectingScripture = false;
+    this._scriptureChallenge = null;
+    this._scriptureCursor = 0;
     this._selectingTarget = false;
     this.engine.phase = BattlePhase.INTRO;
   }
@@ -141,7 +151,7 @@ export class BattleScene {
     this.hud.renderPartyStrip(ctx, this.engine.party, actorId);
 
     // Action menu
-    if (this.engine.phase === BattlePhase.SELECT_ACTION && !this._selectingAbility) {
+    if (this.engine.phase === BattlePhase.SELECT_ACTION && !this._selectingAbility && !this._selectingScripture) {
       this.hud.showActionMenu = true;
       this.hud.renderActionMenu(ctx, fc);
     } else {
@@ -151,6 +161,11 @@ export class BattleScene {
     // Ability sub-menu
     if (this._selectingAbility) {
       this._renderAbilityMenu(ctx, fc);
+    }
+
+    // Scripture selection mini-game
+    if (this._selectingScripture) {
+      this._renderScriptureMenu(ctx, fc);
     }
 
     // Target selection cursor
@@ -170,6 +185,11 @@ export class BattleScene {
   }
 
   _handleActionInput() {
+    if (this._selectingScripture) {
+      this._handleScriptureInput();
+      return;
+    }
+
     if (this._selectingAbility) {
       this._handleAbilityInput();
       return;
@@ -214,16 +234,16 @@ export class BattleScene {
         break;
       }
 
-      case 'scripture':
-        // Scripture selection - simplified: auto-attack with scripture
-        this._selectingTarget = true;
-        this._targetType = 'enemy';
-        this.hud.targetCursor = 0;
-        this.engine.setAction(ActionType.SCRIPTURE, {
-          target: null,
-          correct: Math.random() > 0.3, // placeholder: 70% chance correct
-        });
+      case 'scripture': {
+        // Pick a scripture challenge based on enemies in battle
+        const challenge = this._pickScriptureChallenge();
+        if (challenge) {
+          this._selectingScripture = true;
+          this._scriptureChallenge = challenge;
+          this._scriptureCursor = 0;
+        }
         break;
+      }
 
       case 'items':
         // Item use deferred to full integration
@@ -309,6 +329,107 @@ export class BattleScene {
     if (this.input.pressed(Actions.CANCEL)) {
       this._selectingTarget = false;
       this.engine.pendingAction = null;
+    }
+  }
+
+  /**
+   * Pick a scripture challenge based on enemies present in battle.
+   * Looks up ENEMY_SCRIPTURE by enemy id; falls back to a random challenge.
+   */
+  _pickScriptureChallenge() {
+    const alive = this.engine.enemies.filter((e) => e.currentHp > 0);
+    // Try to match an enemy id to a challenge
+    for (const enemy of alive) {
+      const challengeId = ENEMY_SCRIPTURE[enemy.id];
+      if (challengeId && SCRIPTURE_CHALLENGES[challengeId]) {
+        return SCRIPTURE_CHALLENGES[challengeId];
+      }
+    }
+    // Fallback: pick a random challenge
+    const keys = Object.keys(SCRIPTURE_CHALLENGES);
+    return SCRIPTURE_CHALLENGES[keys[Math.floor(Math.random() * keys.length)]];
+  }
+
+  _handleScriptureInput() {
+    const options = this._scriptureChallenge.options;
+
+    if (this.input.pressed(Actions.UP)) {
+      this._scriptureCursor = (this._scriptureCursor - 1 + options.length) % options.length;
+    }
+    if (this.input.pressed(Actions.DOWN)) {
+      this._scriptureCursor = (this._scriptureCursor + 1) % options.length;
+    }
+
+    if (this.input.pressed(Actions.CONFIRM)) {
+      const selected = options[this._scriptureCursor];
+      this._selectingScripture = false;
+      this._scriptureChallenge = null;
+
+      // Proceed to target selection with correct/incorrect result
+      this._selectingTarget = true;
+      this._targetType = 'enemy';
+      this.hud.targetCursor = 0;
+      this.engine.setAction(ActionType.SCRIPTURE, {
+        target: null,
+        correct: selected.correct,
+      });
+    }
+
+    if (this.input.pressed(Actions.CANCEL)) {
+      this._selectingScripture = false;
+      this._scriptureChallenge = null;
+    }
+  }
+
+  /**
+   * Render the scripture challenge overlay: challenge text at top, three options below.
+   */
+  _renderScriptureMenu(ctx, frameCount) {
+    const challenge = this._scriptureChallenge;
+    if (!challenge) return;
+
+    // Semi-transparent overlay
+    ctx.fillStyle = Colors.BG_OVERLAY;
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Panel dimensions
+    const panelX = 12;
+    const panelY = 10;
+    const panelW = SCREEN_WIDTH - 24;
+    const panelH = 90;
+
+    drawPanel(ctx, panelX, panelY, panelW, panelH, Colors.BG_DARK);
+
+    // Challenge text (word-wrapped, max chars based on panel width / CELL_W=6)
+    const maxChars = Math.floor((panelW - 16) / 6);
+    const challengeLines = wordWrap(challenge.challenge, maxChars);
+    for (let i = 0; i < challengeLines.length; i++) {
+      drawText(ctx, challengeLines[i], panelX + 8, panelY + 6 + i * 10, Colors.TEXT_GOLD);
+    }
+
+    // Options start below the challenge text
+    const optionsY = panelY + 6 + challengeLines.length * 10 + 6;
+
+    for (let i = 0; i < challenge.options.length; i++) {
+      const opt = challenge.options[i];
+      const oy = optionsY + i * 18;
+
+      // Highlight selected option
+      if (i === this._scriptureCursor) {
+        ctx.fillStyle = Colors.CURSOR_BG;
+        ctx.fillRect(panelX + 4, oy - 1, panelW - 8, 16);
+        drawCursor(ctx, panelX + 6, oy + 2, frameCount, Colors.TEXT_LIGHT);
+      }
+
+      // Verse text (truncated to fit panel width)
+      const optMaxChars = Math.floor((panelW - 32) / 6);
+      const displayText = opt.text.length > optMaxChars
+        ? opt.text.slice(0, optMaxChars - 2) + '..'
+        : opt.text;
+      drawText(ctx, displayText, panelX + 16, oy, Colors.TEXT_LIGHT);
+
+      // Reference
+      drawText(ctx, opt.ref, panelX + 16, oy + 8, Colors.TEXT_DIM);
     }
   }
 

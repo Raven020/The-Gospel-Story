@@ -9,8 +9,11 @@ import {
   renderAboveLayer,
   isBlocked,
   getEvent,
+  checkEncounterZone,
   TILE_SIZE,
 } from '../engine/TilemapRenderer.js';
+import { createEnemy } from '../data/enemies.js';
+import { gainExp } from '../data/partyData.js';
 import { renderSprite, renderSpriteMirrored } from '../lib/renderSprite.js';
 import { drawText, measureText } from '../lib/drawText.js';
 import { Player } from '../systems/Player.js';
@@ -27,7 +30,7 @@ const LOC_HOLD = 120;
 const LOC_FADE_OUT = 20;
 
 export class OverworldScene {
-  constructor({ input, transitions, sceneManager, spriteRegistry, questFlags, frameCountFn }) {
+  constructor({ input, transitions, sceneManager, spriteRegistry, questFlags, frameCountFn, gameState, battleScene }) {
     this.input = input;
     this.transitions = transitions;
     this.sceneManager = sceneManager;
@@ -65,6 +68,11 @@ export class OverworldScene {
     this._locName = '';
 
     this._pendingWarp = null;
+
+    // Battle integration
+    this.gameState = gameState || null;
+    this.battleScene = battleScene || null;
+    this._inBattle = false;
   }
 
   loadMap(map, tileset, spawnX, spawnY) {
@@ -157,6 +165,11 @@ export class OverworldScene {
       const evt = getEvent(this.map, this.player.tileX, this.player.tileY);
       if (evt) {
         this._handleEvent(evt);
+      } else if (!this._inBattle) {
+        const enemyId = checkEncounterZone(this.map, this.player.tileX, this.player.tileY);
+        if (enemyId) {
+          this._triggerEncounter(enemyId);
+        }
       }
     }
 
@@ -311,6 +324,70 @@ export class OverworldScene {
   _handleMenuSelect(option) {
     // Sub-screens will be implemented as needed (Party, Items, Save, Load, Options)
     console.log('[Menu] Selected:', option);
+  }
+
+  _triggerEncounter(enemyId) {
+    this._inBattle = true;
+    this.transitions.flashWhite(() => {
+      this._startBattle(enemyId);
+    });
+  }
+
+  _startBattle(enemyId) {
+    if (!this.battleScene) {
+      this._inBattle = false;
+      return;
+    }
+
+    // Create 1-3 enemies of the encountered type
+    const count = 1 + Math.floor(Math.random() * 3);
+    const enemies = [];
+    for (let i = 0; i < count; i++) {
+      const enemy = createEnemy(enemyId);
+      if (enemy) enemies.push(enemy);
+    }
+
+    if (enemies.length === 0) {
+      this._inBattle = false;
+      return;
+    }
+
+    // Get the active party from gameState, or fall back to a default
+    const party = this.gameState ? this.gameState.party.active : [];
+    if (party.length === 0) {
+      this._inBattle = false;
+      return;
+    }
+
+    this.sceneManager.switch('battle');
+    this.battleScene.startBattle(party, enemies, (result, expGained) => {
+      if (result === 'victory') {
+        // Award EXP to all living party members
+        for (const member of party) {
+          if (member.currentHp > 0) {
+            gainExp(member, expGained);
+          }
+        }
+        // Fade back to overworld
+        this.transitions.fadeToBlack(
+          () => {
+            this.sceneManager.switch('overworld');
+          },
+          () => {
+            this._inBattle = false;
+          }
+        );
+      } else {
+        // Defeat: fade to title screen (game over)
+        this.transitions.fadeToBlack(
+          () => {
+            this._inBattle = false;
+            this.sceneManager.switch('title');
+          },
+          null
+        );
+      }
+    });
   }
 
   _handleEvent(evt) {

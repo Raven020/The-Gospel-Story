@@ -97,7 +97,27 @@ export const MAP = {
   ],
 
   encounters: {
-    enabled: false,
+    enabled: true,
+    zones: [
+      {
+        x: 0, y: 1, w: 8, h: 12,
+        rate: 0.15,
+        table: [
+          { enemy: 'doubt', weight: 4 },
+          { enemy: 'fear', weight: 3 },
+          { enemy: 'deception', weight: 2 },
+        ],
+      },
+      {
+        x: 11, y: 1, w: 7, h: 12,
+        rate: 0.18,
+        table: [
+          { enemy: 'temptation', weight: 3 },
+          { enemy: 'pride', weight: 3 },
+          { enemy: 'greed', weight: 2 },
+        ],
+      },
+    ],
   },
 
   music: 'bgm_overworld',
