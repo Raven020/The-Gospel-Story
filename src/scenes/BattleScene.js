@@ -1,0 +1,379 @@
+/**
+ * Battle scene: orchestrates the turn-based combat flow.
+ * Manages phases, player input for action/target selection, enemy AI, and victory/defeat.
+ */
+
+import { BattleEngine, BattlePhase, ActionType } from '../systems/BattleEngine.js';
+import { BattleHUD } from '../ui/BattleHUD.js';
+import { ABILITIES, AbilityCategory } from '../data/abilities.js';
+import { Actions, InputContext } from '../systems/InputSystem.js';
+import { Colors } from '../ui/Colors.js';
+import { drawText } from '../lib/drawText.js';
+import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
+
+const INTRO_FRAMES = 30;
+const EXECUTE_FRAMES = 30;
+const VICTORY_DISPLAY_FRAMES = 120;
+
+export class BattleScene {
+  constructor({ input, transitions, sceneManager, frameCountFn }) {
+    this.input = input;
+    this.transitions = transitions;
+    this.sceneManager = sceneManager;
+    this.getFrameCount = frameCountFn || (() => 0);
+
+    this.engine = null;
+    this.hud = new BattleHUD();
+    this._stateFrames = 0;
+    this._onComplete = null;
+
+    // Sub-state for ability selection
+    this._selectingAbility = false;
+    this._abilityList = [];
+    this._abilityCursor = 0;
+
+    // Target selection
+    this._selectingTarget = false;
+    this._targetType = 'enemy'; // 'enemy' or 'ally'
+  }
+
+  /**
+   * Start a battle with given party and enemies.
+   * @param {Function} onComplete - called with 'victory' or 'defeat' when battle ends
+   */
+  startBattle(party, enemies, onComplete) {
+    this.engine = new BattleEngine(party, enemies);
+    this.hud = new BattleHUD();
+    this._onComplete = onComplete;
+    this._stateFrames = 0;
+    this._selectingAbility = false;
+    this._selectingTarget = false;
+    this.engine.phase = BattlePhase.INTRO;
+  }
+
+  enter() {
+    this.input.context = InputContext.BATTLE;
+  }
+
+  exit() {}
+
+  update(dt) {
+    if (!this.engine) return;
+
+    this._stateFrames++;
+    this.hud.updateFloaters();
+
+    switch (this.engine.phase) {
+      case BattlePhase.INTRO:
+        if (this._stateFrames >= INTRO_FRAMES) {
+          this.engine.buildTurnOrder();
+          this.engine.nextTurn();
+          this._stateFrames = 0;
+        }
+        break;
+
+      case BattlePhase.SELECT_ACTION:
+        this._handleActionInput();
+        break;
+
+      case BattlePhase.SELECT_TARGET:
+        this._handleTargetInput();
+        break;
+
+      case BattlePhase.ENEMY_TURN:
+        this.engine.execute();
+        this._showResult();
+        this._stateFrames = 0;
+        this.engine.phase = BattlePhase.EXECUTE;
+        break;
+
+      case BattlePhase.EXECUTE:
+        if (this._stateFrames >= EXECUTE_FRAMES) {
+          const end = this.engine.checkEnd();
+          if (end) {
+            this._stateFrames = 0;
+          } else {
+            this.engine.nextTurn();
+            this._stateFrames = 0;
+          }
+        }
+        break;
+
+      case BattlePhase.CHECK_END: {
+        const end = this.engine.checkEnd();
+        if (end) {
+          this._stateFrames = 0;
+        } else {
+          this.engine.nextTurn();
+          this._stateFrames = 0;
+        }
+        break;
+      }
+
+      case BattlePhase.VICTORY:
+        if (this._stateFrames >= VICTORY_DISPLAY_FRAMES || this.input.pressed(Actions.CONFIRM)) {
+          if (this._onComplete) this._onComplete('victory', this.engine.expGained);
+        }
+        break;
+
+      case BattlePhase.DEFEAT:
+        if (this._stateFrames >= VICTORY_DISPLAY_FRAMES || this.input.pressed(Actions.CONFIRM)) {
+          if (this._onComplete) this._onComplete('defeat', 0);
+        }
+        break;
+    }
+  }
+
+  render(ctx) {
+    if (!this.engine) return;
+
+    const fc = this.getFrameCount();
+
+    // Background
+    ctx.fillStyle = '#181028';
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Enemies
+    this.hud.renderEnemies(ctx, this.engine.enemies, fc);
+
+    // Party strip
+    const actorId = this.engine.currentActor?.entity?.id;
+    this.hud.renderPartyStrip(ctx, this.engine.party, actorId);
+
+    // Action menu
+    if (this.engine.phase === BattlePhase.SELECT_ACTION && !this._selectingAbility) {
+      this.hud.showActionMenu = true;
+      this.hud.renderActionMenu(ctx, fc);
+    } else {
+      this.hud.showActionMenu = false;
+    }
+
+    // Ability sub-menu
+    if (this._selectingAbility) {
+      this._renderAbilityMenu(ctx, fc);
+    }
+
+    // Target selection cursor
+    if (this._selectingTarget) {
+      this.hud.renderTargetCursor(ctx, this.engine.enemies, fc);
+    }
+
+    // Damage floaters
+    this.hud.renderFloaters(ctx);
+
+    // Victory/defeat overlay
+    if (this.engine.phase === BattlePhase.VICTORY) {
+      this._renderVictory(ctx);
+    } else if (this.engine.phase === BattlePhase.DEFEAT) {
+      this._renderDefeat(ctx);
+    }
+  }
+
+  _handleActionInput() {
+    if (this._selectingAbility) {
+      this._handleAbilityInput();
+      return;
+    }
+
+    if (this._selectingTarget) return;
+
+    if (this.input.pressed(Actions.UP)) {
+      this.hud.actionCursor = (this.hud.actionCursor - 1 + 6) % 6;
+    }
+    if (this.input.pressed(Actions.DOWN)) {
+      this.hud.actionCursor = (this.hud.actionCursor + 1) % 6;
+    }
+
+    if (this.input.pressed(Actions.CONFIRM)) {
+      const action = this.hud.getSelectedAction();
+      this._processActionSelection(action);
+    }
+  }
+
+  _processActionSelection(action) {
+    const member = this.engine.currentActor.entity;
+
+    switch (action) {
+      case 'prayer':
+      case 'miracles':
+      case 'truth': {
+        const categoryMap = {
+          prayer: AbilityCategory.PRAYER,
+          miracles: AbilityCategory.MIRACLE,
+          truth: AbilityCategory.TRUTH,
+        };
+        this._abilityList = member.abilities
+          .filter((aId) => ABILITIES[aId]?.category === categoryMap[action])
+          .map((aId) => ABILITIES[aId])
+          .filter(Boolean);
+
+        if (this._abilityList.length > 0) {
+          this._selectingAbility = true;
+          this._abilityCursor = 0;
+        }
+        break;
+      }
+
+      case 'scripture':
+        // Scripture selection - simplified: auto-attack with scripture
+        this._selectingTarget = true;
+        this._targetType = 'enemy';
+        this.hud.targetCursor = 0;
+        this.engine.setAction(ActionType.SCRIPTURE, {
+          target: null,
+          correct: Math.random() > 0.3, // placeholder: 70% chance correct
+        });
+        break;
+
+      case 'items':
+        // Item use deferred to full integration
+        break;
+
+      case 'defend':
+        this.engine.setAction(ActionType.DEFEND, {});
+        this.engine.execute();
+        this._showResult();
+        this._stateFrames = 0;
+        this.engine.phase = BattlePhase.EXECUTE;
+        break;
+    }
+  }
+
+  _handleAbilityInput() {
+    if (this.input.pressed(Actions.UP)) {
+      this._abilityCursor = (this._abilityCursor - 1 + this._abilityList.length) % this._abilityList.length;
+    }
+    if (this.input.pressed(Actions.DOWN)) {
+      this._abilityCursor = (this._abilityCursor + 1) % this._abilityList.length;
+    }
+
+    if (this.input.pressed(Actions.CONFIRM)) {
+      const ability = this._abilityList[this._abilityCursor];
+      this._selectingAbility = false;
+
+      // Check if needs target selection
+      if (ability.target === 'single_enemy') {
+        this._selectingTarget = true;
+        this._targetType = 'enemy';
+        this.hud.targetCursor = 0;
+        this.engine.setAction(ActionType.ABILITY, {
+          abilityId: ability.id,
+          target: null, // set after target selection
+        });
+      } else {
+        // Auto-target (self, all, etc.)
+        const member = this.engine.currentActor.entity;
+        this.engine.setAction(ActionType.ABILITY, {
+          abilityId: ability.id,
+          target: member,
+        });
+        this.engine.execute();
+        this._showResult();
+        this._stateFrames = 0;
+        this.engine.phase = BattlePhase.EXECUTE;
+      }
+    }
+
+    if (this.input.pressed(Actions.CANCEL)) {
+      this._selectingAbility = false;
+    }
+  }
+
+  _handleTargetInput() {
+    const alive = this.engine.enemies.filter((e) => e.currentHp > 0);
+
+    if (this.input.pressed(Actions.LEFT)) {
+      this.hud.targetCursor = (this.hud.targetCursor - 1 + alive.length) % alive.length;
+    }
+    if (this.input.pressed(Actions.RIGHT)) {
+      this.hud.targetCursor = (this.hud.targetCursor + 1) % alive.length;
+    }
+
+    if (this.input.pressed(Actions.CONFIRM)) {
+      const target = alive[this.hud.targetCursor];
+      this._selectingTarget = false;
+
+      // Update pending action target
+      if (this.engine.pendingAction) {
+        this.engine.pendingAction.target = target;
+      } else {
+        this.engine.setAction(ActionType.ATTACK, { target });
+      }
+
+      this.engine.execute();
+      this._showResult();
+      this._stateFrames = 0;
+      this.engine.phase = BattlePhase.EXECUTE;
+    }
+
+    if (this.input.pressed(Actions.CANCEL)) {
+      this._selectingTarget = false;
+      this.engine.pendingAction = null;
+    }
+  }
+
+  _showResult() {
+    const result = this.engine.lastResult;
+    if (!result) return;
+
+    if (result.type === 'damage' && result.damage !== undefined) {
+      const x = 100 + Math.floor(Math.random() * 40);
+      const y = result.targetType === 'party' ? 110 : 40;
+      this.hud.addFloater(x, y, String(result.damage), Colors.DMG_NORMAL);
+    } else if (result.type === 'heal') {
+      this.hud.addFloater(100, 110, `+${result.heal}`, Colors.DMG_HEAL);
+    } else if (result.type === 'scripture') {
+      const color = result.correct ? Colors.DMG_HEAL : Colors.DMG_CRIT;
+      const text = result.correct ? `${result.damage}!` : String(result.damage);
+      this.hud.addFloater(100, 40, text, color);
+    }
+  }
+
+  _renderAbilityMenu(ctx, frameCount) {
+    const x = 144;
+    const y = 100;
+    const w = 96;
+    const h = Math.min(58, this._abilityList.length * 10 + 4);
+
+    ctx.fillStyle = Colors.BG_DARK;
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = Colors.BORDER;
+    ctx.fillRect(x, y, w, 1);
+    ctx.fillRect(x, y + h - 1, w, 1);
+    ctx.fillRect(x, y, 1, h);
+    ctx.fillRect(x + w - 1, y, 1, h);
+
+    for (let i = 0; i < this._abilityList.length; i++) {
+      const ay = y + 2 + i * 10;
+      const abil = this._abilityList[i];
+      const name = abil.name.slice(0, 12);
+
+      if (i === this._abilityCursor) {
+        ctx.fillStyle = Colors.CURSOR_BG;
+        ctx.fillRect(x + 2, ay - 1, w - 4, 10);
+      }
+
+      const member = this.engine.currentActor?.entity;
+      const canAfford = member && member.currentSp >= abil.spCost;
+      drawText(ctx, name, x + 4, ay, canAfford ? Colors.TEXT_LIGHT : Colors.TEXT_DIM);
+      drawText(ctx, String(abil.spCost), x + w - 20, ay, Colors.SP_BAR);
+    }
+  }
+
+  _renderVictory(ctx) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    drawText(ctx, 'VICTORY', 90, 50, Colors.TEXT_GOLD);
+    drawText(ctx, `EXP: ${this.engine.expGained}`, 84, 70, Colors.TEXT_LIGHT);
+    drawText(ctx, 'Press Z', 90, 100, Colors.TEXT_DIM);
+  }
+
+  _renderDefeat(ctx) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    drawText(ctx, 'FALLEN', 96, 50, Colors.DMG_CRIT);
+    drawText(ctx, 'Press Z', 90, 100, Colors.TEXT_DIM);
+  }
+}

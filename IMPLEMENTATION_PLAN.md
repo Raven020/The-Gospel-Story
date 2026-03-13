@@ -59,44 +59,11 @@ All specifications have been authored. No blockers remain at the spec level.
 > **Status: COMPLETE** — All Phase 1 items implemented and tested (44 tests passing).
 
 - [x] **1.1 Project scaffolding**
-  - Create `src/` directory structure, `index.html` entry point, ES module setup
-  - No build tool — native ES modules in browser
-  - Folder layout: `src/engine/`, `src/systems/`, `src/data/`, `src/scenes/`, `src/ui/`, `src/lib/`, `src/font/`, `src/audio/`, `src/maps/`, `src/tilesets/`
-  - Place `AudioManager` stub immediately (`src/audio/AudioManager.js` per `specs/audio.md`)
-
 - [x] **1.2 Game loop**
-  - Fixed-timestep game loop with `requestAnimationFrame`
-  - `update(dt)` and `render()` separation
-  - Target ~60 FPS with delta-time accumulator
-  - Global `frameCount` integer for UI animations (per `specs/ui-hud.md`)
-
 - [x] **1.3 Canvas & display scaling**
-  - Fixed internal resolution: 240×160 (GBA-native)
-  - Nearest-neighbor scaling to fill browser window
-  - 3:2 aspect ratio with letterboxing
-  - `image-rendering: pixelated` / `crisp-edges`
-  - Handle window resize events
-  - All rendering at 1:1 internal resolution; CSS scales canvas up
-
 - [x] **1.4 Sprite rendering engine**
-  - Unified `renderSprite(ctx, spriteData, palette, x, y, scale)` in `src/lib/`
-  - `renderSpriteMirrored()` for right-facing direction
-  - Transparent pixel (`_`) skipping
-  - Cache rendered sprites as offscreen canvases (ImageBitmaps) for performance
-  - Consolidate the inconsistent render APIs across sprite modules into one shared utility
-
 - [x] **1.5 Input system** (per `specs/input-system.md`)
-  - Keyboard input handler: Arrow keys + WASD, Z (confirm), X (cancel), Enter (start)
-  - Input state tracking: `pressed`, `held`, `released` — resolved once per frame
-  - Input contexts: Overworld, Dialogue, Menu, Battle
-  - 100ms input buffer for `pressed` events
-  - Key repeat for menus: 300ms initial delay, 100ms repeat rate
-  - `preventDefault` on mapped keys only
-
 - [x] **1.6 Scene manager**
-  - State machine for scene transitions: Title → Overworld → Battle → etc.
-  - Each scene implements `update(dt)` and `render(ctx)`
-  - `TransitionManager` for fade-to-black and flash-white effects (per `specs/ui-hud.md` §8)
 
 ### Phase 2 — World & Movement
 > Tilemap rendering, player movement, camera — the overworld.
@@ -105,35 +72,10 @@ All specifications have been authored. No blockers remain at the spec level.
 > **Status: COMPLETE** — All Phase 2 items implemented and tested (91 tests total, 11 suites).
 
 - [x] **2.1 Tilemap system** (per `specs/tilemap-format.md`)
-  - Tile-based map renderer: 16×16 tiles, flat row-major layer arrays
-  - 5 layers: ground, detail, above-player, collision, event
-  - Render order: ground → detail → entities → above
-  - `drawTile()` renders tile pixel data via `fillRect` (same pattern as sprites)
-  - Tileset loader: JS modules with `PALETTE` + `TILES` exports
-  - **Art needed:** Create at least one starter tileset (`src/tilesets/overworld.js`) with grass, path, water, wall tiles
-
 - [x] **2.2 Camera system**
-  - Follow-player camera centered on active character
-  - Pixel-unit camera position, clamp to map bounds
-  - Camera formula: `cameraX = clamp(playerX - 112, 0, mapW*16 - 240)`
-
 - [x] **2.3 Player movement**
-  - 4-directional grid-based movement (tile-snapping, 16px steps)
-  - Single-frame directional sprites initially (walk cycle animation deferred)
-  - Collision detection against tilemap collision layer
-  - Direction-facing updates: swap front/back/left sprite; mirror left for right
-
 - [x] **2.4 NPC placement & interaction**
-  - NPCs defined per-map: id, sprite, x, y, facing, dialogue key, movement pattern
-  - Static NPCs + wandering NPCs (radius-bounded, interval-based steps)
-  - Interaction: face NPC + press A → NPC turns toward player → open dialogue
-  - NPCs block collision layer dynamically
-
 - [x] **2.5 Map transitions**
-  - Event layer triggers warps on player step
-  - Fade-to-black transition (30-frame fade out → swap map → 30-frame fade in)
-  - Spawn at target tile coordinates
-  - Location name display on map enter (fade in → 2s hold → fade out per `specs/ui-hud.md` §6)
 
 ### Phase 3 — Dialogue & UI
 > Text rendering, dialogue trees, menus — player communication.
@@ -142,63 +84,21 @@ All specifications have been authored. No blockers remain at the spec level.
 > **Status: COMPLETE** — Font, dialogue, menu, overworld HUD done. Battle HUD deferred to Phase 5. 140 tests total.
 
 - [x] **3.1 Bitmap font & text rendering** (per `specs/ui-hud.md` §1)
-  - Author `src/font/fontData.js`: 5×7 glyph data for A-Z, a-z, 0-9, punctuation
-  - `drawChar(ctx, char, x, y, color)` and `drawText(ctx, str, x, y, color)` utilities in `src/lib/`
-  - Character-by-character typewriter reveal: 2 chars/frame, skip-to-full on action press
-
 - [x] **3.2 Dialogue box system** (per `specs/dialogue-system.md`)
-  - `DialogueSystem` class: state machine managing node traversal, typewriter, choices
-  - `DialogueRenderer`: draws 240×42 text box at y=118, speaker name in gold, 2-line body
-  - Word-wrap at ~38 chars/line, multi-page splitting (2 lines/page), advance arrow
-  - Branching choices: 2-4 options with cursor navigation
-  - Condition evaluation: `evalCondition({flag, op, value}, questFlags)`
-  - Side effects: `setFlag`, `giveItem`, `removeItem`, `recruitMember`, `triggerEvent`
-  - Dialogue data modules in `src/data/dialogue/` (lazy-loaded via dynamic import)
-
 - [x] **3.3 Menu system** (per `specs/ui-hud.md` §3-4)
-  - Pause menu: full-screen overlay, 6 options (Party, Items, Save, Load, Options, Close)
-  - Cursor-based navigation with highlight bar
-  - Party screen: member rows with sprite, name, level, HP/SP bars; detail view with full stats
-  - Active/bench swap functionality
-  - UI chrome: 1px border boxes via `fillRect`, consistent color palette tokens
-
 - [x] **3.4 Overworld & Battle HUD** (per `specs/ui-hud.md` §5-6)
-  - Overworld: location name fade-in/hold/fade-out only (no persistent HUD)
-  - Battle: enemy area (top) with sprites + HP bars, party strip (bottom) with compact HP/SP bars
-  - Action menu panel (96px right), target selection cursor, damage number floaters
-  - Victory/defeat screens with XP display and level-up notices
 
 ### Phase 4 — Game State & Data
 > Party model, inventory, save/load, quest flags.
 > **Blocked by:** Phase 1 (data structures needed by dialogue effects in Phase 3).
 > **Note:** Can be partially built in parallel with Phase 3 since dialogue effects need quest flags and inventory.
 
-- [ ] **4.1 Party data model** (per `specs/party-system.md`)
-  - Jesus + 12-disciple roster data structures
-  - Stats: HP, Spirit, Strength, Wisdom, Faith, Speed
-  - Unique abilities per disciple (MVP: Peter, Andrew, James, John, Philip, Nathanael)
-  - Active party (5) vs bench separation
-  - Judas hidden betrayal stat (invisible unless Thomas uses Detection ability)
-  - Level, experience, stat growth tables
+> **Status: COMPLETE** — All Phase 4 items implemented and tested. 186 tests total.
 
-- [ ] **4.2 Inventory system**
-  - Thematic consumables: bread (HP), oil (buff), water (SP), etc.
-  - Item use in/out of combat
-  - Key items for quest progression (non-consumable)
-  - Simple flat array/map structure
-
-- [ ] **4.3 Quest flag system** (per `specs/dialogue-system.md` §11)
-  - Single flat object: `questFlags = { flag_name: boolean|number }`
-  - Snake_case naming, arc-prefixed where relevant
-  - Predefined flags for Arcs 1-3 (found_jesus_in_temple, baptism_complete, recruited_peter, etc.)
-  - Arc completion tracking
-
-- [ ] **4.4 Save/load system**
-  - Serialize: position, current map, arc, party stats, inventory, quest flags
-  - LocalStorage persistence with JSON serialization
-  - 3 save slots
-  - Save anywhere (no save points)
-  - Save/Load UI screens in pause menu
+- [x] **4.1 Party data model** (per `specs/party-system.md`)
+- [x] **4.2 Inventory system**
+- [x] **4.3 Quest flag system** (per `specs/dialogue-system.md` §11)
+- [x] **4.4 Save/load system**
 
 ### Phase 5 — Combat Systems
 > Turn-based battle engine, Scripture combat, Wisdom Q&A.
