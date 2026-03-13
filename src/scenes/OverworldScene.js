@@ -19,6 +19,7 @@ import { drawText, measureText } from '../lib/drawText.js';
 import { Player } from '../systems/Player.js';
 import { NPCManager } from '../systems/NPCManager.js';
 import { DialogueSystem } from '../systems/DialogueSystem.js';
+import { EventSystem } from '../systems/EventSystem.js';
 import { PauseMenu } from '../ui/PauseMenu.js';
 import { Colors } from '../ui/Colors.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
@@ -47,9 +48,23 @@ export class OverworldScene {
       onEffect: (effect) => this._handleDialogueEffect(effect),
     });
 
+    // Event/cutscene system
+    this.eventSystem = new EventSystem({
+      player: this.player,
+      npcManager: this.npcManager,
+      dialogueSystem: this.dialogue,
+      camera: this.camera,
+      transitions,
+      questFlags: questFlags || {},
+    });
+
+    // Script registry for cutscene events
+    this._cutsceneScripts = {};
+
     // Pause menu
     this.pauseMenu = new PauseMenu({
       input,
+      gameState: gameState || null,
       onSelect: (option) => this._handleMenuSelect(option),
       onClose: () => { this.input.context = InputContext.OVERWORLD; },
     });
@@ -98,6 +113,13 @@ export class OverworldScene {
     this._dialogueCache[key] = data;
   }
 
+  /**
+   * Register a cutscene script (array of commands or function returning array).
+   */
+  registerCutscene(key, script) {
+    this._cutsceneScripts[key] = script;
+  }
+
   enter() {
     this.input.context = InputContext.OVERWORLD;
   }
@@ -110,6 +132,44 @@ export class OverworldScene {
     // Pause menu takes priority
     if (this.pauseMenu.active) {
       this.pauseMenu.update();
+      return;
+    }
+
+    // Event/cutscene system takes priority
+    if (this.eventSystem.isActive()) {
+      this.eventSystem.update(dt);
+
+      // Still update dialogue input during events (dialogue command needs it)
+      if (this.dialogue.isOpen) {
+        this.dialogue.update();
+        if (this.input.pressed(Actions.CONFIRM)) {
+          this.dialogue.onActionPress();
+        }
+        const dir = this.input.getDirectionalPressed();
+        if (dir === Actions.UP || dir === Actions.DOWN) {
+          this.dialogue.onDirectional(dir === Actions.UP ? 'up' : 'down');
+        }
+      }
+
+      // Update transitions during events
+      if (this.transitions.active) {
+        this.transitions.update();
+      }
+
+      // Camera: follow override position or player
+      if (this.eventSystem._cameraOverride) {
+        this.camera.follow(
+          this.eventSystem._cameraOverride.x,
+          this.eventSystem._cameraOverride.y,
+          this.map.width,
+          this.map.height
+        );
+      } else {
+        this.camera.follow(this.player.pixelX, this.player.pixelY, this.map.width, this.map.height);
+      }
+
+      // Update NPC rendering positions during events
+      this.npcManager.update(dt, () => false);
       return;
     }
 
@@ -413,7 +473,11 @@ export class OverworldScene {
         }
       );
     } else if (evt.type === 'cutscene') {
-      console.log(`[Cutscene] Trigger: ${evt.script}`);
+      const script = this._cutsceneScripts[evt.script];
+      if (script) {
+        const commands = typeof script === 'function' ? script() : script;
+        this.eventSystem.startEvent(commands);
+      }
     }
   }
 }

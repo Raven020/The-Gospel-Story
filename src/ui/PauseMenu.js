@@ -8,6 +8,9 @@ import { drawText } from '../lib/drawText.js';
 import { Colors } from './Colors.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
+import { SaveLoadMenu } from './SaveLoadMenu.js';
+import { PartyMenu } from './PartyMenu.js';
+import { ItemMenu } from './ItemMenu.js';
 
 const PANEL_X = 60;
 const PANEL_Y = 30;
@@ -22,13 +25,30 @@ const TEXT_X = PANEL_X + 16;
 const OPTIONS = ['Party', 'Items', 'Save', 'Load', 'Options', 'Close'];
 
 export class PauseMenu {
-  constructor({ input, onSelect, onClose }) {
+  constructor({ input, onSelect, onClose, gameState }) {
     this.input = input;
     this.onSelect = onSelect || (() => {});
     this.onClose = onClose || (() => {});
     this.active = false;
     this.cursorIndex = 0;
     this._prevContext = InputContext.OVERWORLD;
+
+    // Sub-menus (only created if gameState is provided)
+    this._activeSubMenu = null;
+    if (gameState) {
+      this.saveLoadMenu = new SaveLoadMenu({ input, gameState, mode: 'save' });
+      this.saveLoadMenu.onClose = () => { this._activeSubMenu = null; };
+
+      this.partyMenu = new PartyMenu({ input, gameState });
+      this.partyMenu.onClose = () => { this._activeSubMenu = null; };
+
+      this.itemMenu = new ItemMenu({ input, gameState });
+      this.itemMenu.onClose = () => { this._activeSubMenu = null; };
+    } else {
+      this.saveLoadMenu = null;
+      this.partyMenu = null;
+      this.itemMenu = null;
+    }
   }
 
   open() {
@@ -47,6 +67,12 @@ export class PauseMenu {
   update() {
     if (!this.active) return;
 
+    // Delegate to active sub-menu
+    if (this._activeSubMenu) {
+      this._activeSubMenu.update();
+      return;
+    }
+
     if (this.input.pressed(Actions.UP)) {
       this.cursorIndex = (this.cursorIndex - 1 + OPTIONS.length) % OPTIONS.length;
     }
@@ -59,7 +85,7 @@ export class PauseMenu {
       if (option === 'Close') {
         this.close();
       } else {
-        this.onSelect(option.toLowerCase());
+        this._openSubMenu(option.toLowerCase());
       }
     }
 
@@ -68,8 +94,33 @@ export class PauseMenu {
     }
   }
 
+  _openSubMenu(option) {
+    if (option === 'party' && this.partyMenu) {
+      this.partyMenu.open();
+      this._activeSubMenu = this.partyMenu;
+    } else if (option === 'items' && this.itemMenu) {
+      this.itemMenu.open();
+      this._activeSubMenu = this.itemMenu;
+    } else if (option === 'save' && this.saveLoadMenu) {
+      this.saveLoadMenu.open('save');
+      this._activeSubMenu = this.saveLoadMenu;
+    } else if (option === 'load' && this.saveLoadMenu) {
+      this.saveLoadMenu.open('load');
+      this._activeSubMenu = this.saveLoadMenu;
+    } else {
+      // Fallback for options without sub-menu or no gameState
+      this.onSelect(option);
+    }
+  }
+
   render(ctx, frameCount) {
     if (!this.active) return;
+
+    // If sub-menu is active, render it instead
+    if (this._activeSubMenu) {
+      this._activeSubMenu.render(ctx, frameCount);
+      return;
+    }
 
     // Semi-transparent overlay
     ctx.fillStyle = Colors.BG_OVERLAY;
