@@ -49,37 +49,51 @@ export function measureText(str) {
 
 /**
  * Word-wrap text to fit within maxCharsPerLine.
+ * Hard \n forces a line break (per specs/dialogue-system.md).
  * Returns array of lines.
  */
 export function wordWrap(text, maxCharsPerLine) {
-  const words = text.split(' ');
-  const lines = [];
-  let currentLine = '';
+  if (!text) return [];
 
-  for (const word of words) {
-    if (word.length > maxCharsPerLine) {
-      // Hard break long words
-      if (currentLine) {
-        lines.push(currentLine);
-        currentLine = '';
-      }
-      for (let i = 0; i < word.length; i += maxCharsPerLine) {
-        lines.push(word.slice(i, i + maxCharsPerLine));
-      }
+  // Split on hard newlines first, then word-wrap each paragraph
+  const paragraphs = text.split('\n');
+  const lines = [];
+
+  for (const paragraph of paragraphs) {
+    if (paragraph === '') {
+      // Explicit blank line from \n — preserve it
+      lines.push('');
       continue;
     }
 
-    const test = currentLine ? currentLine + ' ' + word : word;
-    if (test.length <= maxCharsPerLine) {
-      currentLine = test;
-    } else {
-      lines.push(currentLine);
-      currentLine = word;
-    }
-  }
+    const words = paragraph.split(' ');
+    let currentLine = '';
 
-  if (currentLine) {
-    lines.push(currentLine);
+    for (const word of words) {
+      if (word.length > maxCharsPerLine) {
+        // Hard break long words
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = '';
+        }
+        for (let i = 0; i < word.length; i += maxCharsPerLine) {
+          lines.push(word.slice(i, i + maxCharsPerLine));
+        }
+        continue;
+      }
+
+      const test = currentLine ? currentLine + ' ' + word : word;
+      if (test.length <= maxCharsPerLine) {
+        currentLine = test;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
   }
 
   return lines;

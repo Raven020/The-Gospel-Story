@@ -46,6 +46,19 @@ export class TransitionManager {
     this._onComplete = onComplete || null;
   }
 
+  /**
+   * Standalone fade-in from black to clear over FADE_FRAMES (30) frames.
+   * Use after a scene loads while the screen should start black and reveal.
+   */
+  fadeIn(onComplete) {
+    this.state = TransitionState.FADE_IN;
+    this._frame = 0;
+    this._alpha = 1;
+    this._color = '#000';
+    this._onMidpoint = null;
+    this._onComplete = onComplete || null;
+  }
+
   flashWhite(onComplete) {
     this.state = TransitionState.FLASH;
     this._frame = 0;

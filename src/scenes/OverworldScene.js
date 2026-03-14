@@ -32,7 +32,7 @@ const LOC_HOLD = 120;
 const LOC_FADE_OUT = 20;
 
 export class OverworldScene {
-  constructor({ input, transitions, sceneManager, spriteRegistry, questFlags, frameCountFn, gameState, battleScene }) {
+  constructor({ input, transitions, sceneManager, spriteRegistry, frameCountFn, gameState, battleScene }) {
     this.input = input;
     this.transitions = transitions;
     this.sceneManager = sceneManager;
@@ -43,9 +43,16 @@ export class OverworldScene {
     this.player = new Player(9, 5);
     this.npcManager = new NPCManager();
 
+    // Use gameState.questFlags as the single source of truth for quest flags.
+    // Both DialogueSystem and EventSystem must reference the same object so that
+    // flag reads (condition checks) and writes (setFlag effects) stay in sync.
+    // loadMap() refreshes these references after newGame()/load() which replace
+    // the questFlags object on gameState.
+    const flags = (gameState && gameState.questFlags) || {};
+
     // Dialogue system
     this.dialogue = new DialogueSystem({
-      questFlags: questFlags || {},
+      questFlags: flags,
       onEffect: (effect) => this._handleDialogueEffect(effect),
     });
 
@@ -56,7 +63,7 @@ export class OverworldScene {
       dialogueSystem: this.dialogue,
       camera: this.camera,
       transitions,
-      questFlags: questFlags || {},
+      questFlags: flags,
     });
 
     // Map registry: maps map IDs to { map, tileset } for cross-map warps
@@ -121,6 +128,12 @@ export class OverworldScene {
       this.gameState.currentMap = map.id || '';
       this.gameState.playerX = this.player.tileX;
       this.gameState.playerY = this.player.tileY;
+
+      // Refresh questFlags references after newGame()/load() which replace
+      // the questFlags object. Both subsystems must point to the same object
+      // so condition checks and flag writes stay in sync.
+      this.dialogue.questFlags = this.gameState.questFlags;
+      this.eventSystem.questFlags = this.gameState.questFlags;
     }
 
     // Auto-register dialogue for NPCs on this map
@@ -179,10 +192,8 @@ export class OverworldScene {
         }
       }
 
-      // Update transitions during events
-      if (this.transitions.active) {
-        this.transitions.update();
-      }
+      // Note: transitions.update() is called by the game loop (main.js) each tick,
+      // so we do NOT call it here — doing so would double-advance the animation.
 
       // Camera: follow override position or player
       if (this.eventSystem._cameraOverride) {

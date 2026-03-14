@@ -48,6 +48,35 @@ describe('TransitionManager', () => {
     });
   });
 
+  describe('fadeIn', () => {
+    it('transitions from FADE_IN to IDLE in 30 frames', () => {
+      const onDone = vi.fn();
+      const tm = new TransitionManager();
+
+      tm.fadeIn(onDone);
+      expect(tm.state).toBe(TransitionState.FADE_IN);
+      expect(tm.active).toBe(true);
+      expect(tm.alpha).toBe(1);
+
+      // Advance 30 frames for fade in
+      for (let i = 0; i < 30; i++) tm.update();
+      expect(tm.state).toBe(TransitionState.IDLE);
+      expect(tm.alpha).toBe(0);
+      expect(onDone).toHaveBeenCalledOnce();
+    });
+
+    it('alpha decreases linearly from 1 to 0', () => {
+      const tm = new TransitionManager();
+      tm.fadeIn();
+
+      tm.update(); // frame 1
+      expect(tm.alpha).toBeCloseTo(1 - 1 / 30);
+
+      for (let i = 0; i < 14; i++) tm.update(); // frame 15
+      expect(tm.alpha).toBeCloseTo(1 - 15 / 30);
+    });
+  });
+
   describe('flashWhite', () => {
     it('completes in 8 frames', () => {
       const onDone = vi.fn();

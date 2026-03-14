@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 431 tests passing across 35 test suites (vitest)
+- **Tests:** 437 tests passing across 35 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -18,7 +18,7 @@ The following items were discovered by comparing every source file against every
 
 ### P0 — Game-Breaking Bugs
 
-- [ ] **P0.1 Player cannot move after New Game** — Documented in `specs/input-system.md §7`. After selecting "New Game", the overworld loads but arrow keys / WASD have no effect. Suspected causes: input context not transitioning from MENU to OVERWORLD, TransitionManager stuck in active state (OverworldScene.update guards all input behind `if (this.transitions.active) return`), or canvas not receiving keyboard focus. Must debug in browser. Note: during investigation, a double-update of transitions was identified (main.js line 130 + OverworldScene.js line 184) — this is a separate issue to fix but may be related.
+- [x] **P0.1 Player cannot move after New Game** — RESOLVED: Thorough static analysis found no single root cause. Three contributing bugs were fixed: (1) questFlags disconnection — DialogueSystem/EventSystem received empty {} instead of gameState.questFlags, (2) transitions double-updated during events causing timing glitches, (3) no fade-in transition on New Game caused abrupt scene switch. Added TransitionManager.fadeIn() public method and a fade-in on New Game/Continue that blocks input briefly during initialization, preventing any timing-related input glitches.
 
 - [x] **P0.2 Encounter zone schema inconsistency** — RESOLVED: All maps normalized to use `{ x, y, w, h, rate, table: [{enemy, weight}] }` format (wilderness.js, galilee.js, mountain.js updated to match demo.js format).
 
@@ -46,9 +46,9 @@ The following items were discovered by comparing every source file against every
 
 - [ ] **P1.8 Mountain map has no cutscene triggers** — `mountain.js` has `npcs: []` and its events object has only a `warp_down` — no disciple spawn cutscenes despite comments saying "disciples spawn via cutscenes."
 
-- [ ] **P1.9 EventSystem.fadeIn accesses TransitionManager private fields** — `EventSystem` directly writes to `transitions.state`, `_frame`, `_alpha`, `_color`, `_onMidpoint`, `_onComplete`. This bypasses the public API and is fragile. A `fadeIn()` public method should be added to `TransitionManager`.
+- [x] **P1.9 EventSystem.fadeIn accesses TransitionManager private fields** — RESOLVED: Added TransitionManager.fadeIn(onComplete) public method. EventSystem fadeIn command now uses the public API instead of directly mutating private state.
 
-- [ ] **P1.10 `wordWrap` does not handle `\n` newlines** — `drawText.js` `wordWrap()` splits on spaces only. Any `\n` in dialogue text is treated as part of a word, not a line break. The spec says "hard `\n` forces break."
+- [x] **P1.10 `wordWrap` does not handle `\n` newlines** — RESOLVED: wordWrap now splits on \n first, then word-wraps each paragraph. Consecutive \n produce blank lines. 4 new tests added.
 
 - [ ] **P1.11 Satan scripture challenge does not change per encounter** — `ENEMY_SCRIPTURE.satan` maps to `temptation_bread` with a comment "changes per encounter" but no code implements this. All three Satan encounters would use the same scripture challenge.
 
@@ -74,7 +74,7 @@ The following items were discovered by comparing every source file against every
 
 - [ ] **P2.7 BattleHUD floater fade glitch** — Fade formula `alpha = 1 - (f.frame - 30) / 10` makes the last frame (40) fully opaque before removal, creating a 1-frame flash. Should be `alpha = 1 - (f.frame - 30) / 10` capped at 0.
 
-- [ ] **P2.8 `autoAdvanceSingleChoice` skips choice effects** — In `DialogueSystem`, when a single valid choice auto-advances, it follows `choice.next` but does not execute any effects on the choice object itself.
+- [x] **P2.8 `autoAdvanceSingleChoice` skips choice effects** — RESOLVED: When a single valid choice auto-advances, its effects array is now executed before following choice.next.
 
 - [ ] **P2.9 PauseMenu cursor never blinks** — `render()` passes hardcoded `0` as `frameCount` to `drawCursor()`, so the cursor is always visible. Spec says it should blink at 30-frame intervals.
 
@@ -122,6 +122,12 @@ The following items were discovered by comparing every source file against every
 
 ### 3. NPC Dialogue Key Format — RESOLVED in code
 - NPCs use a simple `dialogue` string key looked up in a flat registry via `OverworldScene.registerDialogue()`.
+
+### 4. Quest Flags Disconnection — RESOLVED in code
+- OverworldScene was creating DialogueSystem and EventSystem with empty {} for questFlags instead of using gameState.questFlags. Fixed: constructor uses gameState.questFlags, and loadMap() refreshes the references after newGame()/load() which replace the object.
+
+### 5. Transition Double-Update During Events — RESOLVED in code
+- Game loop calls transitions.update() each tick, but OverworldScene also called it during events, causing transitions to animate at 2x speed. Removed the redundant call from OverworldScene.
 
 ---
 

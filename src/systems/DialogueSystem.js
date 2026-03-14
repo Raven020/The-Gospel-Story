@@ -165,9 +165,15 @@ export class DialogueSystem {
 
       if (validChoices.length > 0) {
         if (validChoices.length === 1 && node.autoAdvanceSingleChoice) {
-          // Auto-advance if single choice
-          if (validChoices[0].next) {
-            this._navigateToNode(validChoices[0].next);
+          // Auto-advance if single choice — execute effects before following next
+          const choice = validChoices[0];
+          if (choice.effects) {
+            for (const effect of choice.effects) {
+              this._executeEffect(effect);
+            }
+          }
+          if (choice.next) {
+            this._navigateToNode(choice.next);
           } else {
             this.close();
           }

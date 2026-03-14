@@ -115,6 +115,10 @@ const titleScene = new TitleScene({
     gameState.newGame();
     overworld.loadMap(jerusalemMap, overworldTileset, 14, 18);
     scenes.switch('overworld');
+    // Fade in from black so the scene doesn't pop in abruptly.
+    // Also ensures transitions.active blocks input briefly while the
+    // overworld initializes, preventing any one-frame input glitches.
+    transitions.fadeIn();
   },
   onContinue: () => {
     // Load the most recent save (first occupied slot)
@@ -126,6 +130,7 @@ const titleScene = new TitleScene({
           overworld.loadMap(mapEntry.map, mapEntry.tileset, gameState.playerX, gameState.playerY);
         }
         scenes.switch('overworld');
+        transitions.fadeIn();
         return;
       }
     }

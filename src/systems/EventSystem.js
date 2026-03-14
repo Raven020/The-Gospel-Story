@@ -129,20 +129,8 @@ export class EventSystem {
         break;
 
       case 'fadeIn':
-        // fadeToBlack does fade out then fade in. For a standalone fadeIn,
-        // we start a fadeToBlack but skip the fade-out by triggering midpoint immediately.
-        // Actually, TransitionManager doesn't have a standalone fadeIn.
-        // We'll use fadeToBlack and mark done on complete. The caller should
-        // pair fadeOut + fadeIn. For fadeIn, we simulate by starting a fade
-        // that goes from black to clear.
         this._cmdState = { done: false };
-        // Set transition to start from black and fade in
-        this.transitions.state = 'fadeIn';
-        this.transitions._frame = 0;
-        this.transitions._alpha = 1;
-        this.transitions._color = '#000';
-        this.transitions._onMidpoint = null;
-        this.transitions._onComplete = () => { this._cmdState.done = true; };
+        this.transitions.fadeIn(() => { this._cmdState.done = true; });
         break;
 
       case 'flash':

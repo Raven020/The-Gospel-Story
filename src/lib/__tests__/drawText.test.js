@@ -72,5 +72,25 @@ describe('drawText', () => {
       expect(lines[0].length).toBe(38);
       expect(lines[1].length).toBe(2);
     });
+
+    it('handles hard newlines (\\n)', () => {
+      const lines = wordWrap('Line one\nLine two', 38);
+      expect(lines).toEqual(['Line one', 'Line two']);
+    });
+
+    it('handles consecutive newlines for blank lines', () => {
+      const lines = wordWrap('Hello\n\nWorld', 38);
+      expect(lines).toEqual(['Hello', '', 'World']);
+    });
+
+    it('handles newline at end of text', () => {
+      const lines = wordWrap('Hello\n', 38);
+      expect(lines).toEqual(['Hello', '']);
+    });
+
+    it('combines newlines with word wrapping', () => {
+      const lines = wordWrap('Short\nThis is a longer line that should wrap around', 20);
+      expect(lines).toEqual(['Short', 'This is a longer', 'line that should', 'wrap around']);
+    });
   });
 });
