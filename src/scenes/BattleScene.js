@@ -607,13 +607,7 @@ export class BattleScene {
     const w = 96;
     const h = Math.min(58, this._abilityList.length * 10 + 4);
 
-    ctx.fillStyle = Colors.BG_DARK;
-    ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = Colors.BORDER;
-    ctx.fillRect(x, y, w, 1);
-    ctx.fillRect(x, y + h - 1, w, 1);
-    ctx.fillRect(x, y, 1, h);
-    ctx.fillRect(x + w - 1, y, 1, h);
+    drawPanel(ctx, x, y, w, h, Colors.BG_DARK);
 
     for (let i = 0; i < this._abilityList.length; i++) {
       const ay = y + 2 + i * 10;

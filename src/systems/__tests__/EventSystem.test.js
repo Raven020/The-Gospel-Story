@@ -63,6 +63,10 @@ function makeTransitions() {
       this._onMidpoint = onMid;
       this._onComplete = onComplete;
     },
+    fadeIn(onComplete) {
+      this.active = true;
+      this._onComplete = onComplete;
+    },
     flashWhite(onComplete) {
       this.active = true;
       this._onComplete = onComplete;
@@ -240,6 +244,180 @@ describe('EventSystem', () => {
     ]);
 
     expect(npcManager.npcs.length).toBe(0);
+  });
+
+  it('moveNPC moves NPC along path', () => {
+    const npc = {
+      id: 'peter',
+      tileX: 1,
+      tileY: 1,
+      pixelX: 16,
+      pixelY: 16,
+      facing: 'down',
+      _isMoving: false,
+      _targetTileX: 1,
+      _targetTileY: 1,
+    };
+    const npcManager = makeNPCManager([npc]);
+    const es = createEventSystem({ npcManager });
+
+    es.startEvent([
+      { type: 'moveNPC', npcId: 'peter', path: [{ x: 2, y: 1 }] },
+    ]);
+
+    expect(es.isActive()).toBe(true);
+
+    // Simulate enough frames to complete (1 tile = 16px at 128 px/s)
+    const dt = 1 / 60;
+    for (let i = 0; i < 60; i++) {
+      if (!es.isActive()) break;
+      es.update(dt);
+    }
+
+    expect(npc.tileX).toBe(2);
+    expect(npc.tileY).toBe(1);
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('moveNPC skips when NPC not found', () => {
+    const npcManager = makeNPCManager([]);
+    const es = createEventSystem({ npcManager });
+
+    es.startEvent([
+      { type: 'moveNPC', npcId: 'ghost', path: [{ x: 2, y: 1 }] },
+    ]);
+
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('movePlayer moves player along path', () => {
+    const player = makePlayer(5, 5);
+    const es = createEventSystem({ player });
+
+    es.startEvent([
+      { type: 'movePlayer', path: [{ x: 6, y: 5 }] },
+    ]);
+
+    expect(es.isActive()).toBe(true);
+
+    const dt = 1 / 60;
+    for (let i = 0; i < 60; i++) {
+      if (!es.isActive()) break;
+      es.update(dt);
+    }
+
+    expect(player.tileX).toBe(6);
+    expect(player.tileY).toBe(5);
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('movePlayer skips when path is empty', () => {
+    const player = makePlayer(5, 5);
+    const es = createEventSystem({ player });
+
+    es.startEvent([
+      { type: 'movePlayer', path: [] },
+    ]);
+
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('fadeOut command waits for transition to complete', () => {
+    const transitions = makeTransitions();
+    const es = createEventSystem({ transitions });
+
+    es.startEvent([{ type: 'fadeOut' }]);
+
+    expect(es.isActive()).toBe(true);
+    expect(transitions.active).toBe(true);
+
+    es.update(1 / 60);
+    expect(es.isActive()).toBe(true);
+
+    // Simulate transition completing
+    transitions._onComplete();
+    es.update(1 / 60);
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('fadeIn command waits for transition to complete', () => {
+    const transitions = makeTransitions();
+    const es = createEventSystem({ transitions });
+
+    es.startEvent([{ type: 'fadeIn' }]);
+
+    expect(es.isActive()).toBe(true);
+    expect(transitions.active).toBe(true);
+
+    // Simulate transition completing
+    transitions._onComplete();
+    es.update(1 / 60);
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('flash command waits for transition to complete', () => {
+    const transitions = makeTransitions();
+    const es = createEventSystem({ transitions });
+
+    es.startEvent([{ type: 'flash' }]);
+
+    expect(es.isActive()).toBe(true);
+    expect(transitions.active).toBe(true);
+
+    // Simulate transition completing
+    transitions._onComplete();
+    es.update(1 / 60);
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('panCamera moves camera override to target', () => {
+    const camera = makeCamera();
+    const es = createEventSystem({ camera });
+
+    es.startEvent([{ type: 'panCamera', x: 100, y: 100, speed: 200 }]);
+
+    expect(es.isActive()).toBe(true);
+
+    // Update enough to reach target
+    const dt = 1 / 60;
+    for (let i = 0; i < 120; i++) {
+      if (!es.isActive()) break;
+      es.update(dt);
+    }
+
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('returnCamera clears camera override', () => {
+    const camera = makeCamera();
+    const es = createEventSystem({ camera });
+
+    // Start with a pan to set override
+    es.startEvent([
+      { type: 'panCamera', x: 50, y: 50, speed: 1000 },
+    ]);
+    for (let i = 0; i < 60; i++) {
+      if (!es.isActive()) break;
+      es.update(1 / 60);
+    }
+
+    // Now return camera
+    es.startEvent([{ type: 'returnCamera' }]);
+    expect(es._cameraOverride).toBeNull();
+    expect(es.isActive()).toBe(false);
+  });
+
+  it('unknown command is skipped', () => {
+    const es = createEventSystem();
+    es.startEvent([
+      { type: 'unknownCommand' },
+      { type: 'wait', frames: 1 },
+    ]);
+
+    // Unknown was skipped, now on wait
+    expect(es.isActive()).toBe(true);
+    es.update(1 / 60);
+    expect(es.isActive()).toBe(false);
   });
 
   it('teleportNPC moves NPC to position', () => {

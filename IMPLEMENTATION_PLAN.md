@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 439 tests passing across 35 test suites (vitest)
+- **Tests:** 449 tests passing across 35 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -97,15 +97,15 @@ The following items were discovered by comparing every source file against every
 - [ ] **P3.1 No test for Display.js** — The only engine module with zero test coverage.
 - [ ] **P3.2 No tests for tilesets** — No validation that palette keys in TILES exist in PALETTE, that tile arrays are 16x16, etc.
 - [ ] **P3.3 No tests for UIChrome.js or Colors.js** — Core rendering primitives are untested.
-- [ ] **P3.4 EventSystem commands untested** — `moveNPC`, `movePlayer`, `panCamera`, `returnCamera`, `fadeOut`, `fadeIn`, `flash` commands have zero test coverage.
+- [x] **P3.4 EventSystem commands untested** — RESOLVED: Added 10 tests covering `moveNPC`, `movePlayer`, `panCamera`, `returnCamera`, `fadeOut`, `fadeIn`, `flash`, plus edge cases (empty path, missing NPC, unknown command). EventSystem now has 22 tests total.
 - [ ] **P3.5 BattleScene sub-flows untested** — Ability→target, scripture input, target navigation, enemy turn, execute phase, victory/defeat renders have no tests.
 - [ ] **P3.6 OverworldScene gaps** — No tests for: encounter triggering, defeat path, cutscene handling, dialogue effects, unregistered NPC dialogue fallback.
 - [ ] **P3.7 PauseMenu sub-menu delegation untested** — Tests use `null` gameState, so real sub-menu activation (Party/Items/Save/Load) is never tested.
 - [ ] **P3.8 `demo.js` map excluded from maps.test.js** — 7 of 8 maps tested; demo is skipped.
-- [ ] **P3.9 `BattleScene._renderAbilityMenu` doesn't use `drawPanel`** — Draws its own panel manually instead of using UIChrome, inconsistent with the rest of the UI.
+- [x] **P3.9 `BattleScene._renderAbilityMenu` doesn't use `drawPanel`** — RESOLVED: Replaced manual fillRect panel drawing with `drawPanel()` call, matching `_renderItemMenu` and `_renderItemTargetMenu`.
 - [ ] **P3.10 `AbilityCategory.SCRIPTURE` is unused** — Defined in abilities.js enum but no ability has this category. Either assign it to scripture-related abilities or remove it.
 - [ ] **P3.11 Three roster members have placeholder data** — `james_alphaeus`, `thaddaeus`, `simon_zealot` have `role: 'tbd'` and empty `abilities: []` arrays. Per MVP scope these 3 are out of scope (only Peter, Andrew, James, John, Philip, Nathanael are in MVP).
-- [ ] **P3.12 `EventSystem.wait` is frame-rate dependent** — Counts down by 1 per `update()` call rather than using `dt`, making wait duration dependent on frame rate.
+- [x] **P3.12 `EventSystem.wait` is frame-rate dependent** — NOT A BUG: The game loop is fixed-timestep at 1/60s (`FIXED_DT`), so frame counting is equivalent to time-based. Each frame is always exactly 1/60th of a second.
 - [ ] **P3.13 Map NPC dialogue keys not validated** — No test or runtime check that NPC `dialogue` string keys correspond to registered dialogue data.
 - [ ] **P3.14 Map warp `targetMap` values not validated** — No check that warp destinations reference valid map IDs in the registry.
 - [ ] **P3.15 `Inventory.fromJSON` accepts unknown item IDs silently** — Could lead to ghost items in inventory after save format changes.
