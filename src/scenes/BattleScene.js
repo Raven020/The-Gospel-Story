@@ -7,6 +7,7 @@ import { BattleEngine, BattlePhase, ActionType } from '../systems/BattleEngine.j
 import { BattleHUD } from '../ui/BattleHUD.js';
 import { ABILITIES, AbilityCategory } from '../data/abilities.js';
 import { SCRIPTURE_CHALLENGES, ENEMY_SCRIPTURE } from '../data/scriptures.js';
+import { ITEMS, ItemType } from '../data/inventory.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
 import { Colors } from '../ui/Colors.js';
 import { drawText, wordWrap } from '../lib/drawText.js';
@@ -19,11 +20,12 @@ const EXECUTE_FRAMES = 30;
 const VICTORY_DISPLAY_FRAMES = 120;
 
 export class BattleScene {
-  constructor({ input, transitions, sceneManager, frameCountFn }) {
+  constructor({ input, transitions, sceneManager, frameCountFn, gameState }) {
     this.input = input;
     this.transitions = transitions;
     this.sceneManager = sceneManager;
     this.getFrameCount = frameCountFn || (() => 0);
+    this.gameState = gameState || null;
 
     this.engine = null;
     this.hud = new BattleHUD();
@@ -43,6 +45,16 @@ export class BattleScene {
     // Target selection
     this._selectingTarget = false;
     this._targetType = 'enemy'; // 'enemy' or 'ally'
+
+    // Sub-state for item selection
+    this._selectingItem = false;
+    this._itemList = [];
+    this._itemCursor = 0;
+
+    // Sub-state for item target selection (which party member to use item on)
+    this._selectingItemTarget = false;
+    this._itemTargetCursor = 0;
+    this._pendingItemId = null;
   }
 
   /**
@@ -59,6 +71,12 @@ export class BattleScene {
     this._scriptureChallenge = null;
     this._scriptureCursor = 0;
     this._selectingTarget = false;
+    this._selectingItem = false;
+    this._itemList = [];
+    this._itemCursor = 0;
+    this._selectingItemTarget = false;
+    this._itemTargetCursor = 0;
+    this._pendingItemId = null;
     this.engine.phase = BattlePhase.INTRO;
   }
 
@@ -155,7 +173,7 @@ export class BattleScene {
     this.hud.renderPartyStrip(ctx, this.engine.party, actorId);
 
     // Action menu
-    if (this.engine.phase === BattlePhase.SELECT_ACTION && !this._selectingAbility && !this._selectingScripture) {
+    if (this.engine.phase === BattlePhase.SELECT_ACTION && !this._selectingAbility && !this._selectingScripture && !this._selectingItem && !this._selectingItemTarget) {
       this.hud.showActionMenu = true;
       this.hud.renderActionMenu(ctx, fc);
     } else {
@@ -165,6 +183,16 @@ export class BattleScene {
     // Ability sub-menu
     if (this._selectingAbility) {
       this._renderAbilityMenu(ctx, fc);
+    }
+
+    // Item sub-menu
+    if (this._selectingItem) {
+      this._renderItemMenu(ctx, fc);
+    }
+
+    // Item target selection
+    if (this._selectingItemTarget) {
+      this._renderItemTargetMenu(ctx, fc);
     }
 
     // Scripture selection mini-game
@@ -196,6 +224,16 @@ export class BattleScene {
 
     if (this._selectingAbility) {
       this._handleAbilityInput();
+      return;
+    }
+
+    if (this._selectingItemTarget) {
+      this._handleItemTargetInput();
+      return;
+    }
+
+    if (this._selectingItem) {
+      this._handleItemInput();
       return;
     }
 
@@ -249,9 +287,17 @@ export class BattleScene {
         break;
       }
 
-      case 'items':
-        // Item use deferred to full integration
+      case 'items': {
+        if (!this.gameState) break;
+        const inventory = this.gameState.inventory;
+        this._itemList = inventory.getAll()
+          .filter((entry) => entry.def && entry.def.type === ItemType.CONSUMABLE);
+        if (this._itemList.length > 0) {
+          this._selectingItem = true;
+          this._itemCursor = 0;
+        }
         break;
+      }
 
       case 'defend':
         this.engine.setAction(ActionType.DEFEND, {});
@@ -300,6 +346,85 @@ export class BattleScene {
 
     if (this.input.pressed(Actions.CANCEL)) {
       this._selectingAbility = false;
+    }
+  }
+
+  _handleItemInput() {
+    if (this.input.pressed(Actions.UP)) {
+      this._itemCursor = (this._itemCursor - 1 + this._itemList.length) % this._itemList.length;
+    }
+    if (this.input.pressed(Actions.DOWN)) {
+      this._itemCursor = (this._itemCursor + 1) % this._itemList.length;
+    }
+
+    if (this.input.pressed(Actions.CONFIRM)) {
+      const entry = this._itemList[this._itemCursor];
+      this._pendingItemId = entry.id;
+      this._selectingItem = false;
+
+      // Oil (STR buff) doesn't need target — applies to current actor
+      if (entry.def.effect.stat === 'str') {
+        const member = this.engine.currentActor.entity;
+        this.engine.setAction(ActionType.ITEM, {
+          itemId: entry.id,
+          useItemFn: () => {
+            this.engine.buffs.push({
+              target: member,
+              type: 'buff_str',
+              turnsLeft: 99, // lasts the whole battle
+            });
+            this.gameState.inventory.remove(entry.id);
+          },
+        });
+        this.engine.execute();
+        this._showResult();
+        this._stateFrames = 0;
+        this.engine.phase = BattlePhase.EXECUTE;
+      } else {
+        // HP/SP items need a target party member
+        this._selectingItemTarget = true;
+        this._itemTargetCursor = 0;
+      }
+    }
+
+    if (this.input.pressed(Actions.CANCEL)) {
+      this._selectingItem = false;
+    }
+  }
+
+  _handleItemTargetInput() {
+    const alive = this.engine.party.filter((m) => m.currentHp > 0);
+
+    if (this.input.pressed(Actions.UP)) {
+      this._itemTargetCursor = (this._itemTargetCursor - 1 + alive.length) % alive.length;
+    }
+    if (this.input.pressed(Actions.DOWN)) {
+      this._itemTargetCursor = (this._itemTargetCursor + 1) % alive.length;
+    }
+
+    if (this.input.pressed(Actions.CONFIRM)) {
+      const target = alive[this._itemTargetCursor];
+      const itemId = this._pendingItemId;
+      this._selectingItemTarget = false;
+      this._pendingItemId = null;
+
+      this.engine.setAction(ActionType.ITEM, {
+        itemId,
+        useItemFn: () => {
+          this.gameState.inventory.useItem(itemId, target);
+        },
+      });
+      this.engine.execute();
+      this._showResult();
+      this._stateFrames = 0;
+      this.engine.phase = BattlePhase.EXECUTE;
+    }
+
+    if (this.input.pressed(Actions.CANCEL)) {
+      this._selectingItemTarget = false;
+      this._pendingItemId = null;
+      // Re-open item list
+      this._selectingItem = true;
     }
   }
 
@@ -484,6 +609,52 @@ export class BattleScene {
       const canAfford = member && member.currentSp >= abil.spCost;
       drawText(ctx, name, x + 4, ay, canAfford ? Colors.TEXT_LIGHT : Colors.TEXT_DIM);
       drawText(ctx, String(abil.spCost), x + w - 20, ay, Colors.SP_BAR);
+    }
+  }
+
+  _renderItemMenu(ctx, frameCount) {
+    const x = 144;
+    const y = 100;
+    const w = 96;
+    const h = Math.min(58, this._itemList.length * 10 + 4);
+
+    drawPanel(ctx, x, y, w, h, Colors.BG_DARK);
+
+    for (let i = 0; i < this._itemList.length; i++) {
+      const iy = y + 2 + i * 10;
+      const entry = this._itemList[i];
+      const name = entry.def.name.slice(0, 10);
+
+      if (i === this._itemCursor) {
+        ctx.fillStyle = Colors.CURSOR_BG;
+        ctx.fillRect(x + 2, iy - 1, w - 4, 10);
+      }
+
+      drawText(ctx, name, x + 4, iy, Colors.TEXT_LIGHT);
+      drawText(ctx, `x${entry.quantity}`, x + w - 24, iy, Colors.TEXT_DIM);
+    }
+  }
+
+  _renderItemTargetMenu(ctx, frameCount) {
+    const alive = this.engine.party.filter((m) => m.currentHp > 0);
+    const x = 144;
+    const y = 100;
+    const w = 96;
+    const h = alive.length * 10 + 4;
+
+    drawPanel(ctx, x, y, w, h, Colors.BG_DARK);
+
+    for (let i = 0; i < alive.length; i++) {
+      const iy = y + 2 + i * 10;
+      const member = alive[i];
+
+      if (i === this._itemTargetCursor) {
+        ctx.fillStyle = Colors.CURSOR_BG;
+        ctx.fillRect(x + 2, iy - 1, w - 4, 10);
+      }
+
+      drawText(ctx, member.name.slice(0, 8), x + 4, iy, Colors.TEXT_LIGHT);
+      drawText(ctx, `${member.currentHp}/${member.stats.hp}`, x + w - 40, iy, Colors.HP_BAR);
     }
   }
 

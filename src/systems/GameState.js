@@ -34,9 +34,9 @@ export class GameState {
     this.party.bench = [];
     this.inventory = new Inventory();
     this.questFlags = createQuestFlags();
-    this.currentMap = 'demo';
-    this.playerX = 9;
-    this.playerY = 5;
+    this.currentMap = 'jerusalem';
+    this.playerX = 14;
+    this.playerY = 18;
     this.playerFacing = 'down';
     this.playtime = 0;
   }

@@ -92,3 +92,9 @@ Directional keys in the **Menu** context fire a synthetic `pressed` event on a t
 - The input module exposes a single `update()` function called once at the top of each game loop frame. All other systems query the input module after `update()` runs.
 - Input state is reset to all-false at the start of each `update()` call before applying accumulated events.
 - Gamepad / touch support is out of scope for MVP and should be added as a separate input layer without modifying the keyboard module.
+
+---
+
+## 7. Known Bugs
+
+- **Player cannot move after New Game.** After selecting "New Game" from the title screen, the overworld loads (Jerusalem map, spawn at 14,18) but arrow keys and WASD have no effect. The player character is visible but unresponsive to input. Root cause is not yet confirmed — suspected issues include: input context not properly transitioning from MENU to OVERWORLD, the transition manager being stuck in an active state, or the canvas/window not receiving keyboard events. Needs debugging with browser dev console to isolate.

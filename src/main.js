@@ -31,6 +31,25 @@ import { ARC3_DIALOGUE } from './data/dialogue/arc3.js';
 
 // Sprite imports for the sprite registry
 import { PALETTE as jesusPalette, JESUS_FRONT, JESUS_BACK, JESUS_LEFT } from '../specs/sprites/jesus-overworld.js';
+import {
+  PALETTE as disciplePalette,
+  PETER, PETER_BACK, PETER_LEFT,
+  ANDREW, ANDREW_BACK, ANDREW_LEFT,
+  JAMES_ZEBEDEE, JAMES_ZEBEDEE_BACK, JAMES_ZEBEDEE_LEFT,
+  JOHN, JOHN_BACK, JOHN_LEFT,
+  PHILIP, PHILIP_BACK, PHILIP_LEFT,
+  BARTHOLOMEW, BARTHOLOMEW_BACK, BARTHOLOMEW_LEFT,
+  MATTHEW, MATTHEW_BACK, MATTHEW_LEFT,
+} from '../specs/sprites/disciples.js';
+import {
+  PALETTE as johnBaptistPalette,
+  JOHN_BAPTIST, JOHN_BAPTIST_BACK, JOHN_BAPTIST_LEFT,
+} from '../specs/sprites/john-baptist.js';
+import {
+  PALETTE as townsPalette,
+  TOWNSWOMAN_1, TOWNSWOMAN_1_BACK, TOWNSWOMAN_1_LEFT,
+  TEMPLE_TEACHER, TEMPLE_TEACHER_BACK, TEMPLE_TEACHER_LEFT,
+} from '../specs/sprites/townspeople.js';
 
 const display = new Display();
 const input = new InputSystem();
@@ -44,6 +63,46 @@ const spriteRegistry = {
   jesus: {
     palette: jesusPalette,
     sprites: { front: JESUS_FRONT, back: JESUS_BACK, left: JESUS_LEFT },
+  },
+  peter: {
+    palette: disciplePalette,
+    sprites: { front: PETER, back: PETER_BACK, left: PETER_LEFT },
+  },
+  andrew: {
+    palette: disciplePalette,
+    sprites: { front: ANDREW, back: ANDREW_BACK, left: ANDREW_LEFT },
+  },
+  james: {
+    palette: disciplePalette,
+    sprites: { front: JAMES_ZEBEDEE, back: JAMES_ZEBEDEE_BACK, left: JAMES_ZEBEDEE_LEFT },
+  },
+  john: {
+    palette: disciplePalette,
+    sprites: { front: JOHN, back: JOHN_BACK, left: JOHN_LEFT },
+  },
+  philip: {
+    palette: disciplePalette,
+    sprites: { front: PHILIP, back: PHILIP_BACK, left: PHILIP_LEFT },
+  },
+  nathanael: {
+    palette: disciplePalette,
+    sprites: { front: BARTHOLOMEW, back: BARTHOLOMEW_BACK, left: BARTHOLOMEW_LEFT },
+  },
+  matthew: {
+    palette: disciplePalette,
+    sprites: { front: MATTHEW, back: MATTHEW_BACK, left: MATTHEW_LEFT },
+  },
+  npc_john_baptist: {
+    palette: johnBaptistPalette,
+    sprites: { front: JOHN_BAPTIST, back: JOHN_BAPTIST_BACK, left: JOHN_BAPTIST_LEFT },
+  },
+  townspeople_woman_a: {
+    palette: townsPalette,
+    sprites: { front: TOWNSWOMAN_1, back: TOWNSWOMAN_1_BACK, left: TOWNSWOMAN_1_LEFT },
+  },
+  townspeople_elder_a: {
+    palette: townsPalette,
+    sprites: { front: TEMPLE_TEACHER, back: TEMPLE_TEACHER_BACK, left: TEMPLE_TEACHER_LEFT },
   },
 };
 
@@ -78,12 +137,13 @@ scenes.register('title', titleScene);
 const gameState = new GameState();
 gameState.newGame();
 
-// Battle scene
+// Battle scene (gameState passed for item access during combat)
 const battleScene = new BattleScene({
   input,
   transitions,
   sceneManager: scenes,
   frameCountFn: () => loop.frameCount,
+  gameState,
 });
 scenes.register('battle', battleScene);
 

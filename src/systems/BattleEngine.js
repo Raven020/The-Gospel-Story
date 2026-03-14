@@ -201,11 +201,32 @@ export class BattleEngine {
   }
 
   _doAttack(attacker, target, power) {
-    const str = attacker.stats.str;
-    const def = target.stats.str || 0; // enemies use str for both
-    const isDefending = this.buffs.some((b) => b.target === target && b.type === 'defend');
-    const defVal = isDefending ? def * 2 : def;
-    const damage = calcDamage(str, power, defVal);
+    let str = attacker.stats.str;
+    const def = target.stats.def !== undefined ? target.stats.def : (target.stats.str || 0);
+
+    // Apply buff_str to attacker
+    if (this.buffs.some((b) => b.target === attacker && b.type === 'buff_str')) {
+      str = Math.floor(str * 1.5);
+    }
+
+    // Apply defense modifiers to target
+    let defVal = def;
+    if (this.buffs.some((b) => b.target === target && b.type === 'defend')) {
+      defVal = defVal * 2;
+    }
+    if (this.buffs.some((b) => b.target === target && b.type === 'buff_def')) {
+      defVal = defVal * 2;
+    }
+    if (this.buffs.some((b) => b.target === target && b.type === 'debuff_def')) {
+      defVal = Math.floor(defVal * 0.5);
+    }
+
+    let damage = calcDamage(str, power, defVal);
+
+    // Shield reduces final damage
+    if (this.buffs.some((b) => b.target === target && b.type === 'shield')) {
+      damage = Math.max(1, Math.floor(damage * 0.5));
+    }
 
     target.currentHp = Math.max(0, target.currentHp - damage);
     this.lastResult = {
@@ -317,9 +338,28 @@ export class BattleEngine {
 
     const target = alive[Math.floor(Math.random() * alive.length)];
     const power = 80 + Math.floor(Math.random() * 40); // 80-120
-    const isDefending = this.buffs.some((b) => b.target === target && b.type === 'defend');
-    const defVal = isDefending ? target.stats.str * 2 : target.stats.str;
-    const damage = calcDamage(enemy.stats.str, power, defVal);
+
+    let str = enemy.stats.str;
+    if (this.buffs.some((b) => b.target === enemy && b.type === 'buff_str')) {
+      str = Math.floor(str * 1.5);
+    }
+
+    const def = target.stats.def !== undefined ? target.stats.def : target.stats.str;
+    let defVal = def;
+    if (this.buffs.some((b) => b.target === target && b.type === 'defend')) {
+      defVal = defVal * 2;
+    }
+    if (this.buffs.some((b) => b.target === target && b.type === 'buff_def')) {
+      defVal = defVal * 2;
+    }
+    if (this.buffs.some((b) => b.target === target && b.type === 'debuff_def')) {
+      defVal = Math.floor(defVal * 0.5);
+    }
+
+    let damage = calcDamage(str, power, defVal);
+    if (this.buffs.some((b) => b.target === target && b.type === 'shield')) {
+      damage = Math.max(1, Math.floor(damage * 0.5));
+    }
 
     target.currentHp = Math.max(0, target.currentHp - damage);
     this.lastResult = {

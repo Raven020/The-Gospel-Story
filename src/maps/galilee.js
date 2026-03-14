@@ -184,9 +184,13 @@ export const MAP = {
     enabled: true,
     zones: [
       {
-        x: 1, y: 4, width: 7, height: 14,
-        enemies: ['doubt', 'fear', 'greed'],
+        x: 1, y: 4, w: 7, h: 14,
         rate: 0.08,
+        table: [
+          { enemy: 'doubt', weight: 1 },
+          { enemy: 'fear', weight: 1 },
+          { enemy: 'greed', weight: 1 },
+        ],
       },
     ],
   },

@@ -166,24 +166,38 @@ export const MAP = {
     enabled: true,
     zones: [
       {
-        x: 1, y: 13, width: 4, height: 7,
-        enemies: ['pride', 'temptation', 'doubt'],
+        x: 1, y: 13, w: 4, h: 7,
         rate: 0.10,
+        table: [
+          { enemy: 'pride', weight: 1 },
+          { enemy: 'temptation', weight: 1 },
+          { enemy: 'doubt', weight: 1 },
+        ],
       },
       {
-        x: 15, y: 13, width: 4, height: 7,
-        enemies: ['pride', 'temptation', 'doubt'],
+        x: 15, y: 13, w: 4, h: 7,
         rate: 0.10,
+        table: [
+          { enemy: 'pride', weight: 1 },
+          { enemy: 'temptation', weight: 1 },
+          { enemy: 'doubt', weight: 1 },
+        ],
       },
       {
-        x: 1, y: 20, width: 5, height: 4,
-        enemies: ['pride', 'doubt'],
+        x: 1, y: 20, w: 5, h: 4,
         rate: 0.08,
+        table: [
+          { enemy: 'pride', weight: 1 },
+          { enemy: 'doubt', weight: 1 },
+        ],
       },
       {
-        x: 15, y: 20, width: 4, height: 4,
-        enemies: ['temptation', 'doubt'],
+        x: 15, y: 20, w: 4, h: 4,
         rate: 0.08,
+        table: [
+          { enemy: 'temptation', weight: 1 },
+          { enemy: 'doubt', weight: 1 },
+        ],
       },
     ],
   },

@@ -197,12 +197,16 @@ export const MAP = {
 
   encounters: {
     enabled: true,
-    rate: 12,
     zones: [
       {
-        bounds: { x: 1, y: 1, w: 23, h: 18 },
-        enemies: ['doubt', 'fear', 'temptation', 'pride'],
-        weights: [30, 25, 25, 20],
+        x: 1, y: 1, w: 23, h: 18,
+        rate: 0.08,
+        table: [
+          { enemy: 'doubt', weight: 30 },
+          { enemy: 'fear', weight: 25 },
+          { enemy: 'temptation', weight: 25 },
+          { enemy: 'pride', weight: 20 },
+        ],
       },
     ],
   },
