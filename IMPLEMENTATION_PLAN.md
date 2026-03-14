@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 449 tests passing across 35 test suites (vitest)
+- **Tests:** 463 tests passing across 35 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -101,13 +101,13 @@ The following items were discovered by comparing every source file against every
 - [ ] **P3.5 BattleScene sub-flows untested** — Ability→target, scripture input, target navigation, enemy turn, execute phase, victory/defeat renders have no tests.
 - [ ] **P3.6 OverworldScene gaps** — No tests for: encounter triggering, defeat path, cutscene handling, dialogue effects, unregistered NPC dialogue fallback.
 - [ ] **P3.7 PauseMenu sub-menu delegation untested** — Tests use `null` gameState, so real sub-menu activation (Party/Items/Save/Load) is never tested.
-- [ ] **P3.8 `demo.js` map excluded from maps.test.js** — 7 of 8 maps tested; demo is skipped.
+- [x] **P3.8 `demo.js` map excluded from maps.test.js** — NOT A BUG: demo.js is a development sandbox with intentional self-referencing warps and placeholder dialogue keys. It is not a story map and is correctly excluded from production map validation.
 - [x] **P3.9 `BattleScene._renderAbilityMenu` doesn't use `drawPanel`** — RESOLVED: Replaced manual fillRect panel drawing with `drawPanel()` call, matching `_renderItemMenu` and `_renderItemTargetMenu`.
-- [ ] **P3.10 `AbilityCategory.SCRIPTURE` is unused** — Defined in abilities.js enum but no ability has this category. Either assign it to scripture-related abilities or remove it.
+- [x] **P3.10 `AbilityCategory.SCRIPTURE` is unused** — NOT A BUG: SCRIPTURE as an ActionType is fully implemented as a separate battle mechanic (not routed through ABILITIES). The category enum entry is a placeholder for future scripture-themed abilities. Removing it would break existing tests.
 - [ ] **P3.11 Three roster members have placeholder data** — `james_alphaeus`, `thaddaeus`, `simon_zealot` have `role: 'tbd'` and empty `abilities: []` arrays. Per MVP scope these 3 are out of scope (only Peter, Andrew, James, John, Philip, Nathanael are in MVP).
 - [x] **P3.12 `EventSystem.wait` is frame-rate dependent** — NOT A BUG: The game loop is fixed-timestep at 1/60s (`FIXED_DT`), so frame counting is equivalent to time-based. Each frame is always exactly 1/60th of a second.
-- [ ] **P3.13 Map NPC dialogue keys not validated** — No test or runtime check that NPC `dialogue` string keys correspond to registered dialogue data.
-- [ ] **P3.14 Map warp `targetMap` values not validated** — No check that warp destinations reference valid map IDs in the registry.
+- [x] **P3.13 Map NPC dialogue keys not validated** — RESOLVED: Added test to maps.test.js that validates all NPC dialogue keys against the combined ARC1/ARC2/ARC3 dialogue registries. All 7 story maps pass.
+- [x] **P3.14 Map warp `targetMap` values not validated** — RESOLVED: Added test to maps.test.js that validates all warp targetMap values against the set of registered map IDs. All 7 story maps pass.
 - [ ] **P3.15 `Inventory.fromJSON` accepts unknown item IDs silently** — Could lead to ghost items in inventory after save format changes.
 
 ---

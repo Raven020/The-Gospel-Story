@@ -6,6 +6,28 @@ import { MAP as wildernessMap } from '../wilderness.js';
 import { MAP as galileeMap } from '../galilee.js';
 import { MAP as capernaumMap } from '../capernaum.js';
 import { MAP as mountainMap } from '../mountain.js';
+import { ARC1_DIALOGUE } from '../../data/dialogue/arc1.js';
+import { ARC2_DIALOGUE } from '../../data/dialogue/arc2.js';
+import { ARC3_DIALOGUE } from '../../data/dialogue/arc3.js';
+
+// All registered dialogue keys (single source of truth for validation)
+const ALL_DIALOGUE_KEYS = new Set([
+  ...Object.keys(ARC1_DIALOGUE),
+  ...Object.keys(ARC2_DIALOGUE),
+  ...Object.keys(ARC3_DIALOGUE),
+]);
+
+// All registered map IDs (the 7 story maps + demo)
+const ALL_MAP_IDS = new Set([
+  jerusalemMap.id,
+  templeMap.id,
+  jordanRiverMap.id,
+  wildernessMap.id,
+  galileeMap.id,
+  capernaumMap.id,
+  mountainMap.id,
+  'demo',
+]);
 
 function testMap(map, label) {
   describe(label, () => {
@@ -71,6 +93,24 @@ function testMap(map, label) {
 
     it('has encounters property', () => {
       expect(map.encounters).toBeDefined();
+    });
+
+    it('NPC dialogue keys reference registered dialogue data', () => {
+      for (const npc of map.npcs) {
+        expect(ALL_DIALOGUE_KEYS.has(npc.dialogue),
+          `NPC "${npc.id}" references unknown dialogue key "${npc.dialogue}"`
+        ).toBe(true);
+      }
+    });
+
+    it('warp targetMap values reference registered map IDs', () => {
+      for (const [key, evt] of Object.entries(map.events)) {
+        if (evt.type === 'warp') {
+          expect(ALL_MAP_IDS.has(evt.targetMap),
+            `Warp "${key}" references unknown map "${evt.targetMap}"`
+          ).toBe(true);
+        }
+      }
     });
   });
 }
