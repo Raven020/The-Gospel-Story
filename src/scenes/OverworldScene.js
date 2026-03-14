@@ -547,11 +547,34 @@ export class OverworldScene {
         }
       );
     } else if (evt.type === 'cutscene') {
-      const script = this._cutsceneScripts[evt.script];
-      if (script) {
-        const commands = typeof script === 'function' ? script() : script;
-        this.eventSystem.startEvent(commands);
+      // Support flag guard: skip if the guard flag is already set
+      if (evt.flag && this.gameState && this.gameState.questFlags[evt.flag]) {
+        return;
       }
+
+      let commands;
+      if (evt.commands) {
+        // Inline commands on the event object (used by map cutscene events)
+        commands = evt.commands;
+      } else if (evt.script) {
+        // Named script in registry
+        const script = this._cutsceneScripts[evt.script];
+        if (!script) return;
+        commands = typeof script === 'function' ? script() : script;
+      } else {
+        return;
+      }
+
+      // Resolve dialogue string keys to actual data objects from the cache
+      const resolved = commands.map(cmd => {
+        if (cmd.type === 'dialogue' && typeof cmd.data === 'string') {
+          const data = this._dialogueCache[cmd.data];
+          if (data) return { ...cmd, data };
+        }
+        return cmd;
+      });
+
+      this.eventSystem.startEvent(resolved);
     }
   }
 }

@@ -139,9 +139,9 @@ export const MAP = {
     },
     warp_south: {
       type: 'warp',
-      targetMap: 'jerusalem',
+      targetMap: 'jordan_river',
       targetX: 14,
-      targetY: 17,
+      targetY: 18,
       transition: 'fade',
     },
   },

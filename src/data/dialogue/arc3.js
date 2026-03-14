@@ -28,6 +28,7 @@ export const ARC3_DIALOGUE = {
       effects: [
         { type: 'recruitMember', memberId: 'peter' },
         { type: 'setFlag', flag: 'recruited_peter', value: true },
+        { type: 'setFlag', flag: 'arc3_started', value: true },
       ],
       next: null,
     },
@@ -186,6 +187,27 @@ export const ARC3_DIALOGUE = {
         { type: 'recruitMember', memberId: 'matthew' },
         { type: 'setFlag', flag: 'recruited_matthew', value: true },
       ],
+      next: null,
+    },
+  },
+
+  // --- Mountain of Choosing (Luke 6:12-16) ---
+
+  mountain_choosing: {
+    start: {
+      speaker: '',
+      text: 'Jesus went up on the mountain to pray, and spent the night in prayer to God.',
+      next: 'calling',
+    },
+    calling: {
+      speaker: 'Jesus',
+      text: 'You have been chosen. From among all who follow, I have called you to be my apostles.',
+      next: 'commission',
+    },
+    commission: {
+      speaker: 'Jesus',
+      text: 'Go and proclaim the kingdom of God. Heal the sick, raise the dead, cast out demons.',
+      effects: [{ type: 'setFlag', flag: 'arc3_complete', value: true }],
       next: null,
     },
   },

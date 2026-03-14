@@ -113,6 +113,7 @@ const titleScene = new TitleScene({
   frameCountFn: () => loop.frameCount,
   onNewGame: () => {
     gameState.newGame();
+    gameState.questFlags.arc1_started = true;
     overworld.loadMap(jerusalemMap, overworldTileset, 14, 18);
     scenes.switch('overworld');
     // Fade in from black so the scene doesn't pop in abruptly.

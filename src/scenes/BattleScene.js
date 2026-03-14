@@ -463,12 +463,29 @@ export class BattleScene {
 
   /**
    * Pick a scripture challenge based on enemies present in battle.
-   * Looks up ENEMY_SCRIPTURE by enemy id; falls back to a random challenge.
+   * For Satan, selects the correct temptation challenge based on quest flags.
+   * Falls back to ENEMY_SCRIPTURE lookup, then a random challenge.
    */
   _pickScriptureChallenge() {
     const alive = this.engine.enemies.filter((e) => e.currentHp > 0);
     // Try to match an enemy id to a challenge
     for (const enemy of alive) {
+      // Per-encounter Satan scripture: pick based on which temptation is unresolved
+      if (enemy.id === 'satan' && this.gameState) {
+        const flags = this.gameState.questFlags;
+        let challengeId;
+        if (!flags.temptation_1_resolved) {
+          challengeId = 'temptation_bread';
+        } else if (!flags.temptation_2_resolved) {
+          challengeId = 'temptation_pinnacle';
+        } else {
+          challengeId = 'temptation_kingdoms';
+        }
+        if (SCRIPTURE_CHALLENGES[challengeId]) {
+          return SCRIPTURE_CHALLENGES[challengeId];
+        }
+      }
+
       const challengeId = ENEMY_SCRIPTURE[enemy.id];
       if (challengeId && SCRIPTURE_CHALLENGES[challengeId]) {
         return SCRIPTURE_CHALLENGES[challengeId];

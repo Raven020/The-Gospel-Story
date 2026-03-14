@@ -97,5 +97,7 @@ export const ENEMY_SCRIPTURE = {
   pride: 'pride_challenge',
   greed: 'greed_challenge',
   deception: 'deception_challenge',
-  satan: 'temptation_bread', // default, changes per encounter
+  satan: 'temptation_bread', // default for encounter 1
+  satan_2: 'temptation_pinnacle',
+  satan_3: 'temptation_kingdoms',
 };

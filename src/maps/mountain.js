@@ -128,11 +128,17 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Event layer: warp at south entrance
+// Event layer: warp at south entrance + summit cutscene
 const event = fill(W * H, 0);
 // South warp to capernaum (row 24, cols 9-10)
 for (let x = 9; x <= 10; x++) {
   event[(H - 1) * W + x] = 'warp_capernaum';
+}
+// Summit cutscene trigger (rows 2-3, cols 8-11 — center of grass clearing)
+for (let y = 2; y <= 3; y++) {
+  for (let x = 8; x <= 11; x++) {
+    event[y * W + x] = 'summit_choosing';
+  }
 }
 
 export const MAP = {
@@ -157,6 +163,16 @@ export const MAP = {
       targetX: 12,
       targetY: 18,
       transition: 'fade',
+    },
+    summit_choosing: {
+      type: 'cutscene',
+      flag: 'arc3_complete',
+      commands: [
+        { type: 'fadeOut' },
+        { type: 'dialogue', data: 'mountain_choosing' },
+        { type: 'setFlag', flag: 'arc3_complete', value: true },
+        { type: 'fadeIn' },
+      ],
     },
   },
 

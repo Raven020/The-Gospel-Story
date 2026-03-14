@@ -24,7 +24,8 @@ export const ARC1_DIALOGUE = {
   townsperson_3: {
     start: {
       speaker: 'Townsperson',
-      text: 'Have you been to the Temple? The teachers there are very wise.',
+      text: 'Have you been to the Temple? They say a young boy has been speaking with the teachers for days!',
+      effects: [{ type: 'setFlag', flag: 'heard_about_temple_boy', value: true }],
       next: null,
     },
   },

@@ -163,31 +163,32 @@ export const MAP = {
     },
     temptation_1: {
       type: 'cutscene',
-      flag: 'temptation_1_started',
+      flag: 'temptation_1_resolved',
       commands: [
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'satan_temptation_1' },
-        { type: 'setFlag', flag: 'temptation_1_started', value: true },
+        { type: 'setFlag', flag: 'temptation_1_resolved', value: true },
         { type: 'fadeIn' },
       ],
     },
     temptation_2: {
       type: 'cutscene',
-      flag: 'temptation_2_started',
+      flag: 'temptation_2_resolved',
       commands: [
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'satan_temptation_2' },
-        { type: 'setFlag', flag: 'temptation_2_started', value: true },
+        { type: 'setFlag', flag: 'temptation_2_resolved', value: true },
         { type: 'fadeIn' },
       ],
     },
     temptation_3: {
       type: 'cutscene',
-      flag: 'temptation_3_started',
+      flag: 'temptation_3_resolved',
       commands: [
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'satan_temptation_3' },
-        { type: 'setFlag', flag: 'temptation_3_started', value: true },
+        { type: 'setFlag', flag: 'temptation_3_resolved', value: true },
+        { type: 'dialogue', data: 'angel_minister' },
         { type: 'fadeIn' },
       ],
     },

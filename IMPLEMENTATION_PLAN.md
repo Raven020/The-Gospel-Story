@@ -34,27 +34,29 @@ The following items were discovered by comparing every source file against every
 
 - [x] **P1.2 Oil item STR buff not handled** — RESOLVED: Oil items now add buff_str to the engine's buff list during battle via the new item system.
 
-- [ ] **P1.3 Quest flag name mismatch (Arc 2)** — `arc2.js` dialogue and `wilderness.js` cutscenes set flags `temptation_1_started`, `temptation_2_started`, `temptation_3_started`. But `INITIAL_FLAGS` in `questFlags.js` only declares `temptation_1_resolved`, `temptation_2_resolved`, `temptation_3_resolved`. The `_started` flags work at runtime (JS objects accept new keys) but are invisible to any system that checks `INITIAL_FLAGS` for valid flag names.
+- [x] **P1.3 Quest flag name mismatch (Arc 2)** — RESOLVED: All `temptation_N_started` flags renamed to `temptation_N_resolved` in both `wilderness.js` and `arc2.js` dialogue effects, matching the canonical flag names in `INITIAL_FLAGS`.
 
-- [ ] **P1.4 Several Arc 1 quest flags never set** — `arc1_started` and `heard_about_temple_boy` are declared in `INITIAL_FLAGS` but no dialogue or event in arc1 sets them. They are always `false`.
+- [x] **P1.4 Several Arc 1 quest flags never set** — RESOLVED: `arc1_started` is now set in `main.js` `onNewGame` callback. `heard_about_temple_boy` is now set by `townsperson_3` dialogue in `arc1.js` (modified text to mention the boy at the Temple).
 
-- [ ] **P1.5 `arc3_started` flag never set** — Declared in `INITIAL_FLAGS` but no dialogue or event in arc3 sets it.
+- [x] **P1.5 `arc3_started` flag never set** — RESOLVED: `arc3_started` is now set alongside `recruited_peter` in the `peter_recruit` dialogue effects in `arc3.js`. Also added `arc2_started` alongside `baptism_complete` in the `john_baptist` dialogue.
 
-- [ ] **P1.6 `angel_minister` has no gate on temptation completion** — In `arc2.js`, the `angel_minister` dialogue unconditionally sets `arc2_complete: true` without checking that all three temptations were resolved first.
+- [x] **P1.6 `angel_minister` has no gate on temptation completion** — RESOLVED: Angel minister dialogue is now triggered at the end of the `temptation_3` cutscene in `wilderness.js` (after all temptations are resolved in sequence). The angel sets `arc2_complete` only when reached through the `temptation_3` cutscene.
 
-- [ ] **P1.7 Jerusalem `warp_south` is a self-loop** — `jerusalem.js` event `warp_south` warps to `targetMap: 'jerusalem'` at position (14,17) — same map. This should connect to another area (jordan_river or a route).
+- [x] **P1.7 Jerusalem `warp_south` is a self-loop** — RESOLVED: Jerusalem `warp_south` now correctly targets `'jordan_river'` (`targetX: 14, targetY: 18`) instead of self-referencing `'jerusalem'`.
 
-- [ ] **P1.8 Mountain map has no cutscene triggers** — `mountain.js` has `npcs: []` and its events object has only a `warp_down` — no disciple spawn cutscenes despite comments saying "disciples spawn via cutscenes."
+- [x] **P1.8 Mountain map has no cutscene triggers** — RESOLVED: Mountain summit cutscene added. Event tiles at rows 2–3, cols 8–11 (summit clearing) trigger the `'summit_choosing'` cutscene (guarded by `arc3_complete` flag). Added `mountain_choosing` dialogue tree to `arc3.js` covering the choosing of the apostles (Luke 6:12–16).
 
 - [x] **P1.9 EventSystem.fadeIn accesses TransitionManager private fields** — RESOLVED: Added TransitionManager.fadeIn(onComplete) public method. EventSystem fadeIn command now uses the public API instead of directly mutating private state.
 
 - [x] **P1.10 `wordWrap` does not handle `\n` newlines** — RESOLVED: wordWrap now splits on \n first, then word-wraps each paragraph. Consecutive \n produce blank lines. 4 new tests added.
 
-- [ ] **P1.11 Satan scripture challenge does not change per encounter** — `ENEMY_SCRIPTURE.satan` maps to `temptation_bread` with a comment "changes per encounter" but no code implements this. All three Satan encounters would use the same scripture challenge.
+- [x] **P1.11 Satan scripture challenge does not change per encounter** — RESOLVED: `BattleScene._pickScriptureChallenge` now uses `gameState` quest flags to determine which Satan encounter is active: if `temptation_1_resolved` is false → `temptation_bread`; elif `temptation_2_resolved` is false → `temptation_pinnacle`; else → `temptation_kingdoms`. Also added `satan_2` and `satan_3` entries to `ENEMY_SCRIPTURE`.
 
 - [x] **P1.12 Experience distribution not implemented** — RESOLVED: Was already implemented in OverworldScene._startBattle victory callback (gainExp called for each living party member).
 
 - [x] **P1.13 `newGame` starts on demo map, not Jerusalem** — RESOLVED: GameState.newGame() now sets currentMap='jerusalem', playerX=14, playerY=18.
+
+- [x] **P1.14 `OverworldScene._handleEvent` silently ignores inline cutscene commands, flag guards, and string dialogue keys** — RESOLVED: `_handleEvent` previously only supported named scripts registered via `registerCutscene`; map cutscene events with `commands` arrays (used by `wilderness.js` temptation triggers) were silently dropped. Also lacked support for `flag` guards for one-shot cutscene execution. Additionally, `EventSystem` dialogue commands received raw string keys but `DialogueSystem.open()` requires data objects. All three issues fixed: `_handleEvent` now supports inline `commands` arrays, `flag` guards, and resolves dialogue string keys from the registered dialogue cache before passing to `DialogueSystem.open()`.
 
 ---
 
@@ -171,18 +173,18 @@ The following items were discovered by comparing every source file against every
 - [x] 6.1 Event/cutscene system (15 command types)
 - [ ] 6.2 Visual effects (deferred)
 
-### Phase 7 — Arc 1 Content: COMPLETE (with P1.4, P2.13 caveats)
+### Phase 7 — Arc 1 Content: COMPLETE (with P2.13 caveat)
 - [x] 7.1 Jerusalem tilemap (30x20, overworld tileset)
 - [x] 7.2 Arc 1 NPCs & dialogue (9 conversations)
 - [x] 7.3 Arc 1 gameplay
 - [x] 7.4 Arc 1 cutscenes
 
-### Phase 8 — Arc 2 Content: COMPLETE (with P1.3, P1.6, P1.11 caveats)
+### Phase 8 — Arc 2 Content: COMPLETE
 - [x] 8.1 Jordan River & wilderness tilemaps
 - [x] 8.2 Arc 2 NPCs & events
-- [x] 8.3 Satan boss encounters (×3 dialogue stubs — scripture challenge switching not implemented)
+- [x] 8.3 Satan boss encounters (×3, scripture challenge switching implemented)
 
-### Phase 9 — Arc 3 Content: COMPLETE (with P1.5, P1.8 caveats)
+### Phase 9 — Arc 3 Content: COMPLETE
 - [x] 9.1 Sea of Galilee & Capernaum tilemaps
 - [x] 9.2 Disciple recruitment events (7 disciples)
 - [x] 9.3 Party management integration
