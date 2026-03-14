@@ -135,6 +135,11 @@ export class Inventory {
   }
 
   fromJSON(data) {
-    this.items = { ...data };
+    this.items = {};
+    for (const [id, qty] of Object.entries(data)) {
+      if (ITEMS[id]) {
+        this.items[id] = qty;
+      }
+    }
   }
 }

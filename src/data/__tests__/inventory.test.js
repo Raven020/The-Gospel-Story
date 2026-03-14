@@ -98,6 +98,15 @@ describe('Inventory', () => {
     expect(inv2.count('bread')).toBe(3);
     expect(inv2.count('water')).toBe(1);
   });
+
+  it('fromJSON discards unknown item IDs', () => {
+    const inv = new Inventory();
+    inv.fromJSON({ bread: 2, ghost_item: 5, water: 1 });
+    expect(inv.count('bread')).toBe(2);
+    expect(inv.count('water')).toBe(1);
+    expect(inv.count('ghost_item')).toBe(0);
+    expect(inv.getAll()).toHaveLength(2);
+  });
 });
 
 describe('ITEMS', () => {
