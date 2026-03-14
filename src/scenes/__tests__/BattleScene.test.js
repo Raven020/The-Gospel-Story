@@ -160,4 +160,342 @@ describe('BattleScene', () => {
     expect(scene.engine.phase).toBe(BattlePhase.EXECUTE);
     expect(scene.engine.buffs.length).toBe(1);
   });
+
+  // --- P3.5: Ability → target selection flow ---
+  it('ability with single_enemy target opens target selection', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    // thunder_zeal is a miracle with target: single_enemy
+    scene._processActionSelection('miracles');
+    expect(scene._selectingAbility).toBe(true);
+
+    // Confirm the ability selection
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    // Should now be in target selection mode
+    expect(scene._selectingTarget).toBe(true);
+    expect(scene._selectingAbility).toBe(false);
+  });
+
+  it('ability with self/ally target auto-executes without target selection', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    // prayer_heal targets single_ally, auto-targets current actor
+    scene._processActionSelection('prayer');
+    expect(scene._selectingAbility).toBe(true);
+
+    // Confirm the ability (prayer_heal costs 15 SP, member has 50)
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    // Should auto-execute without target selection
+    expect(scene._selectingTarget).toBe(false);
+    expect(scene.engine.phase).toBe(BattlePhase.EXECUTE);
+  });
+
+  it('ability cancel returns to action menu', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('prayer');
+    expect(scene._selectingAbility).toBe(true);
+
+    input._press('cancel');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingAbility).toBe(false);
+  });
+
+  // --- P3.5: Target navigation ---
+  it('target cursor navigates with LEFT/RIGHT', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt'), createEnemy('fear')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    // Open miracles and select thunder_zeal (single_enemy)
+    scene._processActionSelection('miracles');
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingTarget).toBe(true);
+    expect(scene.hud.targetCursor).toBe(0);
+
+    // Move target right
+    input._press('right');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene.hud.targetCursor).toBe(1);
+  });
+
+  it('target confirm executes action on selected enemy', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('miracles');
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    // Confirm target
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingTarget).toBe(false);
+    expect(scene.engine.phase).toBe(BattlePhase.EXECUTE);
+  });
+
+  it('target cancel returns to action menu', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('miracles');
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingTarget).toBe(true);
+
+    input._press('cancel');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingTarget).toBe(false);
+  });
+
+  // --- P3.5: Scripture input flow ---
+  it('scripture cursor navigates with UP/DOWN', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('scripture');
+    expect(scene._selectingScripture).toBe(true);
+    expect(scene._scriptureCursor).toBe(0);
+
+    input._press('down');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._scriptureCursor).toBe(1);
+
+    input._press('up');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._scriptureCursor).toBe(0);
+  });
+
+  it('scripture confirm opens target selection', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('scripture');
+
+    // Select the first option (correct answer)
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingScripture).toBe(false);
+    expect(scene._selectingTarget).toBe(true);
+  });
+
+  it('scripture cancel returns to action menu', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('scripture');
+
+    input._press('cancel');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene._selectingScripture).toBe(false);
+  });
+
+  // --- P3.5: Enemy turn ---
+  it('enemy turn auto-executes and advances to EXECUTE phase', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+
+    // Force enemy turn
+    scene.engine.phase = BattlePhase.ENEMY_TURN;
+    scene.engine.currentActor = { type: 'enemy', entity: enemies[0] };
+
+    scene.update(1 / 60);
+
+    expect(scene.engine.phase).toBe(BattlePhase.EXECUTE);
+  });
+
+  // --- P3.5: Execute phase advancement ---
+  it('execute phase advances after EXECUTE_FRAMES', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    // Set to EXECUTE phase
+    scene.engine.phase = BattlePhase.EXECUTE;
+    scene._stateFrames = 0;
+
+    // Run for 30 frames (EXECUTE_FRAMES)
+    for (let i = 0; i < 30; i++) {
+      scene.update(1 / 60);
+    }
+
+    // Should have advanced past EXECUTE
+    expect(scene.engine.phase).not.toBe(BattlePhase.EXECUTE);
+  });
+
+  // --- P3.5: Victory/defeat renders ---
+  it('render shows victory overlay in VICTORY phase', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    enemies[0].currentHp = 0;
+    scene.engine.phase = BattlePhase.VICTORY;
+    scene.engine.expGained = 12;
+
+    const fillRects = [];
+    const ctx = {
+      fillStyle: '',
+      fillRect: vi.fn((...args) => fillRects.push(args)),
+      drawImage: vi.fn(),
+      globalAlpha: 1,
+    };
+
+    expect(() => scene.render(ctx)).not.toThrow();
+    // Victory overlay draws a semi-transparent black rect
+    expect(ctx.fillRect).toHaveBeenCalled();
+  });
+
+  it('render shows defeat overlay in DEFEAT phase', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    party[0].currentHp = 0;
+    scene.engine.phase = BattlePhase.DEFEAT;
+
+    const ctx = {
+      fillStyle: '',
+      fillRect: vi.fn(),
+      drawImage: vi.fn(),
+      globalAlpha: 1,
+    };
+
+    expect(() => scene.render(ctx)).not.toThrow();
+    expect(ctx.fillRect).toHaveBeenCalled();
+  });
+
+  // --- P3.5: Item flow ---
+  it('items action opens item list when inventory has consumables', () => {
+    const { scene: s, input: inp } = (() => {
+      const i = makeInput();
+      const gameState = {
+        inventory: {
+          getAll: () => [
+            { id: 'bread', quantity: 3, def: { id: 'bread', name: 'Bread', type: 'consumable', effect: { stat: 'hp', amount: 50 } } },
+          ],
+        },
+        questFlags: {},
+      };
+      const sc = new BattleScene({
+        input: i,
+        transitions: { fadeToBlack: vi.fn() },
+        sceneManager: {},
+        frameCountFn: () => 0,
+        gameState,
+      });
+      return { scene: sc, input: i };
+    })();
+
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    s.startBattle(party, enemies, vi.fn());
+    s.engine.buildTurnOrder();
+    s.engine.nextTurn();
+
+    s._processActionSelection('items');
+    expect(s._selectingItem).toBe(true);
+    expect(s._itemList).toHaveLength(1);
+  });
+
+  // --- P3.5: Action cursor navigation ---
+  it('action menu cursor navigates with UP/DOWN', () => {
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    expect(scene.hud.actionCursor).toBe(0);
+
+    input._press('down');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene.hud.actionCursor).toBe(1);
+
+    input._press('up');
+    scene.update(1 / 60);
+    input._clear();
+
+    expect(scene.hud.actionCursor).toBe(0);
+  });
+
+  // --- P3.5: Ability SP check ---
+  it('blocks ability selection when SP is insufficient', () => {
+    const party = [makeMember({ currentSp: 0 })]; // No SP
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, vi.fn());
+    scene.engine.buildTurnOrder();
+    scene.engine.nextTurn();
+
+    scene._processActionSelection('prayer');
+    expect(scene._selectingAbility).toBe(true);
+
+    // Try to confirm - should be blocked by SP check
+    input._press('confirm');
+    scene.update(1 / 60);
+    input._clear();
+
+    // Should still be selecting ability (blocked)
+    expect(scene._selectingAbility).toBe(true);
+  });
 });

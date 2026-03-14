@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 516 tests passing across 39 test suites (vitest)
+- **Tests:** 543 tests passing across 39 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -15,12 +15,13 @@
 
 | ID | Status | Item |
 |----|--------|------|
-| P3.5 | Open | **BattleScene sub-flows untested** — Ability→target, scripture input, target navigation, enemy turn, execute phase, victory/defeat renders have no tests. |
-| P3.6 | Open | **OverworldScene gaps** — No tests for: encounter triggering, defeat path, cutscene handling, dialogue effects, unregistered NPC dialogue fallback. |
 | P3.11 | Out of scope | **Three roster members have placeholder data** — `james_alphaeus`, `thaddaeus`, `simon_zealot` have `role: 'tbd'` and empty `abilities: []` arrays. Per MVP scope only Peter, Andrew, James, John, Philip, Nathanael are in MVP. |
 
 ### Resolved P3 Items (for reference)
-P3.1 (Display.js tests), P3.2 (tileset tests), P3.3 (UIChrome/Colors tests), P3.4 (EventSystem command tests), P3.7 (PauseMenu sub-menu delegation tests), P3.8 (demo.js exclusion — by design), P3.9 (ability menu drawPanel), P3.10 (AbilityCategory.SCRIPTURE — by design), P3.12 (wait frame-rate — fixed timestep), P3.13 (dialogue key validation), P3.14 (warp target validation), P3.15 (Inventory.fromJSON unknown ID filtering).
+P3.1 (Display.js tests), P3.2 (tileset tests), P3.3 (UIChrome/Colors tests), P3.4 (EventSystem command tests), P3.5 (BattleScene sub-flow tests + target selection bug fix), P3.6 (OverworldScene gap tests), P3.7 (PauseMenu sub-menu delegation tests), P3.8 (demo.js exclusion — by design), P3.9 (ability menu drawPanel), P3.10 (AbilityCategory.SCRIPTURE — by design), P3.12 (wait frame-rate — fixed timestep), P3.13 (dialogue key validation), P3.14 (warp target validation), P3.15 (Inventory.fromJSON unknown ID filtering).
+
+### Bug Fixes Discovered During Testing
+- **BattleScene target selection was broken** — `_handleActionInput()` had `if (this._selectingTarget) return;` which silently dropped all target input. Fixed to call `_handleTargetInput()`. Without this fix, players could never confirm a target after selecting a single-enemy ability.
 
 ---
 

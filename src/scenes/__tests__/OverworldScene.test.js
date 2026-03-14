@@ -170,4 +170,230 @@ describe('OverworldScene', () => {
     expect(scene.pauseMenu.active).toBe(true);
     expect(input.context).toBe(InputContext.MENU);
   });
+
+  // --- P3.6: Unregistered NPC dialogue fallback ---
+  it('opens fallback dialogue for NPC without registered dialogue', () => {
+    const map = createTestMap();
+    map.npcs = [
+      { id: 'mystery', sprite: 's', x: 5, y: 4, facing: 'down', dialogue: 'nonexistent_key', movement: 'static' },
+    ];
+    scene.loadMap(map, createTestTileset(), 5, 5);
+    // Don't register any dialogue for this key
+
+    scene.player.facing = 'up';
+    input.pressed.mockImplementation((a) => a === 'confirm');
+    input.getDirectionalPressed.mockReturnValue(null);
+
+    scene.update(1 / 60);
+
+    // Fallback dialogue should open with '...'
+    expect(scene.dialogue.isOpen).toBe(true);
+    expect(input.context).toBe(InputContext.DIALOGUE);
+  });
+
+  // --- P3.6: Dialogue effects ---
+  it('handleDialogueEffect sets quest flag', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleDialogueEffect({ type: 'setFlag', flag: 'met_peter', value: true });
+    expect(gameState.questFlags.met_peter).toBe(true);
+  });
+
+  it('handleDialogueEffect recruits member', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleDialogueEffect({ type: 'recruitMember', memberId: 'peter' });
+    expect(gameState.recruitMember).toHaveBeenCalledWith('peter');
+  });
+
+  it('handleDialogueEffect gives item', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleDialogueEffect({ type: 'giveItem', itemId: 'bread', count: 3 });
+    expect(gameState.inventory.add).toHaveBeenCalledWith('bread', 3);
+  });
+
+  it('handleDialogueEffect removes item', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleDialogueEffect({ type: 'removeItem', itemId: 'bread', count: 1 });
+    expect(gameState.inventory.remove).toHaveBeenCalledWith('bread', 1);
+  });
+
+  it('handleDialogueEffect is no-op without gameState', () => {
+    // scene from beforeEach has no gameState
+    expect(() => scene._handleDialogueEffect({ type: 'setFlag', flag: 'test', value: true })).not.toThrow();
+  });
+
+  // --- P3.6: Cutscene handling ---
+  it('handles cutscene event with inline commands', () => {
+    scene.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    // Directly invoke _handleEvent to test cutscene logic
+    scene._handleEvent({
+      type: 'cutscene',
+      commands: [{ type: 'wait', frames: 5 }],
+    });
+
+    expect(scene.eventSystem.isActive()).toBe(true);
+  });
+
+  it('handles cutscene event with named script', () => {
+    scene.loadMap(createTestMap(), createTestTileset(), 5, 5);
+    scene.registerCutscene('test_script', [{ type: 'wait', frames: 5 }]);
+
+    scene._handleEvent({
+      type: 'cutscene',
+      script: 'test_script',
+    });
+
+    expect(scene.eventSystem.isActive()).toBe(true);
+  });
+
+  it('skips cutscene if guard flag is already set', () => {
+    const gameState = {
+      questFlags: { cs_done: true },
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    // Directly invoke _handleEvent with a guarded cutscene
+    scn._handleEvent({
+      type: 'cutscene',
+      flag: 'cs_done',
+      commands: [{ type: 'wait', frames: 5 }],
+    });
+
+    // Cutscene should NOT be active (guard flag blocks it)
+    expect(scn.eventSystem.isActive()).toBe(false);
+  });
+
+  // --- P3.6: Encounter triggering ---
+  it('triggers encounter via _triggerEncounter', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [{ id: 'jesus', name: 'Jesus', level: 1, stats: { hp: 200, sp: 50, str: 30, wis: 25, fai: 20, spd: 30 }, currentHp: 200, currentSp: 50, abilities: [] }], bench: [] },
+    };
+    const battleScene = {
+      startBattle: vi.fn(),
+    };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+      battleScene,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    // Directly trigger an encounter
+    scn._triggerEncounter('doubt');
+
+    expect(scn._inBattle).toBe(true);
+  });
+
+  // --- P3.6: Defeat path ---
+  it('defeat transitions to title screen', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [{ id: 'jesus', name: 'Jesus', level: 1, stats: { hp: 200, sp: 50, str: 30, wis: 25, fai: 20, spd: 30, def: 15 }, currentHp: 200, currentSp: 50, abilities: [] }], bench: [] },
+    };
+    const battleStartBattle = vi.fn();
+    const battleScene = { startBattle: battleStartBattle };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+      battleScene,
+    });
+
+    // Simulate calling _startBattle directly and intercepting the onComplete callback
+    scn._startBattle('doubt');
+
+    // battleScene.startBattle should have been called
+    expect(battleStartBattle).toHaveBeenCalled();
+
+    // Get the onComplete callback
+    const onComplete = battleStartBattle.mock.calls[0][2];
+
+    // Simulate defeat
+    onComplete('defeat', 0);
+
+    // Should have triggered a fadeToBlack transition
+    expect(transitions.active).toBe(true);
+
+    // Complete the transition
+    for (let i = 0; i < 60; i++) {
+      transitions.update();
+    }
+
+    // Should switch to title screen
+    expect(mockSceneManager.switch).toHaveBeenCalledWith('title');
+  });
 });

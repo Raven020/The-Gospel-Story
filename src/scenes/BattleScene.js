@@ -233,7 +233,10 @@ export class BattleScene {
       return;
     }
 
-    if (this._selectingTarget) return;
+    if (this._selectingTarget) {
+      this._handleTargetInput();
+      return;
+    }
 
     if (this.input.pressed(Actions.UP)) {
       this.hud.actionCursor = (this.hud.actionCursor - 1 + 6) % 6;
