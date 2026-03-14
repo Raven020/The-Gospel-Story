@@ -11,6 +11,20 @@ import { createQuestFlags } from '../data/questFlags.js';
 const SAVE_KEY_PREFIX = 'gospel_story_save_';
 const MAX_SLOTS = 3;
 
+/**
+ * Maps each map ID to the minimum arc required to access it.
+ * Maps not listed here are accessible from any arc (e.g., demo).
+ */
+const MAP_ARC_REQUIREMENTS = {
+  jerusalem: 1,
+  temple: 1,
+  jordan_river: 2,
+  wilderness: 2,
+  galilee: 3,
+  capernaum: 3,
+  mountain: 3,
+};
+
 export class GameState {
   constructor() {
     this.party = {
@@ -80,6 +94,29 @@ export class GameState {
   removeMember(memberId) {
     this.party.active = this.party.active.filter((m) => m.id !== memberId);
     this.party.bench = this.party.bench.filter((m) => m.id !== memberId);
+  }
+
+  /**
+   * Check if the player can access a map based on current arc progression.
+   * Enforces linear arc ordering — players cannot skip ahead.
+   * @param {string} mapId
+   * @returns {boolean}
+   */
+  canAccessMap(mapId) {
+    const requiredArc = MAP_ARC_REQUIREMENTS[mapId];
+    if (requiredArc === undefined) return true; // unlisted maps are always accessible
+    const currentArc = this.questFlags.current_arc || 1;
+    return currentArc >= requiredArc;
+  }
+
+  /**
+   * Advance to the next arc. Called when an arc's completion flag is set.
+   * @param {number} arc - The arc number to advance to.
+   */
+  advanceArc(arc) {
+    if (arc > (this.questFlags.current_arc || 1)) {
+      this.questFlags.current_arc = arc;
+    }
   }
 
   /**

@@ -427,6 +427,13 @@ export class OverworldScene {
     switch (effect.type) {
       case 'setFlag':
         this.gameState.questFlags[effect.flag] = effect.value;
+        // Auto-advance arc when an arc completion flag is set
+        if (effect.value && typeof effect.flag === 'string') {
+          const match = effect.flag.match(/^arc(\d+)_complete$/);
+          if (match) {
+            this.gameState.advanceArc(Number(match[1]) + 1);
+          }
+        }
         break;
       case 'recruitMember':
         this.gameState.recruitMember(effect.memberId);
@@ -544,6 +551,10 @@ export class OverworldScene {
 
   _handleEvent(evt) {
     if (evt.type === 'warp') {
+      // Arc ordering enforcement: block warps to maps the player hasn't unlocked
+      if (evt.targetMap && this.gameState && !this.gameState.canAccessMap(evt.targetMap)) {
+        return; // silently block — player hasn't reached this arc yet
+      }
       this._pendingWarp = evt;
       this.transitions.fadeToBlack(
         () => {

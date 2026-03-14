@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 555 tests passing across 39 test suites (vitest)
+- **Tests:** 566 tests passing across 39 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -19,17 +19,17 @@
 | P4.1 | **Morale system entirely missing** — spec: combat.md, party-system.md, game-design.md |
 | P4.2 | **Healing Encounters not implemented** — spec: combat.md |
 | P4.3 | **Debate/Riddle Battles not implemented** — spec: combat.md |
-| P4.4 | **gold_bonus buff type never consulted post-battle** — Matthew's Gold Find ability has no effect |
+| ~~P4.4~~ | ~~**gold_bonus buff type never consulted post-battle**~~ — RESOLVED: gold_bonus applies buff in BattleEngine, grants 1.5x EXP on victory |
 | P4.5 | **Dialogue text box dimensions differ from spec** — code uses 240x42/38chars/2lines (ui-hud.md); dialogue-system.md specifies 224x64/26chars/3lines |
 | P4.6 | **Speaker name plate uses plain text** instead of 9-slice sprite (minor visual) — spec: dialogue-system.md |
-| P4.7 | **rollEncounter JSDoc says returns {enemy, rate}** but returns bare string — spec mismatch |
+| ~~P4.7~~ | ~~**rollEncounter JSDoc says returns {enemy, rate}**~~ — RESOLVED: JSDoc updated to match actual return type (string\|null) |
 | P4.8 | **No temple.js tileset** (spec lists it); unspecced shoreline.js exists instead |
 | P4.9 | **Tileset IDs 100–299 (detail/above layers) have zero content** |
 | P4.10 | **Arc 1 player character is Jesus** — spec says Mary/Joseph for Arc 1 |
 | P4.11 | **Arc 2 Satan boss fights not wired to map events** |
 | P4.12 | **Five disciples have no recruitment path** — Thomas, James A., Thaddaeus, Simon Z., Judas |
 | P4.13 | **Judas betrayalStat never incremented** |
-| P4.14 | **No arc ordering enforcement** — players can skip arcs |
+| ~~P4.14~~ | ~~**No arc ordering enforcement**~~ — RESOLVED: GameState.canAccessMap() + MAP_ARC_REQUIREMENTS enforce linear progression; OverworldScene blocks warps to locked maps; arc auto-advances on arc*_complete flags |
 
 ---
 
@@ -41,8 +41,12 @@ P3.19 (evalCondition unknown op defaulted true → false), P3.20 (evalCondition 
 ### Earlier P3 Fixes
 P3.1 (Display.js tests), P3.2 (tileset tests), P3.3 (UIChrome/Colors tests), P3.4 (EventSystem command tests), P3.5 (BattleScene sub-flow tests + target selection bug fix), P3.6 (OverworldScene gap tests), P3.7 (PauseMenu sub-menu delegation tests), P3.8 (demo.js exclusion — by design), P3.9 (ability menu drawPanel), P3.10 (AbilityCategory.SCRIPTURE — by design), P3.11 (placeholder roster members — out of scope), P3.12 (wait frame-rate — fixed timestep), P3.13 (dialogue key validation), P3.14 (warp target validation), P3.15 (Inventory.fromJSON unknown ID filtering), P3.16 (dialogue effects: playSound/playMusic/setNpcState/triggerEvent), P3.17 (enemy AI with abilities), P3.18 (dead code cleanup).
 
+### P4 Fixes
+P4.4 (gold_bonus effectType handled in BattleEngine — applies buff, 1.5x EXP on victory), P4.7 (checkEncounterZone JSDoc corrected to string|null), P4.14 (arc ordering enforcement via MAP_ARC_REQUIREMENTS, canAccessMap(), advanceArc(), auto-advance on arc*_complete).
+
 ### Notable Bug Fixes
 - **BattleScene target selection** — `_handleActionInput()` had `if (this._selectingTarget) return;` which silently dropped all target input. Fixed to call `_handleTargetInput()`.
+- **Flaky enemy AI test** — "enemy attacks a party member" expected result always `'damage'` but enemy AI can use debuff/buff abilities (30% chance). Fixed to accept all valid result types.
 
 ---
 
@@ -84,6 +88,8 @@ All 10 phases confirmed complete by audit:
 - **Enemy defense** — BattleEngine checks target.stats.def first, falls back to str
 - **Enemy AI** — Basic AI: 70% attack / 30% ability; Boss AI: 50/50; enemies have themed abilities
 - **Dialogue effects** — All 8 effect types fully wired (setFlag, giveItem, removeItem, recruitMember, playSound, playMusic, setNpcState, triggerEvent)
+- **Gold Find ability** — Matthew's gold_find applies a gold_bonus buff; grants 1.5x EXP on victory (no gold currency system — EXP is the only reward)
+- **Arc ordering** — MAP_ARC_REQUIREMENTS maps each map to its minimum arc; current_arc tracked in questFlags; auto-advances when arc*_complete flags are set via dialogue effects
 
 ---
 

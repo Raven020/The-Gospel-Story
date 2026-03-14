@@ -104,7 +104,7 @@ export function getEvent(map, tileX, tileY) {
 
 /**
  * Check encounter zones at a tile position.
- * Returns { enemy, rate } or null.
+ * @returns {string|null} Enemy ID string or null if no encounter triggered.
  */
 export function checkEncounterZone(map, tileX, tileY) {
   if (!map.encounters || !map.encounters.enabled) return null;

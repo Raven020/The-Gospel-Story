@@ -204,8 +204,11 @@ describe('BattleEngine', () => {
       engine.buildTurnOrder();
       engine.nextTurn(); // enemy turn
       engine.execute();
-      expect(engine.lastResult.type).toBe('damage');
-      expect(engine.lastResult.targetType).toBe('party');
+      // Enemy AI may use a basic attack (damage) or an ability (debuff/buff)
+      expect(['damage', 'debuff', 'buff']).toContain(engine.lastResult.type);
+      if (engine.lastResult.type === 'damage') {
+        expect(engine.lastResult.targetType).toBe('party');
+      }
     });
 
     it('enemy uses abilities based on AI type', () => {
@@ -408,6 +411,34 @@ describe('BattleEngine', () => {
       eng.execute();
       expect(enemies2[0].currentHp).toBeLessThan(enemies2[0].stats.hp);
       expect(enemies2[1].currentHp).toBeLessThan(enemies2[1].stats.hp);
+    });
+
+    it('gold_bonus ability applies buff and grants 1.5x EXP on victory', () => {
+      // Give hero the gold_find ability
+      party[0].abilities.push('gold_find');
+      party[0].currentSp = 50;
+
+      engine.setAction(ActionType.ABILITY, {
+        abilityId: 'gold_find',
+        target: party[0],
+      });
+      engine.execute();
+      expect(engine.lastResult.type).toBe('buff');
+      expect(engine.lastResult.effectType).toBe('gold_bonus');
+      expect(engine.buffs.some((b) => b.type === 'gold_bonus')).toBe(true);
+
+      // Kill enemy and check EXP is boosted
+      enemies[0].currentHp = 0;
+      const baseExp = enemies[0].exp;
+      engine.checkEnd();
+      expect(engine.expGained).toBe(Math.floor(baseExp * 1.5));
+    });
+
+    it('victory without gold_bonus gives normal EXP', () => {
+      enemies[0].currentHp = 0;
+      const baseExp = enemies[0].exp;
+      engine.checkEnd();
+      expect(engine.expGained).toBe(baseExp);
     });
 
     it('AoE heal heals all allies', () => {

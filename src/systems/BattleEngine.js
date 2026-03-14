@@ -145,7 +145,12 @@ export class BattleEngine {
     const allPartyDead = this.party.every((m) => m.currentHp <= 0);
 
     if (allEnemiesDead) {
-      this.expGained = this.enemies.reduce((sum, e) => sum + e.exp, 0);
+      let exp = this.enemies.reduce((sum, e) => sum + e.exp, 0);
+      // Gold Find bonus: 1.5x EXP if any party member has gold_bonus buff active
+      if (this.buffs.some((b) => b.type === 'gold_bonus')) {
+        exp = Math.floor(exp * 1.5);
+      }
+      this.expGained = exp;
       this.phase = BattlePhase.VICTORY;
       return 'victory';
     }
@@ -254,6 +259,16 @@ export class BattleEngine {
   _executeAbility(caster, ability, target) {
     if (ability.effectType === 'scan') {
       this.lastResult = { type: 'scan', actor: caster, target, enemy: target };
+      return;
+    }
+
+    if (ability.effectType === 'gold_bonus') {
+      this.buffs.push({
+        target: caster,
+        type: 'gold_bonus',
+        turnsLeft: 99, // lasts the whole battle
+      });
+      this.lastResult = { type: 'buff', actor: caster, effectType: 'gold_bonus' };
       return;
     }
 

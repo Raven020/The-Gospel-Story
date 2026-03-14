@@ -171,6 +171,75 @@ describe('GameState', () => {
     });
   });
 
+  describe('canAccessMap', () => {
+    it('allows access to arc 1 maps at start', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.canAccessMap('jerusalem')).toBe(true);
+      expect(gs.canAccessMap('temple')).toBe(true);
+    });
+
+    it('blocks access to arc 2 maps when current_arc is 1', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.canAccessMap('jordan_river')).toBe(false);
+      expect(gs.canAccessMap('wilderness')).toBe(false);
+    });
+
+    it('blocks access to arc 3 maps when current_arc is 2', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.questFlags.current_arc = 2;
+      expect(gs.canAccessMap('galilee')).toBe(false);
+      expect(gs.canAccessMap('capernaum')).toBe(false);
+    });
+
+    it('allows access to all maps when current_arc is 3', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.questFlags.current_arc = 3;
+      expect(gs.canAccessMap('jerusalem')).toBe(true);
+      expect(gs.canAccessMap('jordan_river')).toBe(true);
+      expect(gs.canAccessMap('galilee')).toBe(true);
+    });
+
+    it('allows access to unlisted maps from any arc', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.canAccessMap('demo')).toBe(true);
+      expect(gs.canAccessMap('unknown_map')).toBe(true);
+    });
+  });
+
+  describe('advanceArc', () => {
+    it('advances current_arc forward', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.questFlags.current_arc).toBe(1);
+      gs.advanceArc(2);
+      expect(gs.questFlags.current_arc).toBe(2);
+    });
+
+    it('does not regress current_arc', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.questFlags.current_arc = 3;
+      gs.advanceArc(2);
+      expect(gs.questFlags.current_arc).toBe(3);
+    });
+
+    it('persists through save/load', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.advanceArc(2);
+      gs.save(0);
+
+      const gs2 = new GameState();
+      gs2.load(0);
+      expect(gs2.questFlags.current_arc).toBe(2);
+    });
+  });
+
   describe('static methods', () => {
     it('hasSave returns false for empty slot', () => {
       expect(GameState.hasSave(0)).toBe(false);
