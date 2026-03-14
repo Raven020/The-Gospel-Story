@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 543 tests passing across 39 test suites (vitest)
+- **Tests:** 555 tests passing across 39 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -18,7 +18,7 @@
 | P3.11 | Out of scope | **Three roster members have placeholder data** — `james_alphaeus`, `thaddaeus`, `simon_zealot` have `role: 'tbd'` and empty `abilities: []` arrays. Per MVP scope only Peter, Andrew, James, John, Philip, Nathanael are in MVP. |
 
 ### Resolved P3 Items (for reference)
-P3.1 (Display.js tests), P3.2 (tileset tests), P3.3 (UIChrome/Colors tests), P3.4 (EventSystem command tests), P3.5 (BattleScene sub-flow tests + target selection bug fix), P3.6 (OverworldScene gap tests), P3.7 (PauseMenu sub-menu delegation tests), P3.8 (demo.js exclusion — by design), P3.9 (ability menu drawPanel), P3.10 (AbilityCategory.SCRIPTURE — by design), P3.12 (wait frame-rate — fixed timestep), P3.13 (dialogue key validation), P3.14 (warp target validation), P3.15 (Inventory.fromJSON unknown ID filtering).
+P3.1 (Display.js tests), P3.2 (tileset tests), P3.3 (UIChrome/Colors tests), P3.4 (EventSystem command tests), P3.5 (BattleScene sub-flow tests + target selection bug fix), P3.6 (OverworldScene gap tests), P3.7 (PauseMenu sub-menu delegation tests), P3.8 (demo.js exclusion — by design), P3.9 (ability menu drawPanel), P3.10 (AbilityCategory.SCRIPTURE — by design), P3.12 (wait frame-rate — fixed timestep), P3.13 (dialogue key validation), P3.14 (warp target validation), P3.15 (Inventory.fromJSON unknown ID filtering), P3.16 (dialogue effects: playSound/playMusic/setNpcState/triggerEvent), P3.17 (enemy AI with abilities), P3.18 (dead code cleanup).
 
 ### Bug Fixes Discovered During Testing
 - **BattleScene target selection was broken** — `_handleActionInput()` had `if (this._selectingTarget) return;` which silently dropped all target input. Fixed to call `_handleTargetInput()`. Without this fix, players could never confirm a target after selecting a single-enemy ability.
@@ -61,6 +61,8 @@ All 10 phases confirmed complete by audit:
 - **Walk cycle animation** — Deferred (single-frame per direction)
 - **Scripture difficulty** — correct=150, wrong=60 power
 - **Enemy defense** — BattleEngine checks target.stats.def first, falls back to str
+- **Enemy AI** — Basic AI: 70% attack / 30% ability; Boss AI: 50/50; enemies have themed abilities
+- **Dialogue effects** — All 8 effect types fully wired (setFlag, giveItem, removeItem, recruitMember, playSound, playMusic, setNpcState, triggerEvent)
 
 ---
 

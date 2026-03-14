@@ -353,6 +353,121 @@ describe('OverworldScene', () => {
     expect(scn._inBattle).toBe(true);
   });
 
+  // --- Dialogue effect: playSound ---
+  it('handleDialogueEffect playSound calls audioManager.playSFX', async () => {
+    const { audioManager } = await import('../../audio/AudioManager.js');
+    const spy = vi.spyOn(audioManager, 'playSFX');
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleDialogueEffect({ type: 'playSound', sfxId: 'menu_select' });
+    expect(spy).toHaveBeenCalledWith('menu_select');
+    spy.mockRestore();
+  });
+
+  // --- Dialogue effect: playMusic ---
+  it('handleDialogueEffect playMusic calls audioManager.playBGM', async () => {
+    const { audioManager } = await import('../../audio/AudioManager.js');
+    const spy = vi.spyOn(audioManager, 'playBGM');
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleDialogueEffect({ type: 'playMusic', trackId: 'battle' });
+    expect(spy).toHaveBeenCalledWith('battle');
+    spy.mockRestore();
+  });
+
+  // --- Dialogue effect: setNpcState updates dialogue ---
+  it('handleDialogueEffect setNpcState updates NPC dialogue key', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    const map = createTestMap();
+    map.npcs = [{ id: 'npc1', sprite: 's', x: 3, y: 3, facing: 'down', dialogue: 'old_key', movement: 'static' }];
+    scn.loadMap(map, createTestTileset(), 5, 5);
+
+    scn._handleDialogueEffect({ type: 'setNpcState', npcId: 'npc1', dialogue: 'new_key' });
+    expect(scn.npcManager.npcs[0].dialogue).toBe('new_key');
+  });
+
+  // --- Dialogue effect: setNpcState removes NPC ---
+  it('handleDialogueEffect setNpcState visible:false removes NPC', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    const map = createTestMap();
+    map.npcs = [{ id: 'npc1', sprite: 's', x: 3, y: 3, facing: 'down', dialogue: 'key', movement: 'static' }];
+    scn.loadMap(map, createTestTileset(), 5, 5);
+    expect(scn.npcManager.npcs.length).toBe(1);
+
+    scn._handleDialogueEffect({ type: 'setNpcState', npcId: 'npc1', visible: false });
+    expect(scn.npcManager.npcs.length).toBe(0);
+  });
+
+  // --- Dialogue effect: triggerEvent starts cutscene ---
+  it('handleDialogueEffect triggerEvent starts registered cutscene', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+    scn.registerCutscene('my_event', [{ type: 'wait', frames: 10 }]);
+
+    scn._handleDialogueEffect({ type: 'triggerEvent', eventId: 'my_event' });
+    expect(scn.eventSystem.isActive()).toBe(true);
+  });
+
   // --- P3.6: Defeat path ---
   it('defeat transitions to title screen', () => {
     const gameState = {

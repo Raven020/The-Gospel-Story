@@ -330,12 +330,83 @@ export class BattleEngine {
   }
 
   _executeEnemyAI(enemy) {
-    // Simple AI: random attack on alive party member
     const alive = this.party.filter((m) => m.currentHp > 0);
     if (alive.length === 0) return;
 
     const target = alive[Math.floor(Math.random() * alive.length)];
-    const power = 80 + Math.floor(Math.random() * 40); // 80-120
+
+    // Decide whether to use an ability
+    const hasAbilities = enemy.abilities && enemy.abilities.length > 0;
+    const abilityChance = enemy.ai === 'boss' ? 0.5 : 0.3;
+    const useAbility = hasAbilities && Math.random() < abilityChance;
+
+    if (useAbility) {
+      const ability = enemy.abilities[Math.floor(Math.random() * enemy.abilities.length)];
+      this._executeEnemyAbility(enemy, ability, target);
+    } else {
+      this._doEnemyBasicAttack(enemy, target);
+    }
+  }
+
+  _executeEnemyAbility(enemy, ability, target) {
+    if (ability.type === 'damage') {
+      const def = target.stats.def !== undefined ? target.stats.def : target.stats.str;
+      let defVal = def;
+      if (this.buffs.some((b) => b.target === target && b.type === 'defend')) {
+        defVal = defVal * 2;
+      }
+      if (this.buffs.some((b) => b.target === target && b.type === 'buff_def')) {
+        defVal = defVal * 2;
+      }
+      if (this.buffs.some((b) => b.target === target && b.type === 'debuff_def')) {
+        defVal = Math.floor(defVal * 0.5);
+      }
+
+      let damage = calcDamage(enemy.stats.wis, ability.power, defVal);
+      if (this.buffs.some((b) => b.target === target && b.type === 'shield')) {
+        damage = Math.max(1, Math.floor(damage * 0.5));
+      }
+
+      target.currentHp = Math.max(0, target.currentHp - damage);
+      this.lastResult = {
+        type: 'damage',
+        actor: enemy,
+        target,
+        damage,
+        abilityName: ability.name,
+        targetType: 'party',
+      };
+    } else if (ability.type.startsWith('debuff')) {
+      this.buffs.push({
+        target,
+        type: ability.type,
+        turnsLeft: 3,
+      });
+      this.lastResult = {
+        type: 'debuff',
+        actor: enemy,
+        target,
+        effectType: ability.type,
+        abilityName: ability.name,
+        targetType: 'party',
+      };
+    } else if (ability.type.startsWith('buff')) {
+      this.buffs.push({
+        target: enemy,
+        type: ability.type,
+        turnsLeft: 3,
+      });
+      this.lastResult = {
+        type: 'buff',
+        actor: enemy,
+        effectType: ability.type,
+        abilityName: ability.name,
+      };
+    }
+  }
+
+  _doEnemyBasicAttack(enemy, target) {
+    const power = 80 + Math.floor(Math.random() * 40);
 
     let str = enemy.stats.str;
     if (this.buffs.some((b) => b.target === enemy && b.type === 'buff_str')) {

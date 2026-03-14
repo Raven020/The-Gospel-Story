@@ -12,6 +12,9 @@ export const ENEMIES = {
     exp: 12,
     ai: 'basic',
     weakness: 'truth',
+    abilities: [
+      { id: 'cloud_of_doubt', name: 'Cloud of Doubt', power: 60, type: 'debuff_def' },
+    ],
   },
   fear: {
     id: 'fear',
@@ -20,6 +23,9 @@ export const ENEMIES = {
     exp: 14,
     ai: 'basic',
     weakness: 'prayer',
+    abilities: [
+      { id: 'paralyzing_fear', name: 'Paralyzing Fear', power: 55, type: 'damage' },
+    ],
   },
   temptation: {
     id: 'temptation',
@@ -28,6 +34,9 @@ export const ENEMIES = {
     exp: 16,
     ai: 'basic',
     weakness: 'scripture',
+    abilities: [
+      { id: 'lure', name: 'Lure', power: 50, type: 'debuff_str' },
+    ],
   },
   pride: {
     id: 'pride',
@@ -36,6 +45,9 @@ export const ENEMIES = {
     exp: 18,
     ai: 'basic',
     weakness: 'truth',
+    abilities: [
+      { id: 'boastful_strike', name: 'Boastful Strike', power: 70, type: 'damage' },
+    ],
   },
   greed: {
     id: 'greed',
@@ -44,6 +56,9 @@ export const ENEMIES = {
     exp: 15,
     ai: 'basic',
     weakness: 'miracle',
+    abilities: [
+      { id: 'drain', name: 'Drain', power: 45, type: 'damage' },
+    ],
   },
   deception: {
     id: 'deception',
@@ -52,6 +67,9 @@ export const ENEMIES = {
     exp: 13,
     ai: 'basic',
     weakness: 'truth',
+    abilities: [
+      { id: 'false_image', name: 'False Image', power: 0, type: 'buff_def' },
+    ],
   },
 
   // Boss enemies
@@ -63,6 +81,11 @@ export const ENEMIES = {
     ai: 'boss',
     weakness: 'scripture',
     isBoss: true,
+    abilities: [
+      { id: 'dark_temptation', name: 'Dark Temptation', power: 80, type: 'damage' },
+      { id: 'lies_of_the_enemy', name: 'Lies of the Enemy', power: 0, type: 'debuff_str' },
+      { id: 'shadow_veil', name: 'Shadow Veil', power: 0, type: 'buff_def' },
+    ],
   },
 };
 
@@ -81,5 +104,6 @@ export function createEnemy(enemyId) {
     ai: def.ai,
     weakness: def.weakness,
     isBoss: def.isBoss || false,
+    abilities: def.abilities || [],
   };
 }

@@ -40,6 +40,30 @@ describe('ENEMIES data', () => {
     expect(ENEMIES.satan.stats.hp).toBeGreaterThan(200);
     expect(ENEMIES.satan.stats.str).toBeGreaterThan(30);
   });
+
+  it('each enemy has abilities array', () => {
+    for (const [id, enemy] of Object.entries(ENEMIES)) {
+      expect(Array.isArray(enemy.abilities)).toBe(true);
+      expect(enemy.abilities.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('satan has multiple boss abilities', () => {
+    expect(ENEMIES.satan.abilities.length).toBeGreaterThanOrEqual(3);
+    const types = ENEMIES.satan.abilities.map(a => a.type);
+    expect(types).toContain('damage');
+  });
+
+  it('enemy abilities have required fields', () => {
+    for (const enemy of Object.values(ENEMIES)) {
+      for (const ability of enemy.abilities) {
+        expect(ability.id).toBeTruthy();
+        expect(ability.name).toBeTruthy();
+        expect(typeof ability.power).toBe('number');
+        expect(ability.type).toBeTruthy();
+      }
+    }
+  });
 });
 
 describe('createEnemy', () => {
@@ -70,5 +94,11 @@ describe('createEnemy', () => {
   it('regular enemy instance has isBoss false', () => {
     const doubt = createEnemy('doubt');
     expect(doubt.isBoss).toBe(false);
+  });
+
+  it('copies abilities to enemy instance', () => {
+    const enemy = createEnemy('doubt');
+    expect(Array.isArray(enemy.abilities)).toBe(true);
+    expect(enemy.abilities.length).toBeGreaterThan(0);
   });
 });

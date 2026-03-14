@@ -207,6 +207,73 @@ describe('BattleEngine', () => {
       expect(engine.lastResult.type).toBe('damage');
       expect(engine.lastResult.targetType).toBe('party');
     });
+
+    it('enemy uses abilities based on AI type', () => {
+      // Test with a boss enemy that has abilities
+      const satan = createEnemy('satan');
+      satan.stats.spd = 99;
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+
+      // Run many trials to verify abilities are used at least sometimes
+      let abilityUsed = false;
+      for (let i = 0; i < 50; i++) {
+        testParty[0].currentHp = 200;
+        const eng = new BattleEngine(testParty, [createEnemy('satan')]);
+        eng.enemies[0].stats.spd = 99;
+        eng.buildTurnOrder();
+        eng.nextTurn();
+        eng.execute();
+        if (eng.lastResult.abilityName || eng.lastResult.type === 'debuff' || eng.lastResult.type === 'buff') {
+          abilityUsed = true;
+          break;
+        }
+      }
+      expect(abilityUsed).toBe(true);
+    });
+
+    it('basic enemy can use abilities', () => {
+      const doubt = createEnemy('doubt');
+      doubt.stats.spd = 99;
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+
+      let abilityUsed = false;
+      for (let i = 0; i < 50; i++) {
+        testParty[0].currentHp = 200;
+        const eng = new BattleEngine(testParty, [createEnemy('doubt')]);
+        eng.enemies[0].stats.spd = 99;
+        eng.buildTurnOrder();
+        eng.nextTurn();
+        eng.execute();
+        if (eng.lastResult.type === 'debuff' || eng.lastResult.abilityName) {
+          abilityUsed = true;
+          break;
+        }
+      }
+      expect(abilityUsed).toBe(true);
+    });
+
+    it('enemy abilities have correct result types', () => {
+      // Manually test _executeEnemyAbility via the engine
+      const doubt = createEnemy('doubt');
+      doubt.stats.spd = 99;
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+      const eng = new BattleEngine(testParty, [doubt]);
+
+      // Test damage ability
+      eng._executeEnemyAbility(doubt, { id: 'test', name: 'Test Hit', power: 60, type: 'damage' }, testParty[0]);
+      expect(eng.lastResult.type).toBe('damage');
+      expect(eng.lastResult.abilityName).toBe('Test Hit');
+
+      // Test debuff ability
+      eng._executeEnemyAbility(doubt, { id: 'test_debuff', name: 'Weaken', power: 0, type: 'debuff_str' }, testParty[0]);
+      expect(eng.lastResult.type).toBe('debuff');
+      expect(eng.buffs.some(b => b.type === 'debuff_str')).toBe(true);
+
+      // Test buff ability (self-buff)
+      eng._executeEnemyAbility(doubt, { id: 'test_buff', name: 'Fortify', power: 0, type: 'buff_def' }, testParty[0]);
+      expect(eng.lastResult.type).toBe('buff');
+      expect(eng.buffs.some(b => b.target === doubt && b.type === 'buff_def')).toBe(true);
+    });
   });
 
   describe('checkEnd', () => {

@@ -144,14 +144,6 @@ export class OverworldScene {
       this.eventSystem.questFlags = this.gameState.questFlags;
     }
 
-    // Auto-register dialogue for NPCs on this map
-    if (map.npcs) {
-      for (const npc of map.npcs) {
-        if (npc.dialogue && !this._dialogueCache[npc.dialogue]) {
-          // Dialogue will be registered externally if not already cached
-        }
-      }
-    }
   }
 
   /**
@@ -445,14 +437,43 @@ export class OverworldScene {
       case 'removeItem':
         this.gameState.inventory.remove(effect.itemId, effect.count || 1);
         break;
-      default:
-        console.log('[Effect] Unhandled:', effect.type, effect);
+      case 'playSound':
+        audioManager.playSFX(effect.sfxId);
+        break;
+      case 'playMusic':
+        audioManager.playBGM(effect.trackId);
+        break;
+      case 'setNpcState': {
+        const npc = this.npcManager.npcs.find(n => n.id === effect.npcId);
+        if (npc) {
+          if (effect.dialogue !== undefined) npc.dialogue = effect.dialogue;
+          if (effect.visible === false) {
+            const idx = this.npcManager.npcs.indexOf(npc);
+            if (idx !== -1) this.npcManager.npcs.splice(idx, 1);
+          }
+        }
+        break;
+      }
+      case 'triggerEvent': {
+        const script = this._cutsceneScripts[effect.eventId];
+        if (script) {
+          const commands = typeof script === 'function' ? script() : script;
+          const resolved = commands.map(cmd => {
+            if (cmd.type === 'dialogue' && typeof cmd.data === 'string') {
+              const data = this._dialogueCache[cmd.data];
+              if (data) return { ...cmd, data };
+            }
+            return cmd;
+          });
+          this.eventSystem.startEvent(resolved);
+        }
+        break;
+      }
     }
   }
 
-  _handleMenuSelect(option) {
-    // Sub-screens will be implemented as needed (Party, Items, Save, Load, Options)
-    console.log('[Menu] Selected:', option);
+  _handleMenuSelect(_option) {
+    // Fallback for unhandled menu options (e.g. "Options" has no sub-screen yet)
   }
 
   _triggerEncounter(enemyId) {
