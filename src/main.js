@@ -50,6 +50,10 @@ import {
   TOWNSWOMAN_1, TOWNSWOMAN_1_BACK, TOWNSWOMAN_1_LEFT,
   TEMPLE_TEACHER, TEMPLE_TEACHER_BACK, TEMPLE_TEACHER_LEFT,
 } from '../specs/sprites/townspeople.js';
+import {
+  PALETTE as youngJesusPalette,
+  YOUNG_JESUS, YOUNG_JESUS_BACK, YOUNG_JESUS_LEFT,
+} from '../specs/sprites/young-jesus.js';
 
 const display = new Display();
 const input = new InputSystem();
@@ -104,6 +108,10 @@ const spriteRegistry = {
     palette: townsPalette,
     sprites: { front: TEMPLE_TEACHER, back: TEMPLE_TEACHER_BACK, left: TEMPLE_TEACHER_LEFT },
   },
+  young_jesus: {
+    palette: youngJesusPalette,
+    sprites: { front: YOUNG_JESUS, back: YOUNG_JESUS_BACK, left: YOUNG_JESUS_LEFT },
+  },
 };
 
 // Title scene
@@ -126,7 +134,7 @@ const titleScene = new TitleScene({
     for (let i = 0; i < 3; i++) {
       if (GameState.hasSave(i)) {
         gameState.load(i);
-        const mapEntry = overworld._mapRegistry[gameState.currentMap];
+        const mapEntry = overworld.getMapEntry(gameState.currentMap);
         if (mapEntry) {
           overworld.loadMap(mapEntry.map, mapEntry.tileset, gameState.playerX, gameState.playerY);
         }

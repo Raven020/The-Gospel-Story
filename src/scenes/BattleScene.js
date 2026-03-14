@@ -319,6 +319,11 @@ export class BattleScene {
 
     if (this.input.pressed(Actions.CONFIRM)) {
       const ability = this._abilityList[this._abilityCursor];
+      const member = this.engine.currentActor?.entity;
+      // Block selection if player cannot afford the SP cost
+      if (member && member.currentSp < ability.spCost) {
+        return;
+      }
       this._selectingAbility = false;
 
       // Check if needs target selection
@@ -595,6 +600,8 @@ export class BattleScene {
       const color = result.correct ? Colors.DMG_HEAL : Colors.DMG_CRIT;
       const text = result.correct ? `${result.damage}!` : String(result.damage);
       this.hud.addFloater(100, 40, text, color);
+    } else if (result.type === 'fail') {
+      this.hud.addFloater(100, 110, 'No SP!', Colors.TEXT_DIM);
     }
   }
 
@@ -679,16 +686,26 @@ export class BattleScene {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    drawText(ctx, 'VICTORY', 90, 50, Colors.TEXT_GOLD);
-    drawText(ctx, `EXP: ${this.engine.expGained}`, 84, 70, Colors.TEXT_LIGHT);
-    drawText(ctx, 'Press Z', 90, 100, Colors.TEXT_DIM);
+    const victoryText = 'VICTORY';
+    const victoryX = Math.floor((SCREEN_WIDTH - victoryText.length * 6) / 2);
+    drawText(ctx, victoryText, victoryX, 50, Colors.TEXT_GOLD);
+    const expText = `EXP: ${this.engine.expGained}`;
+    const expX = Math.floor((SCREEN_WIDTH - expText.length * 6) / 2);
+    drawText(ctx, expText, expX, 70, Colors.TEXT_LIGHT);
+    const pressText = 'Press Z';
+    const pressX = Math.floor((SCREEN_WIDTH - pressText.length * 6) / 2);
+    drawText(ctx, pressText, pressX, 100, Colors.TEXT_DIM);
   }
 
   _renderDefeat(ctx) {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    drawText(ctx, 'FALLEN', 96, 50, Colors.DMG_CRIT);
-    drawText(ctx, 'Press Z', 90, 100, Colors.TEXT_DIM);
+    const fallenText = 'FALLEN';
+    const fallenX = Math.floor((SCREEN_WIDTH - fallenText.length * 6) / 2);
+    drawText(ctx, fallenText, fallenX, 50, Colors.DMG_CRIT);
+    const defPressText = 'Press Z';
+    const defPressX = Math.floor((SCREEN_WIDTH - defPressText.length * 6) / 2);
+    drawText(ctx, defPressText, defPressX, 100, Colors.TEXT_DIM);
   }
 }

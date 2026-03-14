@@ -108,6 +108,14 @@ export class OverworldScene {
     this._mapRegistry[mapId] = { map, tileset };
   }
 
+  /**
+   * Get a registered map entry by ID.
+   * @returns {{ map, tileset } | undefined}
+   */
+  getMapEntry(mapId) {
+    return this._mapRegistry[mapId];
+  }
+
   loadMap(map, tileset, spawnX, spawnY) {
     this.map = map;
     this.tileset = tileset;

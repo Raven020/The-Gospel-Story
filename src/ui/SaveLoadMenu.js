@@ -163,10 +163,13 @@ export class SaveLoadMenu {
 
       if (info) {
         // Leader name and level
-        drawText(ctx, `Lv ${info.level}`, TEXT_X + 60, y + 2, Colors.TEXT_DIM);
+        if (info.name) {
+          drawText(ctx, info.name, TEXT_X + 42, y + 2, Colors.TEXT_LIGHT);
+        }
+        drawText(ctx, `Lv ${info.level}`, TEXT_X + 90, y + 2, Colors.TEXT_DIM);
         // Playtime
         const timeStr = this._formatPlaytime(info.playtime || 0);
-        drawText(ctx, timeStr, TEXT_X + 108, y + 2, Colors.TEXT_DIM);
+        drawText(ctx, timeStr, TEXT_X + 126, y + 2, Colors.TEXT_DIM);
         // Map name
         drawText(ctx, info.map || '', TEXT_X, y + 14, Colors.TEXT_DIM);
       } else {

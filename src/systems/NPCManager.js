@@ -6,13 +6,6 @@
 import { TILE_SIZE } from '../engine/TilemapRenderer.js';
 import { Actions } from './InputSystem.js';
 
-const OPPOSITE_DIR = {
-  [Actions.UP]: Actions.DOWN,
-  [Actions.DOWN]: Actions.UP,
-  [Actions.LEFT]: Actions.RIGHT,
-  [Actions.RIGHT]: Actions.LEFT,
-};
-
 const DIR_OFFSETS = {
   [Actions.UP]: { dx: 0, dy: -1 },
   [Actions.DOWN]: { dx: 0, dy: 1 },
@@ -80,7 +73,12 @@ export class NPC {
     this._wanderTimer = 0;
 
     // Pick random direction
-    const shuffled = [...ALL_DIRS].sort(() => Math.random() - 0.5);
+    // Fisher-Yates shuffle for uniform random direction selection
+    const shuffled = [...ALL_DIRS];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     for (const dir of shuffled) {
       const offset = DIR_OFFSETS[dir];
       const newX = this.tileX + offset.dx;

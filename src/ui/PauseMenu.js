@@ -146,7 +146,7 @@ export class PauseMenu {
         // Highlight bar
         ctx.fillStyle = Colors.CURSOR_BG;
         ctx.fillRect(PANEL_X + 2, y - 1, PANEL_W - 4, ROW_HEIGHT - 1);
-        drawCursor(ctx, CURSOR_X, y + 1, 0, Colors.TEXT_LIGHT);
+        drawCursor(ctx, CURSOR_X, y + 1, frameCount, Colors.TEXT_LIGHT);
         drawText(ctx, OPTIONS[i], TEXT_X, y, Colors.TEXT_LIGHT);
       } else {
         drawText(ctx, OPTIONS[i], TEXT_X, y, Colors.TEXT_LIGHT);

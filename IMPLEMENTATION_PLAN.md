@@ -62,31 +62,31 @@ The following items were discovered by comparing every source file against every
 
 ### P2 — Correctness & Consistency Issues
 
-- [ ] **P2.1 Display not centered on screen** — `Display._onResize()` scales the canvas but does not center it (no CSS `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)`). The canvas sits at top-left of body with no letterbox centering.
+- [x] **P2.1 Display not centered on screen** — RESOLVED: CSS flexbox in index.html already centers the canvas via `display: flex; align-items: center; justify-content: center`. No code change needed.
 
-- [ ] **P2.2 Ability SP cost not enforced in BattleScene** — `_renderAbilityMenu` dims unaffordable abilities visually but they remain selectable. The `BattleEngine.execute()` deducts SP but doesn't check if the member has enough — SP can go negative.
+- [x] **P2.2 Ability SP cost not enforced in BattleScene** — RESOLVED: BattleScene._handleAbilityInput() now blocks selection if member.currentSp < ability.spCost. Also added 'fail' result type handling in _showResult() to display "No SP!" floater.
 
 - [ ] **P2.3 `TURN_START` and `SELECT_TARGET` phases are dead code** — Declared in `BattlePhase` enum but never set by the engine. `SELECT_TARGET` selection logic is handled inside `BattleScene` directly, not via the engine phase.
 
 - [x] **P2.4 Enemy defense uses `str` stat** — RESOLVED: BattleEngine now checks for target.stats.def first, falling back to str for backward compatibility with enemies that lack a def field.
 
-- [ ] **P2.5 NPC wander shuffle is biased** — `NPCManager` uses `[...ALL_DIRS].sort(() => Math.random() - 0.5)` which produces a non-uniform distribution. Should use Fisher-Yates shuffle.
+- [x] **P2.5 NPC wander shuffle is biased** — RESOLVED: Replaced `sort(() => Math.random() - 0.5)` with Fisher-Yates shuffle in NPCManager.
 
-- [ ] **P2.6 `OPPOSITE_DIR` constant is dead code in NPCManager** — Defined but never referenced.
+- [x] **P2.6 `OPPOSITE_DIR` constant is dead code in NPCManager** — RESOLVED: Removed unused OPPOSITE_DIR constant from NPCManager.
 
-- [ ] **P2.7 BattleHUD floater fade glitch** — Fade formula `alpha = 1 - (f.frame - 30) / 10` makes the last frame (40) fully opaque before removal, creating a 1-frame flash. Should be `alpha = 1 - (f.frame - 30) / 10` capped at 0.
+- [x] **P2.7 BattleHUD floater fade glitch** — RESOLVED: Code already uses `Math.max(0, alpha)` with `alpha <= 0` continue guard, preventing the 1-frame flash. No change needed.
 
 - [x] **P2.8 `autoAdvanceSingleChoice` skips choice effects** — RESOLVED: When a single valid choice auto-advances, its effects array is now executed before following choice.next.
 
-- [ ] **P2.9 PauseMenu cursor never blinks** — `render()` passes hardcoded `0` as `frameCount` to `drawCursor()`, so the cursor is always visible. Spec says it should blink at 30-frame intervals.
+- [x] **P2.9 PauseMenu cursor never blinks** — RESOLVED: drawCursor() now receives live frameCount instead of hardcoded 0.
 
-- [ ] **P2.10 SaveLoadMenu omits leader name display** — The slot info panel renders level, playtime, and map but drops the leader/character name despite `info` containing it.
+- [x] **P2.10 SaveLoadMenu omits leader name display** — RESOLVED: GameState.getSaveInfo() now returns `name` field. SaveLoadMenu renders leader name in slot info.
 
-- [ ] **P2.11 `BattleScene._renderVictory` text not centered** — "VICTORY" at hardcoded x=90 and "FALLEN" at x=96 are not calculated from `SCREEN_WIDTH`.
+- [x] **P2.11 `BattleScene._renderVictory` text not centered** — RESOLVED: Text positions now calculated dynamically from SCREEN_WIDTH and text length.
 
-- [ ] **P2.12 `onContinue` accesses private `overworld._mapRegistry`** — In `main.js`, the continue-game callback reads `overworld._mapRegistry[mapId]` — accessing a private field.
+- [x] **P2.12 `onContinue` accesses private `overworld._mapRegistry`** — RESOLVED: Added public getMapEntry(mapId) to OverworldScene. main.js now uses the public API.
 
-- [ ] **P2.13 `young_jesus` NPC uses wrong sprite** — In `temple.js`, the `young_jesus` NPC has `sprite: 'townspeople_elder_a'` — same sprite as temple teachers/guards. Should use the young Jesus sprite from `specs/sprites/young-jesus.js`.
+- [x] **P2.13 `young_jesus` NPC uses wrong sprite** — RESOLVED: temple.js now uses 'young_jesus' sprite key. young_jesus sprite registered in main.js from specs/sprites/young-jesus.js.
 
 - [ ] **P2.14 `GameState.deserializeMember` skips `createMember` re-hydration** — If `partyData.js` adds new member fields in the future, saved games won't have them. Members loaded from saves are shallow copies of raw JSON, not re-created through the factory.
 

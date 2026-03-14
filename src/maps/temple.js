@@ -162,7 +162,7 @@ export const MAP = {
     },
     {
       id: 'young_jesus',
-      sprite: 'townspeople_elder_a',
+      sprite: 'young_jesus',
       x: 10,
       y: 3,
       facing: 'down',

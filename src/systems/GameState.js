@@ -188,6 +188,7 @@ export class GameState {
         timestamp: data.timestamp,
         playtime: data.playtime,
         map: data.currentMap,
+        name: data.party.active[0]?.name || '',
         level: data.party.active[0]?.level || 1,
       };
     } catch {
