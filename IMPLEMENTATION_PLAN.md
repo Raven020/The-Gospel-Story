@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 463 tests passing across 35 test suites (vitest)
+- **Tests:** 500 tests passing across 38 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -95,8 +95,8 @@ The following items were discovered by comparing every source file against every
 ### P3 — Quality, Polish & Test Coverage
 
 - [ ] **P3.1 No test for Display.js** — The only engine module with zero test coverage.
-- [ ] **P3.2 No tests for tilesets** — No validation that palette keys in TILES exist in PALETTE, that tile arrays are 16x16, etc.
-- [ ] **P3.3 No tests for UIChrome.js or Colors.js** — Core rendering primitives are untested.
+- [x] **P3.2 No tests for tilesets** — RESOLVED: Added tileset validation tests (20 tests across 4 tilesets) checking palette transparency key, color string validity, 16×16 tile dimensions, and palette key referential integrity.
+- [x] **P3.3 No tests for UIChrome.js or Colors.js** — RESOLVED: Added UIChrome tests (9 tests for drawPanel, drawCursor, drawAdvanceArrow, drawBar) and Colors tests (8 tests validating all color constant groups).
 - [x] **P3.4 EventSystem commands untested** — RESOLVED: Added 10 tests covering `moveNPC`, `movePlayer`, `panCamera`, `returnCamera`, `fadeOut`, `fadeIn`, `flash`, plus edge cases (empty path, missing NPC, unknown command). EventSystem now has 22 tests total.
 - [ ] **P3.5 BattleScene sub-flows untested** — Ability→target, scripture input, target navigation, enemy turn, execute phase, victory/defeat renders have no tests.
 - [ ] **P3.6 OverworldScene gaps** — No tests for: encounter triggering, defeat path, cutscene handling, dialogue effects, unregistered NPC dialogue fallback.
