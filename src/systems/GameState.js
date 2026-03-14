@@ -227,9 +227,17 @@ function serializeMember(m) {
 }
 
 function deserializeMember(data) {
+  // Re-hydrate through createMember to pick up any new fields added to the
+  // roster since this save was created, then overlay saved runtime state.
+  const fresh = createMember(data.id, data.level);
   return {
-    ...data,
+    ...fresh,
+    exp: data.exp,
+    expToNext: data.expToNext,
     stats: { ...data.stats },
+    currentHp: data.currentHp,
+    currentSp: data.currentSp,
     abilities: [...data.abilities],
+    betrayalStat: data.betrayalStat,
   };
 }

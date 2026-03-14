@@ -129,6 +129,36 @@ describe('GameState', () => {
       expect(gs2.currentMap).toBe('jerusalem');
     });
 
+    it('preserves saved runtime state (HP/SP/exp) after load', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.party.active[0].currentHp = 42;
+      gs.party.active[0].currentSp = 17;
+      gs.party.active[0].exp = 25;
+
+      gs.save(0);
+
+      const gs2 = new GameState();
+      gs2.load(0);
+      expect(gs2.party.active[0].currentHp).toBe(42);
+      expect(gs2.party.active[0].currentSp).toBe(17);
+      expect(gs2.party.active[0].exp).toBe(25);
+    });
+
+    it('re-hydrates members through createMember on load', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.save(0);
+
+      const gs2 = new GameState();
+      gs2.load(0);
+      const member = gs2.party.active[0];
+      // createMember sets these fields — verify they survive re-hydration
+      expect(member.role).toBe('leader');
+      expect(member.sprite).toBe('jesus');
+      expect(member.isJesus).toBe(true);
+    });
+
     it('returns false for empty slot', () => {
       const gs = new GameState();
       expect(gs.load(0)).toBe(false);

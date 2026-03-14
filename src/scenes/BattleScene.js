@@ -105,10 +105,6 @@ export class BattleScene {
         this._handleActionInput();
         break;
 
-      case BattlePhase.SELECT_TARGET:
-        this._handleTargetInput();
-        break;
-
       case BattlePhase.ENEMY_TURN:
         this.engine.execute();
         this._showResult();

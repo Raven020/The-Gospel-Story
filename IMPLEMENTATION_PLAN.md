@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 437 tests passing across 35 test suites (vitest)
+- **Tests:** 439 tests passing across 35 test suites (vitest)
 - **Specs:** 12 documents fully authored
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -66,7 +66,7 @@ The following items were discovered by comparing every source file against every
 
 - [x] **P2.2 Ability SP cost not enforced in BattleScene** — RESOLVED: BattleScene._handleAbilityInput() now blocks selection if member.currentSp < ability.spCost. Also added 'fail' result type handling in _showResult() to display "No SP!" floater.
 
-- [ ] **P2.3 `TURN_START` and `SELECT_TARGET` phases are dead code** — Declared in `BattlePhase` enum but never set by the engine. `SELECT_TARGET` selection logic is handled inside `BattleScene` directly, not via the engine phase.
+- [x] **P2.3 `TURN_START` and `SELECT_TARGET` phases are dead code** — RESOLVED: Removed both unused enum entries from `BattlePhase` and the unreachable `case BattlePhase.SELECT_TARGET` branch from BattleScene. Target selection is handled via `_selectingTarget` boolean sub-state while the phase stays `SELECT_ACTION`.
 
 - [x] **P2.4 Enemy defense uses `str` stat** — RESOLVED: BattleEngine now checks for target.stats.def first, falling back to str for backward compatibility with enemies that lack a def field.
 
@@ -88,7 +88,7 @@ The following items were discovered by comparing every source file against every
 
 - [x] **P2.13 `young_jesus` NPC uses wrong sprite** — RESOLVED: temple.js now uses 'young_jesus' sprite key. young_jesus sprite registered in main.js from specs/sprites/young-jesus.js.
 
-- [ ] **P2.14 `GameState.deserializeMember` skips `createMember` re-hydration** — If `partyData.js` adds new member fields in the future, saved games won't have them. Members loaded from saves are shallow copies of raw JSON, not re-created through the factory.
+- [x] **P2.14 `GameState.deserializeMember` skips `createMember` re-hydration** — RESOLVED: `deserializeMember` now calls `createMember(data.id, data.level)` to get a fresh member with all current fields, then overlays saved runtime state (HP, SP, exp, stats, abilities). New fields added to the roster are automatically available on loaded saves. 2 new tests added.
 
 ---
 

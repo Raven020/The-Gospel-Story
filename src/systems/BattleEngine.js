@@ -7,9 +7,7 @@ import { ABILITIES, TargetType, AbilityCategory } from '../data/abilities.js';
 
 export const BattlePhase = {
   INTRO: 'intro',
-  TURN_START: 'turnStart',
   SELECT_ACTION: 'selectAction',
-  SELECT_TARGET: 'selectTarget',
   EXECUTE: 'execute',
   ENEMY_TURN: 'enemyTurn',
   CHECK_END: 'checkEnd',
