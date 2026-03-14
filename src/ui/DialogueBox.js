@@ -189,13 +189,8 @@ export class DialogueBox {
       charsDrawn += line.length;
     }
 
-    // Advance arrow when fully revealed and more pages exist
-    if (this.fullyRevealed && this.pageIndex < this.pages.length - 1) {
-      drawAdvanceArrow(ctx, ARROW_X, ARROW_Y, frameCount);
-    }
-
-    // Advance arrow on last page too (signals close)
-    if (this.fullyRevealed && this.pageIndex === this.pages.length - 1) {
+    // Advance arrow when fully revealed (signals more pages or close)
+    if (this.fullyRevealed) {
       drawAdvanceArrow(ctx, ARROW_X, ARROW_Y, frameCount);
     }
   }
@@ -209,7 +204,7 @@ export class DialogueBox {
         // Highlight bar
         ctx.fillStyle = Colors.CURSOR_BG;
         ctx.fillRect(NAME_X, y - 1, BOX_W - NAME_X * 2, LINE_HEIGHT);
-        drawCursor(ctx, NAME_X, y + 1, 0, Colors.TEXT_LIGHT); // always visible
+        drawCursor(ctx, NAME_X, y + 1, frameCount, Colors.TEXT_LIGHT);
         drawText(ctx, choice.text, NAME_X + 8, y, Colors.TEXT_LIGHT);
       } else {
         drawText(ctx, choice.text, NAME_X + 8, y, Colors.TEXT_LIGHT);

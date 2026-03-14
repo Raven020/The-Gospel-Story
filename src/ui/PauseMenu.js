@@ -116,8 +116,11 @@ export class PauseMenu {
   render(ctx, frameCount) {
     if (!this.active) return;
 
-    // If sub-menu is active, render it instead
+    // If sub-menu is active, render overlay behind it then delegate
     if (this._activeSubMenu) {
+      ctx.fillStyle = Colors.BG_OVERLAY;
+      ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+      drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
       this._activeSubMenu.render(ctx, frameCount);
       return;
     }

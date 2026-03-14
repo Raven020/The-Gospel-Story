@@ -203,6 +203,10 @@ const loop = new GameLoop(
     input.update(dt);
     transitions.update();
     scenes.update(dt);
+    // Increment playtime while playing (not on title screen)
+    if (scenes.current && scenes.current !== titleScene) {
+      gameState.playtime += dt;
+    }
   },
   () => {
     display.clear();

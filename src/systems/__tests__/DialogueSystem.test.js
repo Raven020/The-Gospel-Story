@@ -24,9 +24,13 @@ describe('evalCondition', () => {
     expect(evalCondition({ flag: 'x', op: 'lte', value: 5 }, { x: 5 })).toBe(true);
   });
 
-  it('treats missing flag as 0', () => {
-    expect(evalCondition({ flag: 'missing', op: 'eq', value: 0 }, {})).toBe(true);
-    expect(evalCondition({ flag: 'missing', op: 'gt', value: 0 }, {})).toBe(false);
+  it('treats missing flag as false', () => {
+    expect(evalCondition({ flag: 'missing', op: 'eq', value: false }, {})).toBe(true);
+    expect(evalCondition({ flag: 'missing', op: 'eq', value: 0 }, {})).toBe(false);
+  });
+
+  it('returns false for unknown operator', () => {
+    expect(evalCondition({ flag: 'x', op: 'invalid', value: 1 }, { x: 1 })).toBe(false);
   });
 });
 

@@ -311,16 +311,17 @@ export class BattleEngine {
       this.lastResult = { type: 'heal', actor: caster, heal, targets };
     } else {
       // Damage
-      let power = ability.power;
-      if (ability.bonusVsWeakness && target.weakness === ability.bonusVsWeakness) {
-        power = Math.floor(power * 1.5);
-      }
+      const basePower = ability.power;
       const targets =
         ability.target === TargetType.ALL_ENEMIES ? this.enemies.filter((e) => e.currentHp > 0) :
         [target];
 
       let totalDamage = 0;
       for (const t of targets) {
+        let power = basePower;
+        if (ability.bonusVsWeakness && t.weakness === ability.bonusVsWeakness) {
+          power = Math.floor(power * 1.5);
+        }
         const damage = calcDamage(caster.stats.wis, power, t.stats.wis || 0);
         t.currentHp = Math.max(0, t.currentHp - damage);
         totalDamage += damage;
@@ -377,6 +378,19 @@ export class BattleEngine {
         targetType: 'party',
       };
     } else if (ability.type.startsWith('debuff')) {
+      // Check for status_shield — blocks debuffs
+      if (this.buffs.some((b) => b.target === target && b.type === 'status_shield')) {
+        this.lastResult = {
+          type: 'damage',
+          actor: enemy,
+          target,
+          damage: 0,
+          abilityName: ability.name,
+          targetType: 'party',
+          blocked: true,
+        };
+        return;
+      }
       this.buffs.push({
         target,
         type: ability.type,

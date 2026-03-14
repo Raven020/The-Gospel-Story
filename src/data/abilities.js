@@ -28,6 +28,7 @@ export const ABILITIES = {
     spCost: 15,
     power: 60,
     description: 'Restore HP to one ally.',
+    bonusVsWeakness: 'prayer',
   },
   love_heal: {
     id: 'love_heal',
@@ -69,6 +70,7 @@ export const ABILITIES = {
     spCost: 30,
     power: 40,
     description: 'Deal damage to all enemies.',
+    bonusVsWeakness: 'miracle',
   },
   thunder_zeal: {
     id: 'thunder_zeal',
@@ -78,6 +80,7 @@ export const ABILITIES = {
     spCost: 20,
     power: 70,
     description: 'Deal heavy damage to one enemy.',
+    bonusVsWeakness: 'miracle',
   },
   zealous_strike: {
     id: 'zealous_strike',
@@ -87,6 +90,7 @@ export const ABILITIES = {
     spCost: 12,
     power: 50,
     description: 'A powerful physical attack.',
+    bonusVsWeakness: 'miracle',
   },
 
   // Truth abilities

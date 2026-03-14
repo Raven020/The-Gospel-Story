@@ -39,7 +39,7 @@ describe('BattleHUD', () => {
 
   it('updateFloaters removes expired floaters', () => {
     hud.addFloater(100, 50, '15', '#ff0000');
-    for (let i = 0; i < 41; i++) {
+    for (let i = 0; i < 51; i++) {
       hud.updateFloaters();
     }
     expect(hud.damageFloaters.length).toBe(0);

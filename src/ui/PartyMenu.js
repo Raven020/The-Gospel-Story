@@ -16,7 +16,7 @@ const PANEL_W = 232;
 const PANEL_H = 152;
 const HEADER_Y = 8;
 const LIST_Y = 22;
-const ROW_HEIGHT = 16;
+const ROW_HEIGHT = 18;
 const CURSOR_X = PANEL_X + 4;
 const TEXT_X = PANEL_X + 14;
 const MAX_VISIBLE = 8;
@@ -252,8 +252,9 @@ export class PartyMenu {
       const tag = i < activeLen ? 'A' : 'B';
       drawText(ctx, tag, TEXT_X, y + 2, i < activeLen ? Colors.TEXT_GOLD : Colors.TEXT_DIM);
 
-      // Name
-      drawText(ctx, member.name, TEXT_X + 12, y + 2, Colors.TEXT_LIGHT);
+      // Name (dimmed for bench members)
+      const nameColor = i < activeLen ? Colors.TEXT_LIGHT : Colors.TEXT_DIM;
+      drawText(ctx, member.name, TEXT_X + 12, y + 2, nameColor);
 
       // Level
       drawText(ctx, `Lv${member.level}`, TEXT_X + 72, y + 2, Colors.TEXT_DIM);
@@ -264,10 +265,10 @@ export class PartyMenu {
 
       // HP bar
       const barX = TEXT_X + 150;
-      drawBar(ctx, barX, y + 2, member.currentHp, member.stats.hp, 30, 4, 'hp');
+      drawBar(ctx, barX, y + 2, member.currentHp, member.stats.hp, 50, 4, 'hp');
 
       // SP bar
-      drawBar(ctx, barX, y + 8, member.currentSp, member.stats.sp, 30, 4, Colors.SP_BAR);
+      drawBar(ctx, barX, y + 8, member.currentSp, member.stats.sp, 50, 4, Colors.SP_BAR);
     }
   }
 

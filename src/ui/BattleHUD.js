@@ -35,7 +35,7 @@ export class BattleHUD {
       text: String(text),
       color,
       frame: 0,
-      maxFrames: 40,
+      maxFrames: 50,
     });
   }
 
@@ -65,7 +65,7 @@ export class BattleHUD {
 
       // Name
       const nameX = cx - Math.floor(enemy.name.length * 3);
-      drawText(ctx, enemy.name, nameX, y + 34, Colors.TEXT_LIGHT);
+      drawText(ctx, enemy.name, nameX, y + 39, Colors.TEXT_LIGHT);
 
       // HP bar
       drawBar(ctx, cx - 20, y + 44, enemy.currentHp, enemy.stats.hp, 40, 3, 'hp');
@@ -126,7 +126,7 @@ export class BattleHUD {
       if (i === this.actionCursor) {
         ctx.fillStyle = Colors.CURSOR_BG;
         ctx.fillRect(ACTION_PANEL_X + 2, y - 1, ACTION_PANEL_W - 4, 9);
-        drawCursor(ctx, ACTION_PANEL_X + 4, y + 1, 0, Colors.TEXT_LIGHT);
+        drawCursor(ctx, ACTION_PANEL_X + 4, y + 1, frameCount, Colors.TEXT_LIGHT);
       }
 
       drawText(ctx, ACTION_OPTIONS[i], ACTION_PANEL_X + 14, y, Colors.TEXT_LIGHT);
@@ -135,7 +135,7 @@ export class BattleHUD {
 
   renderFloaters(ctx) {
     for (const f of this.damageFloaters) {
-      const alpha = f.frame < 30 ? 1 : 1 - (f.frame - 30) / 10;
+      const alpha = f.frame < 40 ? 1 : 1 - (f.frame - 40) / 10;
       if (alpha <= 0) continue;
       ctx.globalAlpha = Math.max(0, alpha);
       drawText(ctx, f.text, f.x, f.y, f.color);

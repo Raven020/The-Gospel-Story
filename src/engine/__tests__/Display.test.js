@@ -26,7 +26,7 @@ describe('Display', () => {
     };
     globalThis.document = {
       createElement: vi.fn(() => mockCanvas),
-      body: { appendChild: vi.fn() },
+      body: { appendChild: vi.fn(), style: {} },
     };
     globalThis.window = {
       innerWidth: 960,

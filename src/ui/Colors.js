@@ -26,4 +26,5 @@ export const Colors = {
   DMG_NORMAL: '#F8F800',
   DMG_HEAL: '#40F840',
   DMG_CRIT: '#F84040',
+  DMG_MISS: '#F8F8F8',
 };

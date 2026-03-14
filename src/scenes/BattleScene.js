@@ -599,6 +599,15 @@ export class BattleScene {
       const color = result.correct ? Colors.DMG_HEAL : Colors.DMG_CRIT;
       const text = result.correct ? `${result.damage}!` : String(result.damage);
       this.hud.addFloater(100, 40, text, color);
+    } else if (result.type === 'scan') {
+      const enemy = result.enemy;
+      if (enemy) {
+        const info = `${enemy.name} HP:${enemy.currentHp}/${enemy.stats.hp}`;
+        this.hud.addFloater(60, 30, info, Colors.TEXT_GOLD);
+        if (enemy.weakness) {
+          this.hud.addFloater(60, 42, `Weak: ${enemy.weakness}`, Colors.DMG_HEAL);
+        }
+      }
     } else if (result.type === 'fail') {
       this.hud.addFloater(100, 110, 'No SP!', Colors.TEXT_DIM);
     }

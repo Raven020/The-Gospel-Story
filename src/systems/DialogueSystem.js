@@ -15,7 +15,7 @@ export function evalCondition(condition, questFlags) {
   if (!condition) return true;
   const flagValue = questFlags[condition.flag];
   const value = condition.value;
-  const actual = flagValue !== undefined ? flagValue : 0;
+  const actual = flagValue !== undefined ? flagValue : false;
 
   switch (condition.op) {
     case 'eq': return actual === value;
@@ -24,7 +24,7 @@ export function evalCondition(condition, questFlags) {
     case 'lt': return actual < value;
     case 'gte': return actual >= value;
     case 'lte': return actual <= value;
-    default: return true;
+    default: return false;
   }
 }
 
