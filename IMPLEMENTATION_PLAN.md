@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 604 tests passing across 42 test suites (vitest)
+- **Tests:** 621 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -14,14 +14,6 @@
 ## Remaining Work — P6 Comprehensive Audit (2026-03-16)
 
 Items sorted by priority. Each is confirmed missing/broken via code search.
-
-### P2 — Spec Divergence (Visible to Player)
-
-- **P5.17 — Map `detail` and `above` layers are empty across all maps**
-  - Every map has `detail = fill(W * H, 0)` and `above = fill(W * H, 0)` (except 2 boats in galilee)
-  - Tileset IDs 100–299 (detail/above) have zero tile definitions in any tileset
-  - Maps render completely flat with no depth layering above player sprite
-  - Need: add detail/above tile definitions to tilesets; populate layers for visual depth
 
 ### P3 — Content & Data Gaps
 
@@ -65,18 +57,14 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ### Test Coverage Gaps (non-blocking but tracked)
 
-- **T1** — `BattleScene._handleItemInput` / `_handleItemTargetInput` untested end-to-end
 - **T2** — `BattleEngine` ActionType.ITEM execution path (`useItemFn` callback) never invoked in tests
-- **T3** — `BattleEngine._executeEnemyAbility` with `status_shield` blocking (blocked:true path) untested
-- **T4** — `BattleEngine` bonusVsWeakness 1.5x multiplier never verified in tests
-- **T5** — `OverworldScene.registerMap`/`getMapEntry` zero test coverage
-- **T6** — `DialogueSystem` autoAdvanceSingleChoice path untested
 - **T7** — `TilemapRenderer.renderGroundLayers`/`renderAboveLayer` untested (only underlying `renderLayer` tested)
-- **T8** — `GameState.getMember()` exported but never directly tested
 - **T9** — OverworldScene encounter trigger via natural movement (bypassed — tests call `_triggerEncounter` directly)
 - **T10** — `main.js` has zero test coverage (entry point wiring, onNewGame/onContinue handlers, playtime)
 - **T11** — `demo.js` excluded from maps.test.js structural validation
 - **T12** — BattleEngine enemy AI tests are probabilistic (50 iterations, no Math.random mock) — theoretically flaky
+
+Resolved: T1 (item flow end-to-end), T3 (status_shield blocking), T4 (bonusVsWeakness 1.5x), T5 (registerMap/getMapEntry), T6 (autoAdvanceSingleChoice), T8 (getMember)
 
 ---
 
@@ -93,9 +81,9 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags — covers all arc 1-3 progression states. Hidden during dialogue, menus, battles, and location name display. Font extended with > and < glyphs.
 - **P6.8** — EventSystem._cameraOverride replaced with public getter (get cameraOverride()). OverworldScene now uses the getter.
 - **P6.9** — DMG_MISS color now used for miss and blocked damage floaters in BattleScene._showResult().
-- **P6.6** — Already resolved — arc1_started set in main.js onNewGame.
 
 ### P5 Fixes
+- **P5.17** — Detail and above tile definitions added to all 4 tilesets. Jerusalem and Galilee maps populated with environmental details (flowers, path marks, tree canopy, shells, reeds).
 - **P5.18** — RESOLVED. The temple map correctly uses the `interior` tileset (`src/tilesets/interior.js`), which provides stone/marble floors, walls, pillars, doors, scroll shelves, carpet, and benches — all tiles used by the Temple of Jerusalem map. The spec’s listing of a separate `temple.js` tileset was aspirational; `tilemap-format.md` updated to remove `temple.js` and note that `interior.js` covers both buildings and temples.
 - **P5.16** — Enemy battle sprites created (16×16 pixel art, 2x scaled to 32×32 in BattleHUD). All 7 enemies have distinctive designs: doubt (shadowy wisp), fear (dark shape with red eyes), temptation (flame form), pride (crowned figure), greed (grasping claws), deception (serpent), satan (horned boss).
 - **P5.23** — Summit cutscene now spawns 7 disciple NPCs in semicircle via spawnNPC commands before the choosing dialogue.
