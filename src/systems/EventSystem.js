@@ -50,6 +50,14 @@ export class EventSystem {
   }
 
   /**
+   * Public getter for the camera override position set by camera_move commands.
+   * Returns an {x, y} object while a camera_move is active, or null otherwise.
+   */
+  get cameraOverride() {
+    return this._cameraOverride;
+  }
+
+  /**
    * Process the current command each frame.
    */
   update(dt) {

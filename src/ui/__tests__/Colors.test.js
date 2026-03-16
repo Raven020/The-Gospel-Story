@@ -43,6 +43,7 @@ describe('Colors', () => {
     expect(Colors.DMG_NORMAL).toBeDefined();
     expect(Colors.DMG_HEAL).toBeDefined();
     expect(Colors.DMG_CRIT).toBeDefined();
+    expect(Colors.DMG_MISS).toBeDefined();
   });
 
   it('all values are strings', () => {

@@ -192,7 +192,18 @@ export class OverworldScene {
     audioManager.playBGM('overworld');
   }
 
-  exit() {}
+  exit() {
+    // Close dialogue if open so it doesn't render over the next scene
+    if (this.dialogue.isOpen) {
+      this.dialogue.close();
+    }
+    // Close pause menu if open
+    if (this.pauseMenu.active) {
+      this.pauseMenu.close();
+    }
+    // Reset input context so the incoming scene sets it fresh in its own enter()
+    this.input.context = InputContext.OVERWORLD;
+  }
 
   update(dt) {
     if (!this.map) return;
@@ -223,10 +234,10 @@ export class OverworldScene {
       // so we do NOT call it here — doing so would double-advance the animation.
 
       // Camera: follow override position or player
-      if (this.eventSystem._cameraOverride) {
+      if (this.eventSystem.cameraOverride) {
         this.camera.follow(
-          this.eventSystem._cameraOverride.x,
-          this.eventSystem._cameraOverride.y,
+          this.eventSystem.cameraOverride.x,
+          this.eventSystem.cameraOverride.y,
           this.map.width,
           this.map.height
         );

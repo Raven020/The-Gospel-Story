@@ -101,7 +101,17 @@ export class BattleScene {
     this.input.context = InputContext.BATTLE;
   }
 
-  exit() {}
+  exit() {
+    // Reset all sub-state so stale menus/selections don't bleed into the next scene entry
+    this._selectingAbility = false;
+    this._selectingScripture = false;
+    this._scriptureChallenge = null;
+    this._selectingTarget = false;
+    this._selectingItem = false;
+    this._selectingItemTarget = false;
+    this._pendingItemId = null;
+    audioManager.stopBGM();
+  }
 
   update(dt) {
     if (!this.engine) return;
@@ -714,7 +724,13 @@ export class BattleScene {
       audioManager.playSFX('hit');
       const x = 100 + Math.floor(Math.random() * 40);
       const y = result.targetType === 'party' ? 110 : 40;
-      this.hud.addFloater(x, y, String(result.damage), Colors.DMG_NORMAL);
+      if (result.miss) {
+        this.hud.addFloater(x, y, 'MISS', Colors.DMG_MISS);
+      } else if (result.blocked) {
+        this.hud.addFloater(x, y, 'Blocked', Colors.DMG_MISS);
+      } else {
+        this.hud.addFloater(x, y, String(result.damage), Colors.DMG_NORMAL);
+      }
     } else if (result.type === 'heal') {
       audioManager.playSFX('heal');
       this.hud.addFloater(100, 110, `+${result.heal}`, Colors.DMG_HEAL);

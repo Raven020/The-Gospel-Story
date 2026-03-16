@@ -17,15 +17,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ### P2 — Spec Divergence (Visible to Player)
 
-- **P5.14 — Party screen HP bar 50px vs 60px spec; row height 18px vs 26px spec**
-  - `PartyMenu` uses `ROW_HEIGHT = 18` (spec: 26) and HP bar `maxW = 50` (spec: 60)
-  - Need: update constants to match ui-hud.md
-
-- **P5.15 — Party screen renders no member sprites**
-  - Spec shows a 16×16 sprite column in the party list
-  - Current implementation shows only text columns
-  - Need: render character sprites using `renderSprite` from `src/lib/renderSprite.js`
-
 - **P5.16 — Enemy sprites are placeholder colored rectangles**
   - `BattleHUD.js:62` explicitly comments "Placeholder enemy sprite (colored rectangle)"
   - `#8B0000` for bosses, `#604080` for generic enemies — no real art integrated
@@ -42,25 +33,10 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - `temple.js` map references `tileset: 'interior'` as fallback
   - Need: create temple tileset or update spec to acknowledge interior reuse
 
-- ~~**P5.19 — Jordan River east warp is inside river water**~~ ✓ FIXED
-  - Moved warp from col 29 (water) to col 23 (sandy bank edge, tile 4) rows 9-10
-  - Removed the manual collision override that opened water tiles
-  - Updated `wilderness.js` return warp target from x=28 (water) to x=22 (sandy bank)
-
 - **P5.20 — DialogueBox text layout: 38 chars/2 lines vs spec 26 chars/3 lines**
   - Implementation follows `ui-hud.md` (240×42 box, 38 chars, 2 lines)
   - `dialogue-system.md` specifies 224×64 box, 26 chars, 3 lines
   - These specs conflict — need reconciliation decision
-
-- **P5.30 — Dialogue effects fire synchronously on node enter, not after text reveals**
-  - `dialogue-system.md` says `triggerEvent` fires "asynchronously after the current node's text completes and the player advances"
-  - `DialogueSystem._navigateToNode()` executes effects at lines 142-146 *before* `box.open()` is called
-  - Low impact for `setFlag`; higher impact for `triggerEvent` (cutscene fires before player reads text)
-
-- **P6.5 — OverworldScene character sprites fall back to colored rectangles**
-  - `_renderCharacterSprite` uses colored `fillRect` (`#E8E0D0` for jesus, `#A090C0` generic) when no sprite registry entry exists
-  - Sprite registry must be populated from `specs/sprites/` data — currently only works if `main.js` wires it correctly
-  - Need: verify sprite registry population is complete for all NPCs and party members
 
 ### P3 — Content & Data Gaps
 
@@ -95,14 +71,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - No cutscene commands, no visual event, no sound effects
   - Need: at minimum, dialogue describing the miracle; ideally a cutscene event sequence with fadeOut/spawnNPC/dialogue
 
-- **P6.6 — `arc1_started` flag declared but never set**
-  - `questFlags.js` declares `arc1_started: false` but no dialogue node or system code ever sets it to `true`
-  - Need: set in `main.js` onNewGame or in initial Arc 1 dialogue
-
-- **P6.7 — `arc2_started` set alongside `baptism_complete`, not at arc start**
-  - `arc2.js` sets `arc2_started` in the same node as `baptism_complete` (john_baptist.jesus_reply)
-  - Should be set when Arc 2 begins, not when baptism completes
-
 ### P4 — Polish & Minor Issues
 
 - **P5.28 — `EventSystem.fadeOut` onMidpoint callback is a no-op lambda**
@@ -117,13 +85,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - At certain window sizes the canvas is noticeably smaller than the window
   - Spec says "responsively scaled to fill browser window" — could use CSS transform for fractional scaling
   - Trade-off: integer scaling preserves pixel-perfect rendering — likely intentional
-
-- **P5.33 — `clearTileCache()` never called on map load**
-  - TilemapRenderer tile cache is module-level; persists across map loads
-  - `clearTileCache()` is exported but only used in tests — never called in OverworldScene.loadMap()
-  - Risk: stale pre-baked canvases if tilesets share IDs across maps
-  - Current tilesets use distinct IDs so this is latent, not active — but will break when more tilesets are added
-  - Need: call `clearTileCache()` at the start of `OverworldScene.loadMap()`
 
 - **P5.34 — Morale system entirely missing (MVP-scope says "stub OK")**
   - No `morale` field anywhere in GameState, ROSTER, or createMember()
@@ -174,6 +135,9 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 ## Resolved Items
 
 ### P6 Fixes
+- **P6.7** — `arc2_started` moved from arc2.js baptism_complete node to arc1.js arc1_transition.start, so the flag is set when Arc 2 begins rather than when baptism completes.
+- **P6.6** — `arc1_started` flag is now set in main.js onNewGame handler, resolving the declared-but-never-set gap.
+- **P6.5** — RESOLVED for MVP. All 14 MVP sprite keys (jesus, joseph, mary, young_jesus, 7 disciples, john_baptist, 2 townspeople) are properly registered in the sprite registry. 5 post-MVP disciple sprites (thomas, james_alphaeus, thaddaeus, simon_zealot, judas) are data-only stubs.
 - **P6.4** — Wisdom Q&A implemented as dialogue-tree variant in young_jesus dialogue (arc1.js). Three questions covering Deut 6:5, Isaiah 9:6, Micah 5:2 with correct/wrong answer paths. wisdom_qa_complete flag gates replay. Non-blocking wrong answers per spec.
 - **P6.1** — SaveLoadMenu.onLoad now wired in OverworldScene constructor. _reloadFromSave() fades to black, looks up saved map in _mapRegistry, calls loadMap() with restored coordinates and facing. Pattern matches existing _handleRetry() approach.
 - **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When dialogue box text is fully revealed, held confirm is ignored — only a fresh press advances to the next node. Prevents dialogue from auto-skipping through entire sequences.
@@ -181,6 +145,11 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags — covers all arc 1-3 progression states. Hidden during dialogue, menus, battles, and location name display. Font extended with > and < glyphs.
 
 ### P5 Fixes
+- **P5.33** — `clearTileCache()` is now called at the start of `OverworldScene.loadMap()`, preventing stale pre-baked tile canvases from persisting across map transitions.
+- **P5.30** — DialogueSystem effects are now deferred until the player advances past the node. A `_pendingEffects` array accumulates effects on node enter; they flush when the dialogue reaches 'done' or a choice result is selected. Action nodes (triggerEvent etc.) still execute immediately as per spec.
+- **P5.19** — Jordan River east warp moved from column 29 (water) to column 23 (sandy bank edge, tile 4) rows 9-10. The manual collision override that opened water tiles was removed. `wilderness.js` return warp target updated from x=28 (water) to x=22 (sandy bank).
+- **P5.15** — PartyMenu now renders 16×16 member sprites in both the list and detail views using `renderSprite`. `spriteRegistry` is passed down through the PauseMenu constructor chain so PartyMenu can access character pixel data.
+- **P5.14** — PartyMenu `ROW_HEIGHT` updated from 18 to 26 and HP/SP bar `maxW` updated from 50 to 60, matching the ui-hud.md spec.
 - **P5.1** — Joseph+Mary are now the Arc 1 protagonists. Joseph and Mary added to ROSTER (partyData.js) with full stats/sprites. GameState.newGame() creates Joseph as party leader. Follower class implements breadcrumb-trail pattern for Mary (1-tile delay, same facing, clears on teleport). OverworldScene dynamically resolves player sprite from party leader's sprite field. transitionToArc2() swaps Joseph→Jesus when arc1_complete is set. Mary follower is removed on arc transition.
 - **P5.2** — After `arc2_complete`, `temptation_3` cutscene auto-warps player to galilee (14,18) via new `warp` EventSystem command; `onWarp` callback wired in OverworldScene.
 - **P5.3** — Temptation events now trigger scripture-selection boss battles via new `startBattle` EventSystem command; Satan dialogue no longer sets flags directly (flags set by cutscene after battle victory); `BattleScene._pickScriptureChallenge` selects the correct challenge per encounter.
@@ -258,6 +227,7 @@ All 10 phases confirmed complete by audit:
 - **EventSystem extended commands** — EventSystem now supports `startBattle` (triggers scripture-selection boss battle via callback to OverworldScene) and `warp` (teleports player to target map/coords via onWarp callback) command types
 - **Cutscene prerequisites** — Cutscene events support a `requires` array of flag names; OverworldScene skips the event unless all listed flags are set in questFlags
 - **Text speed** — configurable via Options menu (1/2/4 chars per frame); gameSettings singleton replaces hardcoded CHARS_PER_FRAME
+- **Sprite registry** — passed from OverworldScene through PauseMenu to PartyMenu for consistent character rendering across overworld and menus
 
 ---
 
