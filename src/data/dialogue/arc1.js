@@ -138,13 +138,95 @@ export const ARC1_DIALOGUE = {
     },
   },
 
-  // Young Jesus - triggers the finding cutscene
+  // Young Jesus — Wisdom Q&A mini-game followed by finding cutscene.
+  // First visit: witness the teachers questioning Jesus, select correct answers.
+  // After Q&A complete: reunion dialogue and arc completion.
   young_jesus: {
     start: {
+      condition: { flag: 'wisdom_qa_complete', op: 'eq', value: true },
+      conditionFail: 'qa_intro',
       speaker: 'Young Jesus',
       text: 'Did you not know that I must be in my Father\'s house?',
       effects: [{ type: 'setFlag', flag: 'found_jesus_in_temple', value: true }],
       next: 'mary_response',
+    },
+
+    // --- Wisdom Q&A sequence ---
+    qa_intro: {
+      speaker: '',
+      text: 'You find Jesus sitting among the teachers, listening and asking questions. All who hear him are amazed.',
+      effects: [{ type: 'setFlag', flag: 'found_jesus_in_temple', value: true }],
+      next: 'q1_ask',
+    },
+    q1_ask: {
+      speaker: 'Teacher',
+      text: 'Tell me, boy — what is the greatest commandment in the Law?',
+      choices: [
+        { text: 'Love the Lord your God with all your heart', next: 'q1_correct' },
+        { text: 'Remember the Sabbath day', next: 'q1_wrong' },
+        { text: 'Honor your father and mother', next: 'q1_wrong' },
+      ],
+    },
+    q1_correct: {
+      speaker: 'Teacher',
+      text: 'He is right! "Love the Lord your God with all your heart, soul, and strength." Remarkable!',
+      next: 'q2_ask',
+    },
+    q1_wrong: {
+      speaker: 'Teacher',
+      text: 'A worthy commandment, but the greatest is: "Love the Lord your God with all your heart, soul, and strength."',
+      next: 'q2_ask',
+    },
+    q2_ask: {
+      speaker: 'Teacher',
+      text: 'And what did the prophet Isaiah say the Messiah would be called?',
+      choices: [
+        { text: 'A mighty warrior', next: 'q2_wrong' },
+        { text: 'Wonderful Counselor, Prince of Peace', next: 'q2_correct' },
+        { text: 'The great teacher', next: 'q2_wrong' },
+      ],
+    },
+    q2_correct: {
+      speaker: 'Teacher',
+      text: 'Astounding! Isaiah 9:6 — "Wonderful Counselor, Mighty God, Everlasting Father, Prince of Peace." This child knows the prophets!',
+      next: 'q3_ask',
+    },
+    q2_wrong: {
+      speaker: 'Teacher',
+      text: 'Close, but Isaiah wrote: "Wonderful Counselor, Mighty God, Everlasting Father, Prince of Peace." Remember Isaiah 9:6.',
+      next: 'q3_ask',
+    },
+    q3_ask: {
+      speaker: 'Teacher',
+      text: 'One more, child. Where did the prophet Micah say the ruler of Israel would come from?',
+      choices: [
+        { text: 'Jerusalem', next: 'q3_wrong' },
+        { text: 'Bethlehem', next: 'q3_correct' },
+        { text: 'Nazareth', next: 'q3_wrong' },
+      ],
+    },
+    q3_correct: {
+      speaker: 'Teacher',
+      text: '"But you, Bethlehem, though small among the clans of Judah, out of you will come a ruler over Israel." Micah 5:2. Truly this boy has wisdom beyond his years!',
+      next: 'qa_end',
+    },
+    q3_wrong: {
+      speaker: 'Teacher',
+      text: 'The answer is Bethlehem. Micah 5:2 tells us: "Out of you will come a ruler over Israel." Study well, young one.',
+      next: 'qa_end',
+    },
+    qa_end: {
+      speaker: '',
+      text: 'The teachers look at one another in astonishment. They have never seen such understanding in one so young.',
+      effects: [{ type: 'setFlag', flag: 'wisdom_qa_complete', value: true }],
+      next: 'reunion',
+    },
+
+    // --- Reunion dialogue (plays after Q&A) ---
+    reunion: {
+      speaker: 'Mary',
+      text: 'Son, why have you treated us so? Your father and I have been searching for you anxiously!',
+      next: 'jesus_reply',
     },
     mary_response: {
       speaker: 'Mary',

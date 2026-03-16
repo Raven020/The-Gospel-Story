@@ -13,6 +13,7 @@ export const INITIAL_FLAGS = {
   heard_about_temple_boy: false,
   talked_to_temple_guard: false,
   found_jesus_in_temple: false,
+  wisdom_qa_complete: false,
   arc1_complete: false,
 
   // Arc 2 — Baptism & Temptation

@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 585 tests passing across 40 test suites (vitest)
+- **Tests:** 603 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -18,16 +18,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 ### P0 — Game-Breaking / Core MVP Gaps
 
 ### P1 — Core Feature Incomplete
-
-- **P5.13 — No Options sub-screen in Pause Menu**
-  - `_handleMenuSelect('options')` is a no-op in OverworldScene
-  - Even minimal options (text speed, volume placeholder) would be appropriate
-  - Need: basic Options screen or remove from menu
-
-- **P6.3 — Overworld HUD objective marker entirely absent**
-  - `ui-hud.md §6` specifies `"► <objective text>"` at top-left (x=4, y=4), hidden during battles/menus/dialogue
-  - Zero references to "objective" anywhere in `src/`
-  - Need: add objective text field to GameState/questFlags, render in OverworldScene, update per arc/quest progress
 
 - **P6.4 — Wisdom Q&A mini-game not implemented (Arc 1 spec requirement)**
   - `mvp-scope.md` lists "Wisdom Q&A (Arc 1)" as one of 3 MVP mini-games
@@ -198,6 +188,8 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 ### P6 Fixes
 - **P6.1** — SaveLoadMenu.onLoad now wired in OverworldScene constructor. _reloadFromSave() fades to black, looks up saved map in _mapRegistry, calls loadMap() with restored coordinates and facing. Pattern matches existing _handleRetry() approach.
 - **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When dialogue box text is fully revealed, held confirm is ignored — only a fresh press advances to the next node. Prevents dialogue from auto-skipping through entire sequences.
+- **P5.13** — OptionsMenu implemented with Text Speed (Slow/Normal/Fast), BGM toggle, and SFX toggle. gameSettings singleton drives DialogueBox typewriter speed. Wired into PauseMenu via standard sub-menu pattern.
+- **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags — covers all arc 1-3 progression states. Hidden during dialogue, menus, battles, and location name display. Font extended with > and < glyphs.
 
 ### P5 Fixes
 - **P5.1** — Joseph+Mary are now the Arc 1 protagonists. Joseph and Mary added to ROSTER (partyData.js) with full stats/sprites. GameState.newGame() creates Joseph as party leader. Follower class implements breadcrumb-trail pattern for Mary (1-tile delay, same facing, clears on teleport). OverworldScene dynamically resolves player sprite from party leader's sprite field. transitionToArc2() swaps Joseph→Jesus when arc1_complete is set. Mary follower is removed on arc transition.
@@ -276,6 +268,7 @@ All 10 phases confirmed complete by audit:
 - **Dialogue string-key resolution** — OverworldScene resolves string keys to data objects from `_dialogueCache` before passing to EventSystem, both for triggerEvent and inline cutscene commands
 - **EventSystem extended commands** — EventSystem now supports `startBattle` (triggers scripture-selection boss battle via callback to OverworldScene) and `warp` (teleports player to target map/coords via onWarp callback) command types
 - **Cutscene prerequisites** — Cutscene events support a `requires` array of flag names; OverworldScene skips the event unless all listed flags are set in questFlags
+- **Text speed** — configurable via Options menu (1/2/4 chars per frame); gameSettings singleton replaces hardcoded CHARS_PER_FRAME
 
 ---
 

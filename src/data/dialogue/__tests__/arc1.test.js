@@ -72,4 +72,39 @@ describe('ARC1_DIALOGUE', () => {
     expect(ARC1_DIALOGUE.young_jesus).toBeDefined();
     expect(ARC1_DIALOGUE.mary_worried).toBeDefined();
   });
+
+  it('young_jesus has wisdom Q&A with 3 questions and correct/wrong paths', () => {
+    const yj = ARC1_DIALOGUE.young_jesus;
+
+    // Q&A gates on wisdom_qa_complete flag
+    expect(yj.start.condition.flag).toBe('wisdom_qa_complete');
+    expect(yj.start.conditionFail).toBe('qa_intro');
+
+    // Q&A has 3 question nodes with 3 choices each
+    for (const qId of ['q1_ask', 'q2_ask', 'q3_ask']) {
+      expect(yj[qId], `${qId} missing`).toBeDefined();
+      expect(yj[qId].choices.length).toBe(3);
+    }
+
+    // Each question has correct and wrong paths
+    for (const qNum of [1, 2, 3]) {
+      expect(yj[`q${qNum}_correct`]).toBeDefined();
+      expect(yj[`q${qNum}_wrong`]).toBeDefined();
+    }
+
+    // Q&A ends by setting wisdom_qa_complete
+    expect(yj.qa_end.effects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'setFlag', flag: 'wisdom_qa_complete', value: true }),
+      ])
+    );
+
+    // Reunion dialogue follows Q&A
+    expect(yj.qa_end.next).toBe('reunion');
+    expect(yj.narrator.effects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'setFlag', flag: 'arc1_complete', value: true }),
+      ])
+    );
+  });
 });
