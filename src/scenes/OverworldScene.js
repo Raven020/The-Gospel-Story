@@ -87,6 +87,13 @@ export class OverworldScene {
       onClose: () => { this.input.context = InputContext.OVERWORLD; },
     });
 
+    // Wire SaveLoadMenu.onLoad so loading a save reloads the correct map
+    if (this.pauseMenu.saveLoadMenu) {
+      this.pauseMenu.saveLoadMenu.onLoad = () => {
+        this._reloadFromSave();
+      };
+    }
+
     // Dialogue data cache (loaded modules)
     this._dialogueCache = {};
 
@@ -235,8 +242,10 @@ export class OverworldScene {
       if (this.input.pressed(Actions.CONFIRM)) {
         this.dialogue.onActionPress();
       } else if (this.input.held(Actions.CONFIRM)) {
-        // Fast-forward: auto-advance text each frame while confirm is held
-        this.dialogue.onActionPress();
+        // Fast-forward: only accelerate typewriter reveal, never advance between nodes
+        if (!this.dialogue.box.fullyRevealed) {
+          this.dialogue.onActionPress();
+        }
       }
       const dir = this.input.getDirectionalPressed();
       if (dir === Actions.UP || dir === Actions.DOWN) {
@@ -689,6 +698,25 @@ export class OverworldScene {
         );
       }
     });
+  }
+
+  /**
+   * Reload map and player position from GameState after a save is loaded
+   * via the pause menu. Fades to black, loads the saved map, and restores
+   * player position/facing.
+   */
+  _reloadFromSave() {
+    if (!this.gameState) return;
+    this.transitions.fadeToBlack(
+      () => {
+        const entry = this._mapRegistry[this.gameState.currentMap];
+        if (entry) {
+          this.loadMap(entry.map, entry.tileset, this.gameState.playerX, this.gameState.playerY);
+        }
+        this.player.facing = this.gameState.playerFacing || Actions.DOWN;
+      },
+      null
+    );
   }
 
   _handleRetry() {

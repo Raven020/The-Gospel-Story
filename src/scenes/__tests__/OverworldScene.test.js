@@ -580,11 +580,66 @@ describe('OverworldScene', () => {
     mockInput.pressed.mockReturnValue(false);
     mockInput.held.mockImplementation((action) => action === Actions.CONFIRM);
 
-    // First held frame: skips typewriter to full text
+    // First held frame: skips typewriter to full reveal
     scn.update(1 / 60);
-    // Second held frame: advances past completed text, closing dialogue
+    // Second held frame: text is fully revealed, held confirm does NOT advance
+    scn.update(1 / 60);
+    expect(scn.dialogue.isOpen).toBe(true);
+
+    // Only a fresh press should advance past fully revealed text
+    mockInput.held.mockReturnValue(false);
+    mockInput.pressed.mockImplementation((action) => action === Actions.CONFIRM);
     scn.update(1 / 60);
     expect(scn.dialogue.isOpen).toBe(false);
+  });
+
+  // --- P6.1: SaveLoadMenu.onLoad wired to reload map ---
+  it('wires saveLoadMenu.onLoad to reload map from save state', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [{ id: 'jesus', name: 'Jesus', sprite: 'jesus', level: 1, stats: { hp: 200, sp: 50, str: 30, wis: 25, fai: 20, spd: 30, def: 15 }, currentHp: 200, currentSp: 50, abilities: [] }], bench: [] },
+      currentMap: 'saved_map',
+      playerX: 3,
+      playerY: 7,
+      playerFacing: 'up',
+      save: vi.fn(() => true),
+    };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    // Register a map so _reloadFromSave can find it
+    const savedMap = createTestMap();
+    savedMap.id = 'saved_map';
+    const savedTileset = createTestTileset();
+    scn.registerMap('saved_map', savedMap, savedTileset);
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    // Verify onLoad is wired
+    expect(scn.pauseMenu.saveLoadMenu.onLoad).toBeTypeOf('function');
+
+    // Simulate gameState.load() having restored saved state
+    // (loadMap above overwrote currentMap to 'test'; restore it as load() would)
+    gameState.currentMap = 'saved_map';
+    gameState.playerX = 3;
+    gameState.playerY = 7;
+
+    // Trigger the onLoad callback (simulating a successful load)
+    scn.pauseMenu.saveLoadMenu.onLoad();
+
+    // Advance transition through 30 fade-out frames to hit midpoint callback
+    expect(transitions.active).toBe(true);
+    for (let i = 0; i < 30; i++) transitions.update();
+
+    expect(scn.map).toBe(savedMap);
+    expect(scn.player.tileX).toBe(3);
+    expect(scn.player.tileY).toBe(7);
   });
 
   // --- P3.6: Defeat path ---

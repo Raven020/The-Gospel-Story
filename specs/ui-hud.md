@@ -272,7 +272,18 @@ Appears during the acting party member's turn. Left 144px remains party status.
 
 ## 6. Overworld HUD
 
-No persistent HUD elements on the overworld map.
+### Objective Marker
+
+A persistent objective marker is displayed in the top-left corner of the overworld screen, telling the player what their next goal is.
+
+- Position: x=4, y=4
+- Background: `#181018` filled rect, padded 2px, no border
+- Text: drawn in `#F8F8F8` using the bitmap font
+- Format: `"► <objective text>"` — e.g. `"► Find Jesus in the Temple"`
+- Max width: 180px (30 chars); text is truncated with ellipsis if longer
+- Always visible on the overworld; hidden during battles, menus, and dialogue
+- Objective text is driven by the current quest state — updated via quest flag changes or arc transitions
+- When the location name display triggers (see below), the objective marker temporarily hides to avoid overlap, reappearing after the location name fades out
 
 ### Location Name Display
 

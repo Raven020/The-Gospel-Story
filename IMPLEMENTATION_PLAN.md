@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 578 tests passing across 40 test suites (vitest)
+- **Tests:** 585 tests passing across 40 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -11,7 +11,7 @@
 
 ---
 
-## Remaining Work — P5 Comprehensive Audit (2026-03-16)
+## Remaining Work — P6 Comprehensive Audit (2026-03-16)
 
 Items sorted by priority. Each is confirmed missing/broken via code search.
 
@@ -23,6 +23,18 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - `_handleMenuSelect('options')` is a no-op in OverworldScene
   - Even minimal options (text speed, volume placeholder) would be appropriate
   - Need: basic Options screen or remove from menu
+
+- **P6.3 — Overworld HUD objective marker entirely absent**
+  - `ui-hud.md §6` specifies `"► <objective text>"` at top-left (x=4, y=4), hidden during battles/menus/dialogue
+  - Zero references to "objective" anywhere in `src/`
+  - Need: add objective text field to GameState/questFlags, render in OverworldScene, update per arc/quest progress
+
+- **P6.4 — Wisdom Q&A mini-game not implemented (Arc 1 spec requirement)**
+  - `mvp-scope.md` lists "Wisdom Q&A (Arc 1)" as one of 3 MVP mini-games
+  - `game-design.md` describes it for the temple scene
+  - No quiz system, Q&A scene, or interactive knowledge-test mechanic exists in `src/`
+  - Arc 1's temple scene is entirely standard dialogue
+  - Need: implement a Wisdom Q&A interaction in the temple (could be a dialogue-tree variant with correct/wrong scoring, or a dedicated mini-game scene)
 
 ### P2 — Spec Divergence (Visible to Player)
 
@@ -37,6 +49,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 - **P5.16 — Enemy sprites are placeholder colored rectangles**
   - `BattleHUD.js:62` explicitly comments "Placeholder enemy sprite (colored rectangle)"
+  - `#8B0000` for bosses, `#604080` for generic enemies — no real art integrated
   - Need: integrate actual enemy battle sprites (64×64 per art-style.md spec)
 
 - **P5.17 — Map `detail` and `above` layers are empty across all maps**
@@ -52,13 +65,24 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 - **P5.19 — Jordan River east warp is inside river water**
   - `jordan_river.js` places wilderness warp at column 29 (water tiles)
+  - Collision manually opened at (29, 9-10) so it works mechanically
   - Player walks through river to enter wilderness — visually incoherent
-  - Need: move warp to a ford/bridge point on land
+  - Need: move warp to a ford/bridge point on land, or add a visual crossing tile
 
 - **P5.20 — DialogueBox text layout: 38 chars/2 lines vs spec 26 chars/3 lines**
   - Implementation follows `ui-hud.md` (240×42 box, 38 chars, 2 lines)
   - `dialogue-system.md` specifies 224×64 box, 26 chars, 3 lines
-  - These specs conflict — need reconciliation decision (currently tracked as P4.5)
+  - These specs conflict — need reconciliation decision
+
+- **P5.30 — Dialogue effects fire synchronously on node enter, not after text reveals**
+  - `dialogue-system.md` says `triggerEvent` fires "asynchronously after the current node's text completes and the player advances"
+  - `DialogueSystem._navigateToNode()` executes effects at lines 142-146 *before* `box.open()` is called
+  - Low impact for `setFlag`; higher impact for `triggerEvent` (cutscene fires before player reads text)
+
+- **P6.5 — OverworldScene character sprites fall back to colored rectangles**
+  - `_renderCharacterSprite` uses colored `fillRect` (`#E8E0D0` for jesus, `#A090C0` generic) when no sprite registry entry exists
+  - Sprite registry must be populated from `specs/sprites/` data — currently only works if `main.js` wires it correctly
+  - Need: verify sprite registry population is complete for all NPCs and party members
 
 ### P3 — Content & Data Gaps
 
@@ -76,9 +100,9 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - Post-MVP scope (Arc 11+), but the detection mechanic could be wired now
 
 - **P5.23 — Mountain summit cutscene does not spawn disciple NPCs**
-  - `summit_choosing` cutscene has only `fadeOut`, `dialogue`, `setFlag`, `fadeIn`
+  - `summit_choosing` cutscene has only `fadeOut`, `dialogue`, `setFlag`, `dialogue`, `fadeIn`
   - No `spawnNPC` commands — the "Jesus calling the twelve on the mountain" scene has no visual NPC population
-  - EventSystem's `spawnNPC` command is implemented but never used anywhere
+  - EventSystem's `spawnNPC` command is implemented but never used anywhere in the codebase
 
 - **P5.24 — Missing quest flags for later disciples**
   - `questFlags.js` has no `recruited_thomas`, `recruited_james_alphaeus`, `recruited_thaddaeus`, `recruited_simon_zealot`, `recruited_judas`
@@ -89,36 +113,39 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - Post-MVP (Arc 6) but worth noting for future planning
 
 - **P5.26 — Peter recruitment lacks "miraculous catch of fish" scene**
-  - `story.md` and `mvp-scope.md` reference this; `peter_recruit` in arc3.js is pure dialogue
-  - Need: at minimum, dialogue describing the miracle; ideally a cutscene event sequence
+  - `story.md` and `mvp-scope.md` reference this; `peter_recruit` in arc3.js is pure dialogue (3 nodes)
+  - No cutscene commands, no visual event, no sound effects
+  - Need: at minimum, dialogue describing the miracle; ideally a cutscene event sequence with fadeOut/spawnNPC/dialogue
+
+- **P6.6 — `arc1_started` flag declared but never set**
+  - `questFlags.js` declares `arc1_started: false` but no dialogue node or system code ever sets it to `true`
+  - Need: set in `main.js` onNewGame or in initial Arc 1 dialogue
+
+- **P6.7 — `arc2_started` set alongside `baptism_complete`, not at arc start**
+  - `arc2.js` sets `arc2_started` in the same node as `baptism_complete` (john_baptist.jesus_reply)
+  - Should be set when Arc 2 begins, not when baptism completes
 
 ### P4 — Polish & Minor Issues
 
 - **P5.28 — `EventSystem.fadeOut` onMidpoint callback is a no-op lambda**
-  - Line 126: `() => {}` — fadeOut events complete visually but perform no mid-transition action
+  - Line 129: `() => {}` — fadeOut events complete visually but perform no mid-transition action
   - Need: either connect to a meaningful callback or document as intentional
 
 - **P5.29 — `exit()` methods on BattleScene and OverworldScene are empty**
   - No cleanup of input context, dialogue state, or audio on scene exit
   - Could cause stale state if scenes are switched mid-action
 
-- **P5.30 — Dialogue effects fire synchronously on node enter, not after text reveals**
-  - `dialogue-system.md` says `triggerEvent` fires "asynchronously after the current node's text completes and the player advances"
-  - Current: all effects execute immediately when node is entered (before typewriter reveal starts)
-  - Low impact for `setFlag`; higher impact for `triggerEvent` (cutscene fires before player reads text)
-
 - **P5.31 — Display uses integer-only scaling (Math.floor)**
   - At certain window sizes the canvas is noticeably smaller than the window
   - Spec says "responsively scaled to fill browser window" — could use CSS transform for fractional scaling
-  - Trade-off: integer scaling preserves pixel-perfect rendering
-
-- **P5.32 — `overflow: hidden` not set on body**
-  - Possible scrollbars on small windows; minor CSS fix
+  - Trade-off: integer scaling preserves pixel-perfect rendering — likely intentional
 
 - **P5.33 — `clearTileCache()` never called on map load**
   - TilemapRenderer tile cache is module-level; persists across map loads
+  - `clearTileCache()` is exported but only used in tests — never called in OverworldScene.loadMap()
   - Risk: stale pre-baked canvases if tilesets share IDs across maps
-  - Current tilesets use distinct IDs so this is latent, not active
+  - Current tilesets use distinct IDs so this is latent, not active — but will break when more tilesets are added
+  - Need: call `clearTileCache()` at the start of `OverworldScene.loadMap()`
 
 - **P5.34 — Morale system entirely missing (MVP-scope says "stub OK")**
   - No `morale` field anywhere in GameState, ROSTER, or createMember()
@@ -140,6 +167,15 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - No party-restriction mechanism exists; all recruited members are freely swappable
   - Post-MVP (applies mainly to Arc 8 Transfiguration: Peter/James/John only)
 
+- **P6.8 — EventSystem._cameraOverride accessed as private field from OverworldScene**
+  - `OverworldScene.update()` reads `this.eventSystem._cameraOverride` directly
+  - Encapsulation violation; if field is renamed, overworld silently breaks
+  - Need: add a public getter on EventSystem (e.g., `get cameraOverride()`)
+
+- **P6.9 — `DMG_MISS` color token defined but never used**
+  - `Colors.js` defines `DMG_MISS: '#F8F8F8'` but no code references it
+  - BattleScene/BattleHUD should use it for miss floaters
+
 ### Test Coverage Gaps (non-blocking but tracked)
 
 - **T1** — `BattleScene._handleItemInput` / `_handleItemTargetInput` untested end-to-end
@@ -159,6 +195,10 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ## Resolved Items
 
+### P6 Fixes
+- **P6.1** — SaveLoadMenu.onLoad now wired in OverworldScene constructor. _reloadFromSave() fades to black, looks up saved map in _mapRegistry, calls loadMap() with restored coordinates and facing. Pattern matches existing _handleRetry() approach.
+- **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When dialogue box text is fully revealed, held confirm is ignored — only a fresh press advances to the next node. Prevents dialogue from auto-skipping through entire sequences.
+
 ### P5 Fixes
 - **P5.1** — Joseph+Mary are now the Arc 1 protagonists. Joseph and Mary added to ROSTER (partyData.js) with full stats/sprites. GameState.newGame() creates Joseph as party leader. Follower class implements breadcrumb-trail pattern for Mary (1-tile delay, same facing, clears on teleport). OverworldScene dynamically resolves player sprite from party leader's sprite field. transitionToArc2() swaps Joseph→Jesus when arc1_complete is set. Mary follower is removed on arc transition.
 - **P5.2** — After `arc2_complete`, `temptation_3` cutscene auto-warps player to galilee (14,18) via new `warp` EventSystem command; `onWarp` callback wired in OverworldScene.
@@ -173,6 +213,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P5.9** — Dialogue fast-forward on held confirm now wired. OverworldScene checks `input.held(Actions.CONFIRM)` in addition to `input.pressed()`, calling `dialogue.onActionPress()` every frame while held.
 - **P5.11** — NPC post-discovery dialogue implemented for all Arc 1 NPCs. DialogueSystem enhanced with `conditionFail` field on nodes — when a node's condition is false, navigates to `conditionFail` instead of `next`. All 7 Arc 1 NPCs (townsperson 1-5, temple guard, temple teachers 1-2, mary_worried) now have post-`found_jesus_in_temple` dialogue variants.
 - **P5.27** — Jerusalem townsperson_4 and townsperson_5 now have unique dialogue trees instead of reusing townsperson_1/townsperson_3 keys.
+- **P5.32** — RESOLVED. `overflow: hidden` is set on both `html` and `body` in `index.html`.
 
 ### Pre-existing Test Bug Fix
 - "pending arc cutscene fires after dialogue closes" test needed two confirm presses (typewriter skip + advance), not one.
@@ -198,6 +239,7 @@ P3.1–P3.18 (Display tests, tileset tests, UIChrome/Colors tests, EventSystem c
 2. **Dialogue Module Paths** — Code uses flat string keys via `registerDialogue()`. Spec describes dynamic `import()` by module path. Current approach works; spec is aspirational.
 3. **DEF stat** — RESOLVED (P5.10). DEF is now a proper stat field on all party members and enemies; STR fallback removed.
 4. **Stat display labels** — Spec shows ATK/DEF in party detail; code shows STR/WIS/FAI/SPD.
+5. **Duplicate `greet` key in dialogue-system.md §9 example** — The Miriam example has two `greet` nodes in the same object literal. Second silently overwrites first. Not a runtime bug (it's spec example code) but misleading.
 
 ---
 

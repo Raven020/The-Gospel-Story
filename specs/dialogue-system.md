@@ -500,3 +500,11 @@ Numeric flags are used for morale scores, stat deltas from choices, and multi-st
 - **Cancel / Back**: There is no "back" in dialogue. Once started, the player can only advance or select. This is intentional — it preserves narrative flow and avoids dialogue tree edge cases.
 - **Dialogue during cutscenes**: Cutscenes use the same `DialogueSystem` API but pass `startNodeId` explicitly and may lock player input between nodes. The system does not distinguish between NPC dialogue and cutscene dialogue at the data level.
 - **Localization**: Future-proofed by keeping all user-visible strings inside dialogue data files. Speaker names and text strings should not be embedded in engine code.
+
+---
+
+## 13. Known Issues
+
+| ID | Description | Status |
+|---|---|---|
+| DLG-BUG-01 | Dialogue sequences are being automatically skipped — the system advances through nodes without waiting for player input, causing players to miss dialogue text entirely. The typewriter reveal and/or advance logic is not gating on an explicit action button press before moving to the next node. | Resolved |
