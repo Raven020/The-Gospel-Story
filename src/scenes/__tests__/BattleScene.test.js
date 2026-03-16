@@ -539,6 +539,164 @@ describe('BattleScene', () => {
     expect(s._itemList).toHaveLength(1);
   });
 
+  // --- T1: _handleItemInput / _handleItemTargetInput end-to-end ---
+  describe('item flow end-to-end', () => {
+    // Helper: build a scene with a real-ish gameState containing one HP-restore item (bread)
+    function makeSceneWithInventory(itemDef) {
+      const i = makeInput();
+      const itemEntry = { id: itemDef.id, quantity: 2, def: itemDef };
+      const useItemFnCalls = [];
+      const gameState = {
+        inventory: {
+          getAll: () => [itemEntry],
+          // Record calls so tests can assert the item was consumed
+          useItem: (itemId, target) => {
+            useItemFnCalls.push({ itemId, target });
+            // Actually apply the heal so HP changes are verifiable
+            const amount = itemDef.effect.amount;
+            if (itemDef.effect.stat === 'hp') {
+              target.currentHp = Math.min(target.stats.hp, target.currentHp + amount);
+            }
+          },
+          remove: (itemId) => {
+            useItemFnCalls.push({ itemId, removed: true });
+          },
+        },
+        questFlags: {},
+      };
+      const sc = new BattleScene({
+        input: i,
+        transitions: { fadeToBlack: vi.fn() },
+        sceneManager: {},
+        frameCountFn: () => 0,
+        gameState,
+      });
+      return { scene: sc, input: i, useItemFnCalls };
+    }
+
+    it('selecting an HP item then a target uses the item on that party member', () => {
+      const breadDef = { id: 'bread', name: 'Bread', type: 'consumable', effect: { stat: 'hp', amount: 50 } };
+      const { scene: s, input: inp, useItemFnCalls } = makeSceneWithInventory(breadDef);
+
+      const member = makeMember({ currentHp: 30 }); // injured
+      const enemies = [{ id: 'doubt', name: 'Doubt', currentHp: 60, stats: { hp: 60, str: 15, def: 8, wis: 20, spd: 18 }, exp: 12, ai: 'basic', abilities: [] }];
+      s.startBattle([member], enemies, vi.fn());
+      s.engine.buildTurnOrder();
+      s.engine.nextTurn();
+
+      // Step 1: Open item menu
+      s._processActionSelection('items');
+      expect(s._selectingItem).toBe(true);
+      expect(s._itemList).toHaveLength(1);
+
+      // Step 2: Confirm selection of bread (HP item → needs target)
+      inp._press(Actions.CONFIRM);
+      s.update(1 / 60);
+      inp._clear();
+
+      expect(s._selectingItem).toBe(false);
+      expect(s._selectingItemTarget).toBe(true);
+      expect(s._pendingItemId).toBe('bread');
+
+      // Step 3: Confirm target (the only living party member)
+      inp._press(Actions.CONFIRM);
+      s.update(1 / 60);
+      inp._clear();
+
+      expect(s._selectingItemTarget).toBe(false);
+      expect(s.engine.phase).toBe(BattlePhase.EXECUTE);
+      // Item was applied: useItem was called with the correct target
+      expect(useItemFnCalls.length).toBeGreaterThan(0);
+      expect(useItemFnCalls[0].itemId).toBe('bread');
+      expect(useItemFnCalls[0].target).toBe(member);
+      // HP should have increased
+      expect(member.currentHp).toBeGreaterThan(30);
+    });
+
+    it('selecting an STR item (oil) auto-executes without target selection', () => {
+      const oilDef = { id: 'oil', name: 'Anointing Oil', type: 'consumable', effect: { stat: 'str', amount: 5 } };
+      const { scene: s, input: inp, useItemFnCalls } = makeSceneWithInventory(oilDef);
+
+      const member = makeMember();
+      const enemies = [{ id: 'doubt', name: 'Doubt', currentHp: 60, stats: { hp: 60, str: 15, def: 8, wis: 20, spd: 18 }, exp: 12, ai: 'basic', abilities: [] }];
+      s.startBattle([member], enemies, vi.fn());
+      s.engine.buildTurnOrder();
+      s.engine.nextTurn();
+
+      s._processActionSelection('items');
+      expect(s._selectingItem).toBe(true);
+
+      // Confirm oil selection — STR items auto-execute (no target menu)
+      inp._press(Actions.CONFIRM);
+      s.update(1 / 60);
+      inp._clear();
+
+      expect(s._selectingItem).toBe(false);
+      expect(s._selectingItemTarget).toBe(false);
+      expect(s.engine.phase).toBe(BattlePhase.EXECUTE);
+      // buff_str was added to buffs
+      expect(s.engine.buffs.some((b) => b.type === 'buff_str')).toBe(true);
+    });
+
+    it('cancelling item target menu re-opens item list', () => {
+      const breadDef = { id: 'bread', name: 'Bread', type: 'consumable', effect: { stat: 'hp', amount: 50 } };
+      const { scene: s, input: inp } = makeSceneWithInventory(breadDef);
+
+      const member = makeMember();
+      const enemies = [{ id: 'doubt', name: 'Doubt', currentHp: 60, stats: { hp: 60, str: 15, def: 8, wis: 20, spd: 18 }, exp: 12, ai: 'basic', abilities: [] }];
+      s.startBattle([member], enemies, vi.fn());
+      s.engine.buildTurnOrder();
+      s.engine.nextTurn();
+
+      s._processActionSelection('items');
+
+      // Select bread → enter target selection
+      inp._press(Actions.CONFIRM);
+      s.update(1 / 60);
+      inp._clear();
+      expect(s._selectingItemTarget).toBe(true);
+
+      // Cancel → should re-open item list
+      inp._press(Actions.CANCEL);
+      s.update(1 / 60);
+      inp._clear();
+
+      expect(s._selectingItemTarget).toBe(false);
+      expect(s._pendingItemId).toBeNull();
+      expect(s._selectingItem).toBe(true);
+    });
+
+    it('item target cursor navigates with UP/DOWN across alive party members', () => {
+      const breadDef = { id: 'bread', name: 'Bread', type: 'consumable', effect: { stat: 'hp', amount: 50 } };
+      const { scene: s, input: inp } = makeSceneWithInventory(breadDef);
+
+      const member1 = makeMember({ id: 'peter', name: 'Peter' });
+      const member2 = makeMember({ id: 'john', name: 'John', currentHp: 40 });
+      const enemies = [{ id: 'doubt', name: 'Doubt', currentHp: 60, stats: { hp: 60, str: 15, def: 8, wis: 20, spd: 18 }, exp: 12, ai: 'basic', abilities: [] }];
+      s.startBattle([member1, member2], enemies, vi.fn());
+      s.engine.buildTurnOrder();
+      s.engine.nextTurn();
+
+      s._processActionSelection('items');
+      inp._press(Actions.CONFIRM);
+      s.update(1 / 60);
+      inp._clear();
+
+      expect(s._selectingItemTarget).toBe(true);
+      expect(s._itemTargetCursor).toBe(0);
+
+      inp._press(Actions.DOWN);
+      s.update(1 / 60);
+      inp._clear();
+      expect(s._itemTargetCursor).toBe(1);
+
+      inp._press(Actions.UP);
+      s.update(1 / 60);
+      inp._clear();
+      expect(s._itemTargetCursor).toBe(0);
+    });
+  });
+
   // --- P3.5: Action cursor navigation ---
   it('action menu cursor navigates with UP/DOWN', () => {
     const party = [makeMember()];

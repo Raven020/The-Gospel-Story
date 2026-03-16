@@ -75,14 +75,32 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Detail layer: boats near docks
+// Detail layer: boats near docks + beach accents.
+// Tile 6 = boat, 100 = shells, 101 = wet sand mark
 const detail = fill(W * H, 0);
-// Boat at dock (col 20, rows 6-7)
+// Boats at dock (col 23 is shallow water east of dock area)
 detail[6 * W + 23] = 6; // boat in shallow water east of dock
 detail[10 * W + 23] = 6; // second boat further south
+// Shells scattered on sandy beach
+detail[ 5 * W +  9] = 100; // central sand, row 5
+detail[ 8 * W + 12] = 100; // central sand, row 8
+detail[11 * W + 10] = 100; // central sand, row 11
+detail[13 * W + 16] = 100; // south-east beach
+detail[ 6 * W + 15] = 100; // east beach strip
+// Wet sand tide marks near water transition
+detail[ 4 * W + 14] = 101; // just inland from shallow water
+detail[ 7 * W + 13] = 101; // mid beach
+detail[10 * W + 15] = 101; // lower beach
 
-// Above layer: empty
+// Above layer: tall reeds on grass/water border.
+// Tile 200 = tall reeds
 const above = fill(W * H, 0);
+// Reed clusters along the western grassy shore (where grass meets open area)
+above[ 6 * W +  6] = 200; // west grass, mid area
+above[ 9 * W +  4] = 200; // west grass, lower mid
+above[12 * W +  5] = 200; // west grass, south area
+above[15 * W +  3] = 200; // south-west grass
+above[11 * W +  7] = 200; // inner grass edge
 
 // Collision layer
 const collision = [];

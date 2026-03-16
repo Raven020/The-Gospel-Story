@@ -277,6 +277,26 @@ describe('BattleEngine', () => {
       expect(eng.lastResult.type).toBe('buff');
       expect(eng.buffs.some(b => b.target === doubt && b.type === 'buff_def')).toBe(true);
     });
+
+    // T3: status_shield blocks enemy debuff abilities (blocked:true path)
+    it('status_shield on target blocks enemy debuff ability and returns blocked:true', () => {
+      const doubt = createEnemy('doubt');
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+      const eng = new BattleEngine(testParty, [doubt]);
+
+      // Give the party member a status_shield buff
+      eng.buffs.push({ target: testParty[0], type: 'status_shield', turnsLeft: 3 });
+
+      // Enemy uses a debuff ability against the shielded member
+      eng._executeEnemyAbility(doubt, { id: 'cloud_of_doubt', name: 'Cloud of Doubt', power: 0, type: 'debuff_def' }, testParty[0]);
+
+      // Debuff must be blocked
+      expect(eng.lastResult.blocked).toBe(true);
+      expect(eng.lastResult.damage).toBe(0);
+      expect(eng.lastResult.type).toBe('damage'); // blocked path uses 'damage' result type
+      // The debuff should NOT have been applied
+      expect(eng.buffs.some(b => b.type === 'debuff_def')).toBe(false);
+    });
   });
 
   describe('checkEnd', () => {
@@ -439,6 +459,47 @@ describe('BattleEngine', () => {
       const baseExp = enemies[0].exp;
       engine.checkEnd();
       expect(engine.expGained).toBe(baseExp);
+    });
+
+    // T4: bonusVsWeakness applies 1.5x damage multiplier
+    it('ability with bonusVsWeakness deals 1.5x damage vs matching weakness', () => {
+      // 'greed' enemy has weakness: 'miracle'; thunder_zeal has bonusVsWeakness: 'miracle'
+      const greed = createEnemy('greed');
+      const noWeaknessEnemy = createEnemy('greed');
+      noWeaknessEnemy.weakness = null; // strip weakness for baseline
+
+      // Compute damage WITH bonus (enemy weakness matches ability)
+      const engWith = new BattleEngine(
+        [makeMember({ stats: { hp: 100, sp: 50, str: 20, wis: 30, fai: 10, spd: 25 }, currentHp: 100, currentSp: 50 })],
+        [greed],
+      );
+      engWith.buildTurnOrder();
+      engWith.nextTurn();
+      engWith.setAction(ActionType.ABILITY, { abilityId: 'thunder_zeal', target: greed });
+      engWith.execute();
+      const damageWithBonus = engWith.lastResult.damage;
+
+      // Compute damage WITHOUT bonus (weakness cleared)
+      const engWithout = new BattleEngine(
+        [makeMember({ stats: { hp: 100, sp: 50, str: 20, wis: 30, fai: 10, spd: 25 }, currentHp: 100, currentSp: 50 })],
+        [noWeaknessEnemy],
+      );
+      engWithout.buildTurnOrder();
+      engWithout.nextTurn();
+      engWithout.setAction(ActionType.ABILITY, { abilityId: 'thunder_zeal', target: noWeaknessEnemy });
+      engWithout.execute();
+      const damageWithout = engWithout.lastResult.damage;
+
+      // The bonus path uses power * 1.5 vs normal power; verify 1.5x ratio on base power
+      // calcDamage(wis=30, power=70, def=wis||0=22) vs calcDamage(wis=30, power=105, def=22)
+      const basePower = 70;
+      const boostedPower = Math.floor(basePower * 1.5);
+      const def = greed.stats.wis || 0;
+      const expectedWithout = calcDamage(30, basePower, def);
+      const expectedWith = calcDamage(30, boostedPower, def);
+      expect(damageWithout).toBe(expectedWithout);
+      expect(damageWithBonus).toBe(expectedWith);
+      expect(damageWithBonus).toBeGreaterThan(damageWithout);
     });
 
     it('AoE heal heals all allies', () => {

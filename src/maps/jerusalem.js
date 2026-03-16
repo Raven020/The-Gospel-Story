@@ -76,11 +76,37 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Detail layer: empty (no overlay details)
+// Detail layer: floor accents.
+// Tile 100 = flowers, 101 = path marks, 102 = rocks
 const detail = fill(W * H, 0);
+// Flowers in open sand areas between paths
+detail[ 8 * W +  4] = 100; // west open area, row 8
+detail[ 9 * W +  8] = 100; // near west market edge
+detail[ 8 * W + 22] = 100; // east open area, row 8
+detail[ 9 * W + 25] = 100; // near east market edge
+detail[15 * W +  5] = 100; // south-west residential gap
+detail[15 * W + 23] = 100; // south-east residential gap
+// Path crossing marks on stone path intersections
+detail[ 3 * W + 13] = 101; // north path to temple
+detail[ 3 * W + 16] = 101; // north path to temple (other side)
+detail[ 7 * W + 14] = 101; // main north-south street, upper
+detail[10 * W + 11] = 101; // east-west cross street, left of center
+detail[10 * W + 17] = 101; // east-west cross street, right of center
+// Rocks near walls and building corners
+detail[12 * W +  2] = 102; // near west wall, residential entry
+detail[13 * W +  9] = 102; // east edge of west residential
+detail[12 * W + 27] = 102; // near east wall, residential entry
+detail[14 * W + 20] = 102; // west edge of east residential
 
-// Above layer: empty
+// Above layer: tree canopies in open sand areas.
+// Tile 200 = tree canopy
 const above = fill(W * H, 0);
+// A pair of trees flanking the open central area (rows 7-8, away from paths)
+above[ 7 * W +  5] = 200; // west-side tree
+above[ 7 * W + 23] = 200; // east-side tree
+// Trees in south residential open gaps
+above[17 * W + 10] = 200; // south-west tree
+above[17 * W + 19] = 200; // south-east tree
 
 // Collision layer: walls and stalls block, everything else open
 const collision = [];
