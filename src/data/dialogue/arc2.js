@@ -95,4 +95,18 @@ export const ARC2_DIALOGUE = {
       next: null,
     },
   },
+
+  // Arc 2→3 transition narration (plays after temptation victory, before warp to Galilee)
+  arc2_transition: {
+    start: {
+      speaker: '',
+      text: 'Jesus returned to Galilee in the power of the Spirit, and news about him spread through the whole countryside.',
+      next: 'galilee_intro',
+    },
+    galilee_intro: {
+      speaker: '',
+      text: 'By the Sea of Galilee, fishermen mended their nets. Among them were those who would become the first disciples.',
+      next: null,
+    },
+  },
 };

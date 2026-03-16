@@ -70,6 +70,7 @@ export class OverworldScene {
       questFlags: flags,
       onStartBattle: (enemyId, onComplete) => this._triggerScriptedBattle(enemyId, onComplete),
       onWarp: (targetMap, targetX, targetY, onComplete) => this._executeScriptedWarp(targetMap, targetX, targetY, onComplete),
+      onSetFlag: (flag, value) => this._handleCutsceneSetFlag(flag, value),
     });
 
     // Map registry: maps map IDs to { map, tileset } for cross-map warps
@@ -100,6 +101,9 @@ export class OverworldScene {
     this._locName = '';
 
     this._pendingWarp = null;
+
+    // Pending arc-transition cutscene key, triggered after dialogue closes
+    this._pendingArcCutscene = null;
 
     // Battle integration
     this.gameState = gameState || null;
@@ -230,6 +234,9 @@ export class OverworldScene {
 
       if (this.input.pressed(Actions.CONFIRM)) {
         this.dialogue.onActionPress();
+      } else if (this.input.held(Actions.CONFIRM)) {
+        // Fast-forward: auto-advance text each frame while confirm is held
+        this.dialogue.onActionPress();
       }
       const dir = this.input.getDirectionalPressed();
       if (dir === Actions.UP || dir === Actions.DOWN) {
@@ -238,6 +245,23 @@ export class OverworldScene {
 
       if (!this.dialogue.isOpen) {
         this.input.context = InputContext.OVERWORLD;
+        // Fire pending arc-transition cutscene after dialogue closes
+        if (this._pendingArcCutscene) {
+          const scriptKey = this._pendingArcCutscene;
+          this._pendingArcCutscene = null;
+          const script = this._cutsceneScripts[scriptKey];
+          if (script) {
+            const commands = typeof script === 'function' ? script() : script;
+            const resolved = commands.map(cmd => {
+              if (cmd.type === 'dialogue' && typeof cmd.data === 'string') {
+                const data = this._dialogueCache[cmd.data];
+                if (data) return { ...cmd, data };
+              }
+              return cmd;
+            });
+            this.eventSystem.startEvent(resolved);
+          }
+        }
       }
       return;
     }
@@ -478,6 +502,7 @@ export class OverworldScene {
             if (completedArc === 1) {
               this.gameState.transitionToArc2();
               this.follower = null;
+              this._pendingArcCutscene = 'arc1_transition';
             }
           }
         }
@@ -522,6 +547,26 @@ export class OverworldScene {
           this.eventSystem.startEvent(resolved);
         }
         break;
+      }
+    }
+  }
+
+  /**
+   * Handle arc-completion flags set by EventSystem (cutscene setFlag commands).
+   * Mirrors the arc-advancement logic in _handleDialogueEffect so that inline
+   * cutscene setFlag commands (e.g. summit_choosing) also trigger advanceArc().
+   */
+  _handleCutsceneSetFlag(flag, value) {
+    if (!this.gameState) return;
+    if (value && typeof flag === 'string') {
+      const match = flag.match(/^arc(\d+)_complete$/);
+      if (match) {
+        const completedArc = Number(match[1]);
+        this.gameState.advanceArc(completedArc + 1);
+        if (completedArc === 1) {
+          this.gameState.transitionToArc2();
+          this.follower = null;
+        }
       }
     }
   }

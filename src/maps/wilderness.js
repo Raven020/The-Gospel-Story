@@ -193,6 +193,7 @@ export const MAP = {
         { type: 'startBattle', enemyId: 'satan' },
         { type: 'setFlag', flag: 'temptation_3_resolved', value: true },
         { type: 'dialogue', data: 'angel_minister' },
+        { type: 'dialogue', data: 'arc2_transition' },
         { type: 'warp', targetMap: 'galilee', targetX: 14, targetY: 18 },
       ],
     },

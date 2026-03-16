@@ -165,6 +165,33 @@ describe('DialogueSystem', () => {
     expect(ds._currentNodeId).toBe('greeting');
   });
 
+  it('uses conditionFail as alternate fallback when condition is false', () => {
+    const dialogue = {
+      start: {
+        condition: { flag: 'found', op: 'eq', value: true },
+        conditionFail: 'default',
+        speaker: 'NPC',
+        text: 'Post-discovery text',
+        next: null,
+      },
+      default: {
+        speaker: 'NPC',
+        text: 'Default text',
+        next: null,
+      },
+    };
+
+    // Condition false → should navigate to conditionFail node
+    const ds1 = new DialogueSystem({ questFlags: { found: false } });
+    ds1.open(dialogue, 'start');
+    expect(ds1._currentNodeId).toBe('default');
+
+    // Condition true → should show the start node normally
+    const ds2 = new DialogueSystem({ questFlags: { found: true } });
+    ds2.open(dialogue, 'start');
+    expect(ds2._currentNodeId).toBe('start');
+  });
+
   it('close resets everything', () => {
     const ds = new DialogueSystem({});
     ds.open(simpleDialogue, 'start');

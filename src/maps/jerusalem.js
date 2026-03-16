@@ -189,7 +189,7 @@ export const MAP = {
       x: 5,
       y: 14,
       facing: 'right',
-      dialogue: 'townsperson_1',
+      dialogue: 'townsperson_4',
       movement: { type: 'wander', radius: 1, intervalMs: 4000 },
     },
     {
@@ -198,7 +198,7 @@ export const MAP = {
       x: 24,
       y: 14,
       facing: 'left',
-      dialogue: 'townsperson_3',
+      dialogue: 'townsperson_5',
       movement: 'static',
     },
   ],

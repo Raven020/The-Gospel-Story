@@ -19,22 +19,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ### P1 — Core Feature Incomplete
 
-- **P5.6 — No arc-transition cutscenes after arc*_complete flags**
-  - `arc1_complete` and `arc2_complete` flags are set silently via dialogue effects
-  - No closing cutscene, no scene transition, no "Jesus grows up in Nazareth" (Arc 1 close per spec)
-  - No auto-warp forward after completing an arc
-  - Need: register post-arc cutscene scripts that trigger on flag set; auto-warp to next arc's starting map
-
-- **P5.9 — Dialogue fast-forward on held confirm not wired**
-  - `input-system.md §3`: "Fast-forward text: A (Z) held → held state"
-  - `OverworldScene.update()` only checks `input.pressed(Actions.CONFIRM)`, never `input.held`
-  - Need: add held-confirm path that calls `dialogue.onActionPress()` every frame while held
-
-- **P5.11 — NPC dialogue has no post-discovery state changes (Arc 1)**
-  - Temple guard, townspeople give same dialogue before and after `found_jesus_in_temple`
-  - Spec says NPCs should have conditional post-discovery dialogue branches
-  - Need: add condition-gated alternate dialogue trees for Arc 1 NPCs
-
 - **P5.13 — No Options sub-screen in Pause Menu**
   - `_handleMenuSelect('options')` is a no-op in OverworldScene
   - Even minimal options (text speed, volume placeholder) would be appropriate
@@ -107,10 +91,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P5.26 — Peter recruitment lacks "miraculous catch of fish" scene**
   - `story.md` and `mvp-scope.md` reference this; `peter_recruit` in arc3.js is pure dialogue
   - Need: at minimum, dialogue describing the miracle; ideally a cutscene event sequence
-
-- **P5.27 — Jerusalem townspeople: 2 of 6 NPCs reuse duplicate dialogue**
-  - `townsperson_4` and `townsperson_5` reference `townsperson_1` and `townsperson_3` keys
-  - Need: unique dialogue for each NPC to make Jerusalem feel populated
 
 ### P4 — Polish & Minor Issues
 
@@ -189,6 +169,13 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P5.8** — Victory screen now awards EXP inside BattleScene (via gainExp), displays per-member level-up stat reveals with typewriter animation (2 chars/frame), and shows aggregated stat gains. Panel renders after a 30-frame fade to black. Player presses Z to advance through each member's level-ups, or auto-advances after 3 seconds of inactivity. OverworldScene no longer duplicates EXP awarding.
 - **P5.10** — `def` stat added to all 13 ROSTER entries and all 7 enemies; STR fallback removed from `BattleEngine._doAttack`.
 - **P5.12** — `temptation_3` cutscene now requires both `temptation_1_resolved` AND `temptation_2_resolved` via a `requires` array; OverworldScene enforces `requires` prerequisite guard on cutscene events.
+- **P5.6** — Arc-transition cutscenes now fully implemented. Arc 1→2 has fadeOut + narrator dialogue ("years passed in Nazareth") + warp to jordan_river. Arc 2→3 has angel_minister dialogue + narrator transition ("returned to Galilee in the power of the Spirit") + warp to galilee. Arc 3 ending has mountain commission dialogue + narrator closing ("the twelve were chosen") + fadeIn. All transition dialogue defined in arc1.js, arc2.js, arc3.js; cutscene sequences in wilderness.js and mountain.js.
+- **P5.9** — Dialogue fast-forward on held confirm now wired. OverworldScene checks `input.held(Actions.CONFIRM)` in addition to `input.pressed()`, calling `dialogue.onActionPress()` every frame while held.
+- **P5.11** — NPC post-discovery dialogue implemented for all Arc 1 NPCs. DialogueSystem enhanced with `conditionFail` field on nodes — when a node's condition is false, navigates to `conditionFail` instead of `next`. All 7 Arc 1 NPCs (townsperson 1-5, temple guard, temple teachers 1-2, mary_worried) now have post-`found_jesus_in_temple` dialogue variants.
+- **P5.27** — Jerusalem townsperson_4 and townsperson_5 now have unique dialogue trees instead of reusing townsperson_1/townsperson_3 keys.
+
+### Pre-existing Test Bug Fix
+- "pending arc cutscene fires after dialogue closes" test needed two confirm presses (typewriter skip + advance), not one.
 
 ### P4 Fixes
 P4.4 (gold_bonus effectType handled in BattleEngine — applies buff, 1.5x EXP on victory), P4.7 (checkEncounterZone JSDoc corrected to string|null), P4.14 (arc ordering enforcement via MAP_ARC_REQUIREMENTS, canAccessMap(), advanceArc(), auto-advance on arc*_complete).

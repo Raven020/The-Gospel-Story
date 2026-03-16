@@ -122,10 +122,13 @@ export class DialogueSystem {
       return;
     }
 
-    // Check node-level condition — skip if false
+    // Check node-level condition — skip if false.
+    // conditionFail overrides next as the fallback when the condition is false,
+    // enabling pre/post-flag dialogue branches from the same start node.
     if (node.condition && !evalCondition(node.condition, this.questFlags)) {
-      if (node.next) {
-        this._navigateToNode(node.next);
+      const fallback = node.conditionFail || node.next;
+      if (fallback) {
+        this._navigateToNode(fallback);
       } else {
         this.close();
       }

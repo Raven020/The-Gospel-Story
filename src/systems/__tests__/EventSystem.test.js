@@ -420,6 +420,20 @@ describe('EventSystem', () => {
     expect(es.isActive()).toBe(false);
   });
 
+  it('onSetFlag callback is called when setFlag command executes', () => {
+    const questFlags = {};
+    const onSetFlag = vi.fn();
+    const es = createEventSystem({ questFlags });
+    es.onSetFlag = onSetFlag;
+
+    es.startEvent([{ type: 'setFlag', flag: 'arc1_complete', value: true }]);
+
+    expect(questFlags.arc1_complete).toBe(true);
+    expect(onSetFlag).toHaveBeenCalledTimes(1);
+    expect(onSetFlag).toHaveBeenCalledWith('arc1_complete', true);
+    expect(es.isActive()).toBe(false);
+  });
+
   it('teleportNPC moves NPC to position', () => {
     const npc = {
       id: 'peter',

@@ -171,6 +171,7 @@ export const MAP = {
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'mountain_choosing' },
         { type: 'setFlag', flag: 'arc3_complete', value: true },
+        { type: 'dialogue', data: 'arc3_ending' },
         { type: 'fadeIn' },
       ],
     },

@@ -207,6 +207,13 @@ for (const [key, data] of Object.entries(ARC3_DIALOGUE)) {
   overworld.registerDialogue(key, data);
 }
 
+// Register arc-transition cutscenes
+overworld.registerCutscene('arc1_transition', [
+  { type: 'fadeOut' },
+  { type: 'dialogue', data: 'arc1_transition' },
+  { type: 'warp', targetMap: 'jordan_river', targetX: 14, targetY: 18 },
+]);
+
 scenes.register('overworld', overworld);
 
 scenes.switch('title');

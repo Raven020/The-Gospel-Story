@@ -468,6 +468,125 @@ describe('OverworldScene', () => {
     expect(scn.eventSystem.isActive()).toBe(true);
   });
 
+  // --- Arc-transition cutscene ---
+  it('_handleCutsceneSetFlag calls advanceArc for arc completion flags', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      advanceArc: vi.fn(),
+      transitionToArc2: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+
+    scn._handleCutsceneSetFlag('arc1_complete', true);
+
+    expect(gameState.advanceArc).toHaveBeenCalledWith(2);
+    expect(gameState.transitionToArc2).toHaveBeenCalledTimes(1);
+  });
+
+  it('_pendingArcCutscene is set when arc1_complete is triggered via dialogue effect', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      advanceArc: vi.fn(),
+      transitionToArc2: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    expect(scn._pendingArcCutscene).toBeNull();
+    scn._handleDialogueEffect({ type: 'setFlag', flag: 'arc1_complete', value: true });
+
+    expect(scn._pendingArcCutscene).toBe('arc1_transition');
+  });
+
+  it('pending arc cutscene fires after dialogue closes', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      advanceArc: vi.fn(),
+      transitionToArc2: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const mockInput = createMockInput();
+    const scn = new OverworldScene({
+      input: mockInput,
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    // Register the arc1_transition cutscene
+    scn.registerCutscene('arc1_transition', [{ type: 'wait', frames: 5 }]);
+
+    // Open dialogue and set the pending arc cutscene
+    scn.dialogue.open({ start: { speaker: 'Test', text: 'Hello', next: null } });
+    scn._pendingArcCutscene = 'arc1_transition';
+
+    expect(scn.eventSystem.isActive()).toBe(false);
+
+    // Simulate pressing confirm to close dialogue, then update so the scene
+    // detects dialogue has closed and fires the pending cutscene.
+    // First confirm skips typewriter to full text; second closes the dialogue.
+    mockInput.pressed.mockImplementation((action) => action === Actions.CONFIRM);
+    scn.update(1 / 60);
+    scn.update(1 / 60);
+
+    expect(scn._pendingArcCutscene).toBeNull();
+    expect(scn.eventSystem.isActive()).toBe(true);
+  });
+
+  // --- P5.9: Held confirm fast-forwards dialogue ---
+  it('held confirm auto-advances dialogue each frame', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const mockInput = createMockInput();
+    const scn = new OverworldScene({
+      input: mockInput,
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    scn.dialogue.open({ start: { speaker: 'Test', text: 'Hi', next: null } });
+    expect(scn.dialogue.isOpen).toBe(true);
+
+    // Simulate held confirm (not pressed, but held)
+    mockInput.pressed.mockReturnValue(false);
+    mockInput.held.mockImplementation((action) => action === Actions.CONFIRM);
+
+    // First held frame: skips typewriter to full text
+    scn.update(1 / 60);
+    // Second held frame: advances past completed text, closing dialogue
+    scn.update(1 / 60);
+    expect(scn.dialogue.isOpen).toBe(false);
+  });
+
   // --- P3.6: Defeat path ---
   it('defeat transitions to title screen', () => {
     const gameState = {

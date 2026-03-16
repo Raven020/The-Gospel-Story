@@ -11,7 +11,7 @@ import { Actions } from './InputSystem.js';
 const MOVE_SPEED = 128; // px/s, same as Player
 
 export class EventSystem {
-  constructor({ player, npcManager, dialogueSystem, camera, transitions, questFlags, onStartBattle, onWarp }) {
+  constructor({ player, npcManager, dialogueSystem, camera, transitions, questFlags, onStartBattle, onWarp, onSetFlag }) {
     this.player = player;
     this.npcManager = npcManager;
     this.dialogueSystem = dialogueSystem;
@@ -20,6 +20,7 @@ export class EventSystem {
     this.questFlags = questFlags || {};
     this.onStartBattle = onStartBattle || null;
     this.onWarp = onWarp || null;
+    this.onSetFlag = onSetFlag || null;
 
     this.active = false;
     this._commands = [];
@@ -142,6 +143,7 @@ export class EventSystem {
 
       case 'setFlag':
         this.questFlags[cmd.flag] = cmd.value;
+        if (this.onSetFlag) this.onSetFlag(cmd.flag, cmd.value);
         this._advanceToNext();
         return;
 

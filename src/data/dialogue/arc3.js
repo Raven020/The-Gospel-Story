@@ -212,6 +212,20 @@ export const ARC3_DIALOGUE = {
     },
   },
 
+  // Arc 3 ending narration (plays after mountain commission)
+  arc3_ending: {
+    start: {
+      speaker: '',
+      text: 'And so the twelve were chosen. Together they would walk the roads of Galilee, proclaiming the kingdom of God.',
+      next: 'closing',
+    },
+    closing: {
+      speaker: '',
+      text: 'The journey had only begun. Greater trials and wonders lay ahead for Jesus and his disciples.',
+      next: null,
+    },
+  },
+
   // --- Capernaum townspeople ---
 
   townsperson_cap_1: {
