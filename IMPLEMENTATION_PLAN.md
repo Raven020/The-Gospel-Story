@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 603 tests passing across 42 test suites (vitest)
+- **Tests:** 604 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -14,17 +14,6 @@
 ## Remaining Work — P6 Comprehensive Audit (2026-03-16)
 
 Items sorted by priority. Each is confirmed missing/broken via code search.
-
-### P0 — Game-Breaking / Core MVP Gaps
-
-### P1 — Core Feature Incomplete
-
-- **P6.4 — Wisdom Q&A mini-game not implemented (Arc 1 spec requirement)**
-  - `mvp-scope.md` lists "Wisdom Q&A (Arc 1)" as one of 3 MVP mini-games
-  - `game-design.md` describes it for the temple scene
-  - No quiz system, Q&A scene, or interactive knowledge-test mechanic exists in `src/`
-  - Arc 1's temple scene is entirely standard dialogue
-  - Need: implement a Wisdom Q&A interaction in the temple (could be a dialogue-tree variant with correct/wrong scoring, or a dedicated mini-game scene)
 
 ### P2 — Spec Divergence (Visible to Player)
 
@@ -53,11 +42,10 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - `temple.js` map references `tileset: 'interior'` as fallback
   - Need: create temple tileset or update spec to acknowledge interior reuse
 
-- **P5.19 — Jordan River east warp is inside river water**
-  - `jordan_river.js` places wilderness warp at column 29 (water tiles)
-  - Collision manually opened at (29, 9-10) so it works mechanically
-  - Player walks through river to enter wilderness — visually incoherent
-  - Need: move warp to a ford/bridge point on land, or add a visual crossing tile
+- ~~**P5.19 — Jordan River east warp is inside river water**~~ ✓ FIXED
+  - Moved warp from col 29 (water) to col 23 (sandy bank edge, tile 4) rows 9-10
+  - Removed the manual collision override that opened water tiles
+  - Updated `wilderness.js` return warp target from x=28 (water) to x=22 (sandy bank)
 
 - **P5.20 — DialogueBox text layout: 38 chars/2 lines vs spec 26 chars/3 lines**
   - Implementation follows `ui-hud.md` (240×42 box, 38 chars, 2 lines)
@@ -186,6 +174,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 ## Resolved Items
 
 ### P6 Fixes
+- **P6.4** — Wisdom Q&A implemented as dialogue-tree variant in young_jesus dialogue (arc1.js). Three questions covering Deut 6:5, Isaiah 9:6, Micah 5:2 with correct/wrong answer paths. wisdom_qa_complete flag gates replay. Non-blocking wrong answers per spec.
 - **P6.1** — SaveLoadMenu.onLoad now wired in OverworldScene constructor. _reloadFromSave() fades to black, looks up saved map in _mapRegistry, calls loadMap() with restored coordinates and facing. Pattern matches existing _handleRetry() approach.
 - **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When dialogue box text is fully revealed, held confirm is ignored — only a fresh press advances to the next node. Prevents dialogue from auto-skipping through entire sequences.
 - **P5.13** — OptionsMenu implemented with Text Speed (Slow/Normal/Fast), BGM toggle, and SFX toggle. gameSettings singleton drives DialogueBox typewriter speed. Wired into PauseMenu via standard sub-menu pattern.

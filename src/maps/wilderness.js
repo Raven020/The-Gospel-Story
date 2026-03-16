@@ -157,7 +157,7 @@ export const MAP = {
     warp_west: {
       type: 'warp',
       targetMap: 'jordan_river',
-      targetX: 28,
+      targetX: 22,
       targetY: 9,
       transition: 'fade',
     },

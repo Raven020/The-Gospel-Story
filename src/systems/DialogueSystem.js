@@ -38,6 +38,7 @@ export class DialogueSystem {
     this._nodes = null;        // nodes map from current dialogue
     this._currentNodeId = null;
     this._currentNode = null;
+    this._pendingEffects = []; // effects deferred until player advances past text
   }
 
   get isOpen() {
@@ -59,6 +60,7 @@ export class DialogueSystem {
     this._nodes = null;
     this._currentNodeId = null;
     this._currentNode = null;
+    this._pendingEffects = [];
   }
 
   /**
@@ -79,7 +81,8 @@ export class DialogueSystem {
     if (result === null) return; // text still revealing
 
     if (result === 'done') {
-      // End of current node's text
+      // End of current node's text — flush deferred effects now that player has advanced
+      this._flushPendingEffects();
       if (this._currentNode && this._currentNode.next) {
         this._navigateToNode(this._currentNode.next);
       } else {
@@ -91,7 +94,8 @@ export class DialogueSystem {
     if (result === 'next') return; // next page of same node
 
     if (result && result.choice) {
-      // Choice selected
+      // Choice selected — flush deferred effects then follow the choice
+      this._flushPendingEffects();
       const choice = result.choice;
       if (choice.next) {
         this._navigateToNode(choice.next);
@@ -138,21 +142,27 @@ export class DialogueSystem {
     this._currentNodeId = nodeId;
     this._currentNode = node;
 
-    // Execute effects
-    if (node.effects) {
-      for (const effect of node.effects) {
-        this._executeEffect(effect);
-      }
-    }
-
-    // If node has no text (action node), skip to next
+    // If node has no text (action node), execute effects immediately and skip to next.
+    // Action nodes are invisible to the player so there is no "after advancing" moment.
     if (!node.text && !node.choices) {
+      if (node.effects) {
+        for (const effect of node.effects) {
+          this._executeEffect(effect);
+        }
+      }
       if (node.next) {
         this._navigateToNode(node.next);
       } else {
         this.close();
       }
       return;
+    }
+
+    // Node has text/choices — defer effects until after the player advances past this node
+    if (node.effects) {
+      this._pendingEffects = node.effects.slice();
+    } else {
+      this._pendingEffects = [];
     }
 
     // Open dialogue box with text
@@ -185,6 +195,17 @@ export class DialogueSystem {
         this.box.showChoices(validChoices);
       }
     }
+  }
+
+  /**
+   * Execute and clear all deferred effects stored from the current node.
+   * Called when the player advances past a text node.
+   */
+  _flushPendingEffects() {
+    for (const effect of this._pendingEffects) {
+      this._executeEffect(effect);
+    }
+    this._pendingEffects = [];
   }
 
   _executeEffect(effect) {

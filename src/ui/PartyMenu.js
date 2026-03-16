@@ -16,7 +16,7 @@ const PANEL_W = 232;
 const PANEL_H = 152;
 const HEADER_Y = 8;
 const LIST_Y = 22;
-const ROW_HEIGHT = 18;
+const ROW_HEIGHT = 26;
 const CURSOR_X = PANEL_X + 4;
 const TEXT_X = PANEL_X + 14;
 const MAX_VISIBLE = 8;
@@ -265,10 +265,10 @@ export class PartyMenu {
 
       // HP bar
       const barX = TEXT_X + 150;
-      drawBar(ctx, barX, y + 2, member.currentHp, member.stats.hp, 50, 4, 'hp');
+      drawBar(ctx, barX, y + 2, member.currentHp, member.stats.hp, 60, 4, 'hp');
 
       // SP bar
-      drawBar(ctx, barX, y + 8, member.currentSp, member.stats.sp, 50, 4, Colors.SP_BAR);
+      drawBar(ctx, barX, y + 8, member.currentSp, member.stats.sp, 60, 4, Colors.SP_BAR);
     }
   }
 
@@ -295,11 +295,11 @@ export class PartyMenu {
 
     // HP / SP with bars
     drawText(ctx, `HP ${member.currentHp}/${stats.hp}`, col1X, sy, Colors.TEXT_LIGHT);
-    drawBar(ctx, col1X + 90, sy + 1, member.currentHp, stats.hp, 50, 5, 'hp');
+    drawBar(ctx, col1X + 90, sy + 1, member.currentHp, stats.hp, 60, 5, 'hp');
     sy += 12;
 
     drawText(ctx, `SP ${member.currentSp}/${stats.sp}`, col1X, sy, Colors.TEXT_LIGHT);
-    drawBar(ctx, col1X + 90, sy + 1, member.currentSp, stats.sp, 50, 5, Colors.SP_BAR);
+    drawBar(ctx, col1X + 90, sy + 1, member.currentSp, stats.sp, 60, 5, Colors.SP_BAR);
     sy += 14;
 
     // Core stats

@@ -67,7 +67,7 @@ describe('DialogueSystem', () => {
     expect(ds.isOpen).toBe(false);
   });
 
-  it('executes setFlag effects', () => {
+  it('executes setFlag effects after player advances past text', () => {
     const flags = {};
     const dialogue = {
       start: {
@@ -81,10 +81,17 @@ describe('DialogueSystem', () => {
     const ds = new DialogueSystem({ questFlags: flags });
     ds.open(dialogue, 'start');
 
+    // Effect is deferred — not fired yet while text is displaying
+    expect(flags.found_item).toBeUndefined();
+
+    // Skip text reveal then advance past the node
+    ds.onActionPress(); // fast-forward text
+    ds.onActionPress(); // confirm 'done' — effects fire here
+
     expect(flags.found_item).toBe(true);
   });
 
-  it('calls onEffect for non-flag effects', () => {
+  it('calls onEffect for non-flag effects after player advances past text', () => {
     const onEffect = vi.fn();
     const dialogue = {
       start: {
@@ -96,6 +103,13 @@ describe('DialogueSystem', () => {
 
     const ds = new DialogueSystem({ onEffect });
     ds.open(dialogue, 'start');
+
+    // Effect is deferred — not fired yet while text is displaying
+    expect(onEffect).not.toHaveBeenCalled();
+
+    // Skip text reveal then advance past the node
+    ds.onActionPress(); // fast-forward text
+    ds.onActionPress(); // confirm 'done' — effects fire here
 
     expect(onEffect).toHaveBeenCalledWith({ type: 'giveItem', item: 'bread', quantity: 3 });
   });

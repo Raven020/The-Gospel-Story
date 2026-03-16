@@ -63,12 +63,8 @@ for (let y = 0; y < H; y++) {
     const idx = y * W + x;
     const tile = ground[idx];
     if (tile === 3) {
-      // Water is blocked (except warp crossing)
-      if (y >= 9 && y <= 10 && x === 29) {
-        collision.push(0); // warp point to wilderness
-      } else {
-        collision.push(1);
-      }
+      // Water is blocked
+      collision.push(1);
     } else if (tile === 5) {
       collision.push(1); // walls/vegetation blocked
     } else if (y === 0 && !(x >= 13 && x <= 16)) {
@@ -87,9 +83,9 @@ const event = fill(W * H, 0);
 for (let x = 13; x <= 16; x++) {
   event[(H - 1) * W + x] = 'warp_south';
 }
-// East warp to wilderness (col 29, rows 9-10)
+// East warp to wilderness (col 23, rows 9-10) - sandy bank edge, walkable land tile
 for (let y = 9; y <= 10; y++) {
-  event[y * W + 29] = 'warp_east';
+  event[y * W + 23] = 'warp_east';
 }
 
 export const MAP = {
