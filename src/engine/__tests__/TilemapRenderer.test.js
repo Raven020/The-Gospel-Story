@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   renderLayer,
+  renderGroundLayers,
+  renderAboveLayer,
   isBlocked,
   getEvent,
   checkEncounterZone,
@@ -144,6 +146,50 @@ describe('TilemapRenderer', () => {
       renderLayer(ctx, map, tileset, 'test', layerData, 0, 0);
 
       // Should draw 2 tiles (tile IDs 1 at positions [0,0] and [1,1])
+      expect(ctx.drawImage).toHaveBeenCalledTimes(2);
+    });
+
+    it('renderGroundLayers draws ground then detail layers', () => {
+      const tileset = {
+        PALETTE: { A: '#FF0000' },
+        TILES: {
+          1: Array.from({ length: 16 }, () => Array(16).fill('A')),
+          2: Array.from({ length: 16 }, () => Array(16).fill('A')),
+        },
+      };
+      const map = {
+        width: 2, height: 2,
+        layers: {
+          ground: [1, 0, 0, 1],
+          detail: [0, 2, 0, 0],
+        },
+      };
+      const ctx = { drawImage: vi.fn() };
+
+      renderGroundLayers(ctx, map, tileset, 'test', 0, 0);
+
+      // ground draws 2 tiles (ID 1 at 0,0 and 1,1) + detail draws 1 tile (ID 2 at 1,0)
+      expect(ctx.drawImage).toHaveBeenCalledTimes(3);
+    });
+
+    it('renderAboveLayer draws above layer', () => {
+      const tileset = {
+        PALETTE: { A: '#FF0000' },
+        TILES: {
+          3: Array.from({ length: 16 }, () => Array(16).fill('A')),
+        },
+      };
+      const map = {
+        width: 2, height: 2,
+        layers: {
+          above: [0, 3, 3, 0],
+        },
+      };
+      const ctx = { drawImage: vi.fn() };
+
+      renderAboveLayer(ctx, map, tileset, 'test', 0, 0);
+
+      // above draws 2 tiles (ID 3 at 1,0 and 0,1)
       expect(ctx.drawImage).toHaveBeenCalledTimes(2);
     });
 

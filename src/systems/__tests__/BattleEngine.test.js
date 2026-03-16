@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   BattleEngine,
   BattlePhase,
@@ -165,6 +165,25 @@ describe('BattleEngine', () => {
       expect(engine.lastResult.type).toBe('heal');
     });
 
+    it('executes item action calling useItemFn', () => {
+      let called = false;
+      engine.setAction(ActionType.ITEM, {
+        itemId: 'bread',
+        useItemFn: () => { called = true; },
+      });
+      engine.execute();
+      expect(called).toBe(true);
+      expect(engine.lastResult).toEqual({ type: 'item', actor: party[0], item: 'bread' });
+      expect(engine.phase).toBe(BattlePhase.CHECK_END);
+    });
+
+    it('item action without useItemFn sets no result', () => {
+      engine.setAction(ActionType.ITEM, { itemId: 'bread' });
+      engine.execute();
+      expect(engine.lastResult).toBeNull();
+      expect(engine.phase).toBe(BattlePhase.CHECK_END);
+    });
+
     it('executes scripture attack', () => {
       const initialHp = enemies[0].currentHp;
       engine.setAction(ActionType.SCRIPTURE, {
@@ -211,48 +230,59 @@ describe('BattleEngine', () => {
       }
     });
 
-    it('enemy uses abilities based on AI type', () => {
-      // Test with a boss enemy that has abilities
-      const satan = createEnemy('satan');
-      satan.stats.spd = 99;
-      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+    it('enemy uses abilities based on AI type (deterministic)', () => {
+      // Mock Math.random: target index=0, abilityChance<0.5 (boss), ability index=0
+      const randoms = [0, 0.1, 0];
+      let call = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randoms[call++ % randoms.length]);
 
-      // Run many trials to verify abilities are used at least sometimes
-      let abilityUsed = false;
-      for (let i = 0; i < 50; i++) {
-        testParty[0].currentHp = 200;
-        const eng = new BattleEngine(testParty, [createEnemy('satan')]);
-        eng.enemies[0].stats.spd = 99;
-        eng.buildTurnOrder();
-        eng.nextTurn();
-        eng.execute();
-        if (eng.lastResult.abilityName || eng.lastResult.type === 'debuff' || eng.lastResult.type === 'buff') {
-          abilityUsed = true;
-          break;
-        }
-      }
-      expect(abilityUsed).toBe(true);
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+      const eng = new BattleEngine(testParty, [createEnemy('satan')]);
+      eng.enemies[0].stats.spd = 99;
+      eng.buildTurnOrder();
+      eng.nextTurn();
+      eng.execute();
+
+      // Boss should use an ability (not a basic attack)
+      expect(eng.lastResult.abilityName).toBeDefined();
+      vi.restoreAllMocks();
     });
 
-    it('basic enemy can use abilities', () => {
-      const doubt = createEnemy('doubt');
-      doubt.stats.spd = 99;
-      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+    it('basic enemy can use abilities (deterministic)', () => {
+      // Mock Math.random: target index=0, abilityChance<0.3 (basic), ability index=0
+      const randoms = [0, 0.1, 0];
+      let call = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randoms[call++ % randoms.length]);
 
-      let abilityUsed = false;
-      for (let i = 0; i < 50; i++) {
-        testParty[0].currentHp = 200;
-        const eng = new BattleEngine(testParty, [createEnemy('doubt')]);
-        eng.enemies[0].stats.spd = 99;
-        eng.buildTurnOrder();
-        eng.nextTurn();
-        eng.execute();
-        if (eng.lastResult.type === 'debuff' || eng.lastResult.abilityName) {
-          abilityUsed = true;
-          break;
-        }
-      }
-      expect(abilityUsed).toBe(true);
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+      const eng = new BattleEngine(testParty, [createEnemy('doubt')]);
+      eng.enemies[0].stats.spd = 99;
+      eng.buildTurnOrder();
+      eng.nextTurn();
+      eng.execute();
+
+      // Basic enemy should use an ability
+      expect(eng.lastResult.abilityName).toBeDefined();
+      vi.restoreAllMocks();
+    });
+
+    it('enemy uses basic attack when random exceeds ability chance', () => {
+      // Mock Math.random: target index=0, abilityChance=0.9 (>0.3 for basic), attack power roll=0.5
+      const randoms = [0, 0.9, 0.5];
+      let call = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randoms[call++ % randoms.length]);
+
+      const testParty = [makeMember({ id: 'p1', stats: { hp: 200, sp: 50, str: 20, wis: 15, fai: 10, spd: 5, def: 15 }, currentHp: 200, currentSp: 50 })];
+      const eng = new BattleEngine(testParty, [createEnemy('doubt')]);
+      eng.enemies[0].stats.spd = 99;
+      eng.buildTurnOrder();
+      eng.nextTurn();
+      eng.execute();
+
+      // Should be a basic attack (no abilityName)
+      expect(eng.lastResult.type).toBe('damage');
+      expect(eng.lastResult.abilityName).toBeUndefined();
+      vi.restoreAllMocks();
     });
 
     it('enemy abilities have correct result types', () => {

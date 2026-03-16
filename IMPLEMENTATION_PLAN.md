@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 621 tests passing across 42 test suites (vitest)
+- **Tests:** 626 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -57,14 +57,11 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ### Test Coverage Gaps (non-blocking but tracked)
 
-- **T2** — `BattleEngine` ActionType.ITEM execution path (`useItemFn` callback) never invoked in tests
-- **T7** — `TilemapRenderer.renderGroundLayers`/`renderAboveLayer` untested (only underlying `renderLayer` tested)
 - **T9** — OverworldScene encounter trigger via natural movement (bypassed — tests call `_triggerEncounter` directly)
 - **T10** — `main.js` has zero test coverage (entry point wiring, onNewGame/onContinue handlers, playtime)
-- **T11** — `demo.js` excluded from maps.test.js structural validation
-- **T12** — BattleEngine enemy AI tests are probabilistic (50 iterations, no Math.random mock) — theoretically flaky
+- **T11** — `demo.js` excluded from maps.test.js structural validation (intentional — placeholder NPC dialogue keys `dlg_test_greeting`/`dlg_test_elder` are not registered in arc dialogue files)
 
-Resolved: T1 (item flow end-to-end), T3 (status_shield blocking), T4 (bonusVsWeakness 1.5x), T5 (registerMap/getMapEntry), T6 (autoAdvanceSingleChoice), T8 (getMember)
+Resolved: T1 (item flow end-to-end), T2 (ITEM action useItemFn + missing-callback guard), T3 (status_shield blocking), T4 (bonusVsWeakness 1.5x), T5 (registerMap/getMapEntry), T6 (autoAdvanceSingleChoice), T7 (renderGroundLayers/renderAboveLayer composite layer tests), T8 (getMember), T12 (enemy AI deterministic via Math.random mock + basic-attack path test)
 
 ---
 
