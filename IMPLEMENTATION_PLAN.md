@@ -33,10 +33,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - `temple.js` map references `tileset: 'interior'` as fallback
   - Need: create temple tileset or update spec to acknowledge interior reuse
 
-- **P5.20 — DialogueBox text layout: 38 chars/2 lines vs spec 26 chars/3 lines**
-  - Implementation follows `ui-hud.md` (240×42 box, 38 chars, 2 lines)
-  - `dialogue-system.md` specifies 224×64 box, 26 chars, 3 lines
-  - These specs conflict — need reconciliation decision
+- **P5.20 — RESOLVED. See Resolved Items / Spec Inconsistencies.**
 
 ### P3 — Content & Data Gaps
 
@@ -185,7 +182,7 @@ P3.1–P3.18 (Display tests, tileset tests, UIChrome/Colors tests, EventSystem c
 
 ## Spec Inconsistencies
 
-1. **Text Box Dimensions** — Code follows `ui-hud.md` (240×42, 38 chars, 2 lines). `dialogue-system.md` specifies 224×64, 26 chars, 3 lines. Tracked as P5.20.
+1. **Text Box Dimensions** — RESOLVED (P5.20). `dialogue-system.md` updated to match `ui-hud.md` and implementation: 240×42 box, 38 chars/line, 2 lines per page. Full-width box is standard for 240px-wide GBA-style games.
 2. **Dialogue Module Paths** — Code uses flat string keys via `registerDialogue()`. Spec describes dynamic `import()` by module path. Current approach works; spec is aspirational.
 3. **DEF stat** — RESOLVED (P5.10). DEF is now a proper stat field on all party members and enemies; STR fallback removed.
 4. **Stat display labels** — Spec shows ATK/DEF in party detail; code shows STR/WIS/FAI/SPD.

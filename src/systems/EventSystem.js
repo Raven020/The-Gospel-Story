@@ -134,7 +134,7 @@ export class EventSystem {
       case 'fadeOut':
         this._cmdState = { done: false };
         this.transitions.fadeToBlack(
-          () => {},
+          () => {}, // Intentionally empty: fadeOut is a visual-only effect; scene transitions supply their own midpoint callback via fadeToBlack directly.
           () => { this._cmdState.done = true; }
         );
         break;

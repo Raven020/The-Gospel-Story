@@ -11,20 +11,50 @@ export const ARC3_DIALOGUE = {
   peter_recruit: {
     start: {
       speaker: 'Simon Peter',
-      text: 'We have toiled all night and caught nothing...',
+      text: 'We have toiled all night and caught nothing... The nets are empty. There are no fish.',
       choices: [
-        { text: 'Follow me, and I will make you fishers of men.', next: 'peter_response' },
-        { text: 'How is the fishing?', next: 'fishing' },
+        { text: 'Put out into the deep water and let down your nets for a catch.', next: 'peter_doubt' },
+        { text: 'How long have you been out?', next: 'fishing' },
       ],
     },
     fishing: {
       speaker: 'Simon Peter',
-      text: 'Nothing today. The nets come up empty.',
+      text: 'All night, Teacher. Every spot we know. The sea gave us nothing. We are finished for the day.',
       next: null,
+    },
+    peter_doubt: {
+      speaker: 'Simon Peter',
+      text: 'Master... we have worked through the night and caught nothing. But at your word, I will let down the nets.',
+      next: 'miracle_cast',
+    },
+    miracle_cast: {
+      speaker: '',
+      text: 'Simon and his brother Andrew rowed out from the dock. When they let down the nets, the water churned and boiled with fish — so many that the nets began to tear.',
+      next: 'call_partners',
+    },
+    call_partners: {
+      speaker: 'Simon Peter',
+      text: 'James! John! Come quickly — bring the other boat! The nets are breaking!',
+      next: 'boats_filled',
+    },
+    boats_filled: {
+      speaker: '',
+      text: 'Both boats came. Both were filled to the point of sinking. Everyone on the shore stood watching, astonished.',
+      next: 'peter_falls',
+    },
+    peter_falls: {
+      speaker: 'Simon Peter',
+      text: 'Depart from me, Lord, for I am a sinful man!',
+      next: 'jesus_calls',
+    },
+    jesus_calls: {
+      speaker: 'Jesus',
+      text: 'Do not be afraid, Simon. From now on you will catch men.',
+      next: 'peter_response',
     },
     peter_response: {
       speaker: 'Simon Peter',
-      text: 'Master... we will leave everything and follow you.',
+      text: '...\n\nThey brought the boats to land, left everything, and followed him.',
       effects: [
         { type: 'recruitMember', memberId: 'peter' },
         { type: 'setFlag', flag: 'recruited_peter', value: true },

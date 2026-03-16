@@ -138,15 +138,15 @@ Text renders character by character at a configurable rate (default: 2 character
 
 ### 4b. Auto Line-Wrap
 
-The text box renders at internal resolution. The usable text area is **208 × 48 px** (with 8 px padding inside a 224 × 64 box). Using the 8px monospace font (1 px letter-spacing), each line holds approximately **26 characters**. The engine pre-processes `text` strings into wrapped lines before revealing begins.
+The text box renders at internal resolution. The box is **240 × 42 px** (full screen width, positioned at y=118). Inner padding is 2 px on all sides. Using the 5×7 bitmap font with 6 px cell width (see `ui-hud.md` §1), each line holds `floor((240 - 8) / 6)` = **38 characters**. The engine pre-processes `text` strings into wrapped lines before revealing begins.
 
-Word-wrap algorithm: split text on spaces, accumulate words into a line until adding the next word would exceed 26 chars, then start a new line. Hard `\n` characters in the source string force a line break.
+Word-wrap algorithm: split text on spaces, accumulate words into a line until adding the next word would exceed 38 chars, then start a new line. Hard `\n` characters in the source string force a line break.
 
 ### 4c. Multi-Page Splitting
 
-The text box displays **3 lines at a time**. If wrapped text exceeds 3 lines, the engine splits it into pages of 3 lines each. After the player advances past the last character on a page, a down-arrow indicator pulses in the bottom-right corner of the text box. Pressing the action button loads the next page of the same node. Only after the final page does the system advance to `next` or show the choice menu.
+The text box displays **2 lines at a time** (below the speaker name row). If wrapped text exceeds 2 lines, the engine splits it into pages of 2 lines each. After the player advances past the last character on a page, a down-arrow indicator pulses in the bottom-right corner of the text box. Pressing the action button loads the next page of the same node. Only after the final page does the system advance to `next` or show the choice menu.
 
-Page boundaries are computed at load time from the wrapped line array: `pages = chunk(lines, 3)`.
+Page boundaries are computed at load time from the wrapped line array: `pages = chunk(lines, 2)`.
 
 ---
 
@@ -265,7 +265,7 @@ The dialogue renderer is a standalone module (`engine/dialogue/DialogueRenderer.
 ```js
 {
   speakerName: String,
-  lines: String[],        // current page's wrapped lines (max 3)
+  lines: String[],        // current page's wrapped lines (max 2)
   revealIndex: Number,    // total chars revealed so far on this page
   totalChars: Number,     // total chars on this page
   hasMorePages: Boolean,
