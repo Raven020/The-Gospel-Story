@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 575 tests passing across 40 test suites (vitest)
+- **Tests:** 578 tests passing across 40 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -24,17 +24,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - No closing cutscene, no scene transition, no "Jesus grows up in Nazareth" (Arc 1 close per spec)
   - No auto-warp forward after completing an arc
   - Need: register post-arc cutscene scripts that trigger on flag set; auto-warp to next arc's starting map
-
-- **P5.7 — Defeat screen has no menu (Retry/Title)**
-  - Spec requires "FALLEN" panel with "Retry from last save" and "Return to title" options
-  - Current: `BattlePhase.DEFEAT` immediately calls `_onComplete('defeat', 0)` after timer → unconditional title screen
-  - Spec also requires 60-frame slow fade on defeat (current: 30 frames)
-  - Need: defeat menu UI in BattleScene, "retry" calls gameState.load(), 60-frame fade
-
-- **P5.8 — Victory screen missing level-up stat reveals**
-  - Spec: sequential level-up stat-increase reveals with typewriter animation, per-member display
-  - Current: only shows "VICTORY" + "EXP: N", auto-advances after 2 sec or button press
-  - Need: per-member level-up display with stat gains
 
 - **P5.9 — Dialogue fast-forward on held confirm not wired**
   - `input-system.md §3`: "Fast-forward text: A (Z) held → held state"
@@ -196,6 +185,8 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P5.3** — Temptation events now trigger scripture-selection boss battles via new `startBattle` EventSystem command; Satan dialogue no longer sets flags directly (flags set by cutscene after battle victory); `BattleScene._pickScriptureChallenge` selects the correct challenge per encounter.
 - **P5.4** — Arc-blocked warp now shows feedback dialogue ("You're not ready to go there yet.") instead of silently returning.
 - **P5.5** — Capernaum→Mountain warp now spawns player at base (`targetY: 23`) instead of summit (`targetY: 1`).
+- **P5.7** — Defeat screen now shows a "FALLEN" panel with 60-frame slow fade, flavor text, and a two-option menu: "Retry from last save" (loads most recent save via GameState) and "Return to title". OverworldScene handles 'retry' result by finding latest save slot and restoring full game state. Defeat no longer auto-advances to title.
+- **P5.8** — Victory screen now awards EXP inside BattleScene (via gainExp), displays per-member level-up stat reveals with typewriter animation (2 chars/frame), and shows aggregated stat gains. Panel renders after a 30-frame fade to black. Player presses Z to advance through each member's level-ups, or auto-advances after 3 seconds of inactivity. OverworldScene no longer duplicates EXP awarding.
 - **P5.10** — `def` stat added to all 13 ROSTER entries and all 7 enemies; STR fallback removed from `BattleEngine._doAttack`.
 - **P5.12** — `temptation_3` cutscene now requires both `temptation_1_resolved` AND `temptation_2_resolved` via a `requires` array; OverworldScene enforces `requires` prerequisite guard on cutscene events.
 

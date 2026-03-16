@@ -14,10 +14,13 @@ import { drawText, wordWrap } from '../lib/drawText.js';
 import { drawPanel, drawCursor } from '../ui/UIChrome.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
 import { audioManager } from '../audio/AudioManager.js';
+import { gainExp } from '../data/partyData.js';
 
 const INTRO_FRAMES = 30;
 const EXECUTE_FRAMES = 30;
-const VICTORY_DISPLAY_FRAMES = 120;
+const VICTORY_FADE_FRAMES = 30;
+const DEFEAT_FADE_FRAMES = 60;
+const AUTO_ADVANCE_FRAMES = 180; // 3 sec at 60fps
 
 export class BattleScene {
   constructor({ input, transitions, sceneManager, frameCountFn, gameState }) {
@@ -55,11 +58,20 @@ export class BattleScene {
     this._selectingItemTarget = false;
     this._itemTargetCursor = 0;
     this._pendingItemId = null;
+
+    // Defeat menu state
+    this._defeatCursor = 0;
+
+    // Victory level-up state
+    this._levelUpResults = [];
+    this._levelUpMemberIndex = -1; // -1 = EXP screen, 0+ = level-up member
+    this._typewriterChars = 0;
+    this._victoryAutoTimer = 0;
   }
 
   /**
    * Start a battle with given party and enemies.
-   * @param {Function} onComplete - called with 'victory' or 'defeat' when battle ends
+   * @param {Function} onComplete - called with 'victory', 'defeat', or 'retry' when battle ends
    */
   startBattle(party, enemies, onComplete) {
     this.engine = new BattleEngine(party, enemies);
@@ -77,6 +89,11 @@ export class BattleScene {
     this._selectingItemTarget = false;
     this._itemTargetCursor = 0;
     this._pendingItemId = null;
+    this._defeatCursor = 0;
+    this._levelUpResults = [];
+    this._levelUpMemberIndex = -1;
+    this._typewriterChars = 0;
+    this._victoryAutoTimer = 0;
     this.engine.phase = BattlePhase.INTRO;
   }
 
@@ -138,15 +155,35 @@ export class BattleScene {
       case BattlePhase.VICTORY:
         if (this._stateFrames === 1) {
           audioManager.playBGM('victory');
+          this._awardExp();
+          this._levelUpMemberIndex = -1;
+          this._typewriterChars = 0;
+          this._victoryAutoTimer = 0;
         }
-        if (this._stateFrames >= VICTORY_DISPLAY_FRAMES || this.input.pressed(Actions.CONFIRM)) {
-          if (this._onComplete) this._onComplete('victory', this.engine.expGained);
+        if (this._stateFrames <= VICTORY_FADE_FRAMES) break;
+        this._victoryAutoTimer++;
+        if (this._levelUpMemberIndex >= 0 && this._levelUpMemberIndex < this._levelUpResults.length) {
+          this._typewriterChars += 2;
+        }
+        if (this.input.pressed(Actions.CONFIRM) || this._victoryAutoTimer >= AUTO_ADVANCE_FRAMES) {
+          this._advanceVictory();
         }
         break;
 
       case BattlePhase.DEFEAT:
-        if (this._stateFrames >= VICTORY_DISPLAY_FRAMES || this.input.pressed(Actions.CONFIRM)) {
-          if (this._onComplete) this._onComplete('defeat', 0);
+        if (this._stateFrames === 1) {
+          this._defeatCursor = 0;
+        }
+        if (this._stateFrames <= DEFEAT_FADE_FRAMES) break;
+        if (this.input.pressed(Actions.UP) || this.input.pressed(Actions.DOWN)) {
+          this._defeatCursor = this._defeatCursor === 0 ? 1 : 0;
+        }
+        if (this.input.pressed(Actions.CONFIRM)) {
+          if (this._defeatCursor === 0) {
+            this._completeDefeat('retry');
+          } else {
+            this._completeDefeat('defeat');
+          }
         }
         break;
     }
@@ -583,6 +620,92 @@ export class BattleScene {
     }
   }
 
+  /** Award EXP to living party members and collect level-up results for display. */
+  _awardExp() {
+    const exp = this.engine.expGained;
+    if (exp <= 0) return;
+    this._levelUpResults = [];
+    for (const member of this.engine.party) {
+      if (member.currentHp > 0) {
+        const levelUps = gainExp(member, exp);
+        if (levelUps.length > 0) {
+          this._levelUpResults.push({ name: member.name, levelUps });
+        }
+      }
+    }
+  }
+
+  /** Advance victory display: EXP screen → level-ups → complete. */
+  _advanceVictory() {
+    if (this._levelUpMemberIndex < 0) {
+      // On EXP screen
+      if (this._levelUpResults.length > 0) {
+        this._levelUpMemberIndex = 0;
+        this._typewriterChars = 0;
+        this._victoryAutoTimer = 0;
+      } else {
+        this._completeVictory();
+      }
+    } else if (this._levelUpMemberIndex < this._levelUpResults.length) {
+      const totalChars = this._getLevelUpCharCount(this._levelUpMemberIndex);
+      if (this._typewriterChars >= totalChars) {
+        // Fully revealed, advance to next member or complete
+        this._levelUpMemberIndex++;
+        this._typewriterChars = 0;
+        this._victoryAutoTimer = 0;
+        if (this._levelUpMemberIndex >= this._levelUpResults.length) {
+          this._completeVictory();
+        }
+      } else {
+        // Snap typewriter to full reveal
+        this._typewriterChars = totalChars;
+        this._victoryAutoTimer = 0;
+      }
+    } else {
+      this._completeVictory();
+    }
+  }
+
+  _completeVictory() {
+    if (this._onComplete) {
+      const cb = this._onComplete;
+      this._onComplete = null;
+      cb('victory', this.engine.expGained);
+    }
+  }
+
+  _completeDefeat(result) {
+    if (this._onComplete) {
+      const cb = this._onComplete;
+      this._onComplete = null;
+      cb(result, 0);
+    }
+  }
+
+  _buildLevelUpLines(memberIndex) {
+    const result = this._levelUpResults[memberIndex];
+    const lines = [];
+    const totalGains = {};
+    let finalLevel = 0;
+    for (const lu of result.levelUps) {
+      finalLevel = lu.level;
+      for (const [stat, val] of Object.entries(lu.gains)) {
+        totalGains[stat] = (totalGains[stat] || 0) + val;
+      }
+    }
+    lines.push(`${result.name} -> Level ${finalLevel}!`);
+    const entries = Object.entries(totalGains).filter(([, v]) => v > 0);
+    for (let i = 0; i < entries.length; i += 3) {
+      const chunk = entries.slice(i, i + 3);
+      lines.push(chunk.map(([s, v]) => `${s.toUpperCase()} +${v}`).join('  '));
+    }
+    return lines;
+  }
+
+  _getLevelUpCharCount(memberIndex) {
+    return this._buildLevelUpLines(memberIndex).reduce((sum, l) => sum + l.length, 0);
+  }
+
   _showResult() {
     const result = this.engine.lastResult;
     if (!result) return;
@@ -685,29 +808,95 @@ export class BattleScene {
   }
 
   _renderVictory(ctx) {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    // Spec: 30-frame fade to black (globalAlpha stepping 1/30 per frame)
+    const fadeAlpha = Math.min(this._stateFrames / VICTORY_FADE_FRAMES, 1);
+    ctx.globalAlpha = fadeAlpha;
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    ctx.globalAlpha = 1;
+
+    if (this._stateFrames <= VICTORY_FADE_FRAMES) return;
+
+    // Panel with results
+    const panelX = 20;
+    const panelY = 15;
+    const panelW = SCREEN_WIDTH - 40;
+    const panelH = SCREEN_HEIGHT - 30;
+    drawPanel(ctx, panelX, panelY, panelW, panelH, Colors.BG_DARK);
 
     const victoryText = 'VICTORY';
     const victoryX = Math.floor((SCREEN_WIDTH - victoryText.length * 6) / 2);
-    drawText(ctx, victoryText, victoryX, 50, Colors.TEXT_GOLD);
+    drawText(ctx, victoryText, victoryX, panelY + 8, Colors.TEXT_GOLD);
+
     const expText = `EXP: ${this.engine.expGained}`;
     const expX = Math.floor((SCREEN_WIDTH - expText.length * 6) / 2);
-    drawText(ctx, expText, expX, 70, Colors.TEXT_LIGHT);
-    const pressText = 'Press Z';
-    const pressX = Math.floor((SCREEN_WIDTH - pressText.length * 6) / 2);
-    drawText(ctx, pressText, pressX, 100, Colors.TEXT_DIM);
+    drawText(ctx, expText, expX, panelY + 22, Colors.TEXT_LIGHT);
+
+    // Per-member level-up reveal with typewriter animation (2 chars/frame)
+    if (this._levelUpMemberIndex >= 0 && this._levelUpMemberIndex < this._levelUpResults.length) {
+      const lines = this._buildLevelUpLines(this._levelUpMemberIndex);
+      let charsLeft = this._typewriterChars;
+      let lineY = panelY + 40;
+      for (const line of lines) {
+        if (charsLeft <= 0) break;
+        const visible = Math.min(charsLeft, line.length);
+        const color = lineY === panelY + 40 ? Colors.TEXT_GOLD : Colors.TEXT_LIGHT;
+        drawText(ctx, line.slice(0, visible), panelX + 10, lineY, color);
+        charsLeft -= line.length;
+        lineY += 12;
+      }
+    }
+
+    const promptText = 'Press Z';
+    const promptX = Math.floor((SCREEN_WIDTH - promptText.length * 6) / 2);
+    drawText(ctx, promptText, promptX, panelY + panelH - 14, Colors.TEXT_DIM);
   }
 
   _renderDefeat(ctx) {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    // Spec: 60-frame slow fade to black (globalAlpha stepping 1/60 per frame)
+    const fadeAlpha = Math.min(this._stateFrames / DEFEAT_FADE_FRAMES, 1);
+    ctx.globalAlpha = fadeAlpha;
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    ctx.globalAlpha = 1;
+
+    if (this._stateFrames <= DEFEAT_FADE_FRAMES) return;
+
+    // FALLEN panel with menu
+    const panelX = 30;
+    const panelY = 30;
+    const panelW = SCREEN_WIDTH - 60;
+    const panelH = 95;
+    drawPanel(ctx, panelX, panelY, panelW, panelH, Colors.BG_DARK);
 
     const fallenText = 'FALLEN';
     const fallenX = Math.floor((SCREEN_WIDTH - fallenText.length * 6) / 2);
-    drawText(ctx, fallenText, fallenX, 50, Colors.DMG_CRIT);
-    const defPressText = 'Press Z';
-    const defPressX = Math.floor((SCREEN_WIDTH - defPressText.length * 6) / 2);
-    drawText(ctx, defPressText, defPressX, 100, Colors.TEXT_DIM);
+    drawText(ctx, fallenText, fallenX, panelY + 8, Colors.DMG_CRIT);
+
+    const flavorText = 'Your faith was not enough...';
+    const flavorX = Math.floor((SCREEN_WIDTH - flavorText.length * 6) / 2);
+    drawText(ctx, flavorText, flavorX, panelY + 24, Colors.TEXT_DIM);
+
+    const fc = this.getFrameCount();
+    const menuX = panelX + 14;
+    const optW = panelW - 28;
+
+    const opt0 = 'Retry from last save';
+    const opt0Y = panelY + 46;
+    if (this._defeatCursor === 0) {
+      ctx.fillStyle = Colors.CURSOR_BG;
+      ctx.fillRect(menuX - 2, opt0Y - 1, optW, 14);
+      drawCursor(ctx, menuX, opt0Y + 3, fc, Colors.TEXT_LIGHT);
+    }
+    drawText(ctx, opt0, menuX + 10, opt0Y + 1, Colors.TEXT_LIGHT);
+
+    const opt1 = 'Return to title';
+    const opt1Y = panelY + 66;
+    if (this._defeatCursor === 1) {
+      ctx.fillStyle = Colors.CURSOR_BG;
+      ctx.fillRect(menuX - 2, opt1Y - 1, optW, 14);
+      drawCursor(ctx, menuX, opt1Y + 3, fc, Colors.TEXT_LIGHT);
+    }
+    drawText(ctx, opt1, menuX + 10, opt1Y + 1, Colors.TEXT_LIGHT);
   }
 }

@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BattleScene } from '../BattleScene.js';
 import { BattlePhase } from '../../systems/BattleEngine.js';
-import { InputContext } from '../../systems/InputSystem.js';
+import { Actions, InputContext } from '../../systems/InputSystem.js';
 import { createEnemy } from '../../data/enemies.js';
 
 function makeMember(overrides = {}) {
   return {
-    id: 'hero',
-    name: 'Hero',
+    id: 'peter',
+    name: 'Peter',
     level: 1,
-    stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 10, spd: 25 },
+    exp: 0,
+    expToNext: 30,
+    stats: { hp: 100, sp: 50, str: 20, def: 15, wis: 15, fai: 10, spd: 25 },
     currentHp: 100,
     currentSp: 50,
     abilities: ['prayer_heal', 'thunder_zeal', 'truth_word'],
@@ -88,7 +90,7 @@ describe('BattleScene', () => {
     expect(scene.engine.phase).not.toBe(BattlePhase.INTRO);
   });
 
-  it('victory calls onComplete with victory', () => {
+  it('victory calls onComplete with victory after fade and confirm', () => {
     const onComplete = vi.fn();
     const party = [makeMember()];
     const enemies = [createEnemy('doubt')];
@@ -98,13 +100,52 @@ describe('BattleScene', () => {
     enemies[0].currentHp = 0;
     scene.engine.phase = BattlePhase.VICTORY;
     scene.engine.expGained = 12;
-    scene._stateFrames = 120;
+    scene._stateFrames = 0;
 
+    // Advance past init (frame 1) + 30-frame fade
+    for (let i = 0; i <= 30; i++) scene.update(1 / 60);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Press CONFIRM on EXP screen (no level-ups → completes)
+    input._press(Actions.CONFIRM);
     scene.update(1 / 60);
     expect(onComplete).toHaveBeenCalledWith('victory', 12);
   });
 
-  it('defeat calls onComplete with defeat', () => {
+  it('victory auto-advances after 3 seconds of inactivity', () => {
+    const onComplete = vi.fn();
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, onComplete);
+
+    enemies[0].currentHp = 0;
+    scene.engine.phase = BattlePhase.VICTORY;
+    scene.engine.expGained = 12;
+    scene._stateFrames = 0;
+
+    // Advance past fade (31 frames) + auto-advance timer (180 frames) = 211 frames
+    for (let i = 0; i < 211; i++) scene.update(1 / 60);
+    expect(onComplete).toHaveBeenCalledWith('victory', 12);
+  });
+
+  it('victory awards EXP to living party members', () => {
+    const onComplete = vi.fn();
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, onComplete);
+
+    enemies[0].currentHp = 0;
+    scene.engine.phase = BattlePhase.VICTORY;
+    scene.engine.expGained = 12;
+    scene._stateFrames = 0;
+
+    const expBefore = party[0].exp;
+    // Frame 1 triggers _awardExp
+    scene.update(1 / 60);
+    expect(party[0].exp).toBe(expBefore + 12);
+  });
+
+  it('defeat menu retry calls onComplete with retry', () => {
     const onComplete = vi.fn();
     const party = [makeMember()];
     const enemies = [createEnemy('doubt')];
@@ -112,8 +153,38 @@ describe('BattleScene', () => {
 
     party[0].currentHp = 0;
     scene.engine.phase = BattlePhase.DEFEAT;
-    scene._stateFrames = 120;
+    scene._stateFrames = 0;
 
+    // Advance past 60-frame fade
+    for (let i = 0; i <= 60; i++) scene.update(1 / 60);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Default cursor is 0 (Retry) — press CONFIRM
+    input._press(Actions.CONFIRM);
+    scene.update(1 / 60);
+    expect(onComplete).toHaveBeenCalledWith('retry', 0);
+  });
+
+  it('defeat calls onComplete with defeat when title selected', () => {
+    const onComplete = vi.fn();
+    const party = [makeMember()];
+    const enemies = [createEnemy('doubt')];
+    scene.startBattle(party, enemies, onComplete);
+
+    party[0].currentHp = 0;
+    scene.engine.phase = BattlePhase.DEFEAT;
+    scene._stateFrames = 0;
+
+    // Advance past 60-frame fade
+    for (let i = 0; i <= 60; i++) scene.update(1 / 60);
+
+    // Press DOWN to select "Return to title"
+    input._press(Actions.DOWN);
+    scene.update(1 / 60);
+    input._clear();
+
+    // Press CONFIRM
+    input._press(Actions.CONFIRM);
     scene.update(1 / 60);
     expect(onComplete).toHaveBeenCalledWith('defeat', 0);
   });

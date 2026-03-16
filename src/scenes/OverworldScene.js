@@ -13,7 +13,7 @@ import {
   TILE_SIZE,
 } from '../engine/TilemapRenderer.js';
 import { createEnemy } from '../data/enemies.js';
-import { gainExp } from '../data/partyData.js';
+import { GameState } from '../systems/GameState.js';
 import { renderSprite, renderSpriteMirrored } from '../lib/renderSprite.js';
 import { drawText, measureText } from '../lib/drawText.js';
 import { Player } from '../systems/Player.js';
@@ -566,15 +566,9 @@ export class OverworldScene {
 
     this.sceneManager.switch('battle');
     audioManager.playBGM('battle');
-    this.battleScene.startBattle(party, enemies, (result, expGained) => {
+    this.battleScene.startBattle(party, enemies, (result) => {
       if (result === 'victory') {
-        // Award EXP to all living party members
-        for (const member of party) {
-          if (member.currentHp > 0) {
-            gainExp(member, expGained);
-          }
-        }
-        // Fade back to overworld
+        // EXP already awarded by BattleScene
         this.transitions.fadeToBlack(
           () => {
             this.sceneManager.switch('overworld');
@@ -583,8 +577,10 @@ export class OverworldScene {
             this._inBattle = false;
           }
         );
+      } else if (result === 'retry') {
+        this._handleRetry();
       } else {
-        // Defeat: fade to title screen (game over)
+        // Defeat: fade to title screen
         this.transitions.fadeToBlack(
           () => {
             this._inBattle = false;
@@ -625,13 +621,9 @@ export class OverworldScene {
     this._inBattle = true;
     this.sceneManager.switch('battle');
     audioManager.playBGM('battle_boss');
-    this.battleScene.startBattle(party, [enemy], (result, expGained) => {
+    this.battleScene.startBattle(party, [enemy], (result) => {
       if (result === 'victory') {
-        for (const member of party) {
-          if (member.currentHp > 0) {
-            gainExp(member, expGained);
-          }
-        }
+        // EXP already awarded by BattleScene
         this.transitions.fadeToBlack(
           () => { this.sceneManager.switch('overworld'); },
           () => {
@@ -640,6 +632,8 @@ export class OverworldScene {
             if (onComplete) onComplete();
           }
         );
+      } else if (result === 'retry') {
+        this._handleRetry();
       } else {
         this.transitions.fadeToBlack(
           () => {
@@ -650,6 +644,49 @@ export class OverworldScene {
         );
       }
     });
+  }
+
+  _handleRetry() {
+    const slot = this._findLatestSaveSlot();
+    if (slot >= 0 && this.gameState && this.gameState.load(slot)) {
+      this.transitions.fadeToBlack(
+        () => {
+          const entry = this._mapRegistry[this.gameState.currentMap];
+          if (entry) {
+            this.loadMap(entry.map, entry.tileset, this.gameState.playerX, this.gameState.playerY);
+          }
+          this.player.facing = this.gameState.playerFacing || Actions.DOWN;
+          this.sceneManager.switch('overworld');
+        },
+        () => {
+          this._inBattle = false;
+        }
+      );
+    } else {
+      // No save found — fall back to title
+      this.transitions.fadeToBlack(
+        () => {
+          this._inBattle = false;
+          this.sceneManager.switch('title');
+        },
+        null
+      );
+    }
+  }
+
+  _findLatestSaveSlot() {
+    let latestSlot = -1;
+    let latestTimestamp = -1;
+    try {
+      for (let i = 0; i < 3; i++) {
+        const info = GameState.getSaveInfo(i);
+        if (info && info.timestamp > latestTimestamp) {
+          latestTimestamp = info.timestamp;
+          latestSlot = i;
+        }
+      }
+    } catch (_e) { /* localStorage not available */ }
+    return latestSlot;
   }
 
   _handleEvent(evt) {
