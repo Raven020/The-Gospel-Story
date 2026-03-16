@@ -11,13 +11,15 @@ import { Actions } from './InputSystem.js';
 const MOVE_SPEED = 128; // px/s, same as Player
 
 export class EventSystem {
-  constructor({ player, npcManager, dialogueSystem, camera, transitions, questFlags }) {
+  constructor({ player, npcManager, dialogueSystem, camera, transitions, questFlags, onStartBattle, onWarp }) {
     this.player = player;
     this.npcManager = npcManager;
     this.dialogueSystem = dialogueSystem;
     this.camera = camera;
     this.transitions = transitions;
     this.questFlags = questFlags || {};
+    this.onStartBattle = onStartBattle || null;
+    this.onWarp = onWarp || null;
 
     this.active = false;
     this._commands = [];
@@ -200,6 +202,22 @@ export class EventSystem {
         this._advanceToNext();
         return;
       }
+
+      case 'startBattle':
+        if (this.onStartBattle) {
+          this.onStartBattle(cmd.enemyId, () => this._advanceToNext());
+        } else {
+          this._advanceToNext();
+        }
+        return;
+
+      case 'warp':
+        if (this.onWarp) {
+          this.onWarp(cmd.targetMap, cmd.targetX, cmd.targetY, () => this._advanceToNext());
+        } else {
+          this._advanceToNext();
+        }
+        return;
 
       case 'callback':
         if (typeof cmd.fn === 'function') {

@@ -156,7 +156,7 @@ export const MAP = {
       type: 'warp',
       targetMap: 'mountain',
       targetX: 10,
-      targetY: 1,
+      targetY: 23,
       transition: 'fade',
     },
   },

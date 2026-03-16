@@ -64,6 +64,8 @@ export class OverworldScene {
       camera: this.camera,
       transitions,
       questFlags: flags,
+      onStartBattle: (enemyId, onComplete) => this._triggerScriptedBattle(enemyId, onComplete),
+      onWarp: (targetMap, targetX, targetY, onComplete) => this._executeScriptedWarp(targetMap, targetX, targetY, onComplete),
     });
 
     // Map registry: maps map IDs to { map, tileset } for cross-map warps
@@ -549,11 +551,76 @@ export class OverworldScene {
     });
   }
 
+  _executeScriptedWarp(targetMap, targetX, targetY, onComplete) {
+    this.transitions.fadeToBlack(
+      () => {
+        const entry = this._mapRegistry[targetMap];
+        if (entry) {
+          this.loadMap(entry.map, entry.tileset, targetX, targetY);
+        } else {
+          this.player.teleport(targetX, targetY);
+        }
+        this.camera.follow(this.player.pixelX, this.player.pixelY, this.map.width, this.map.height);
+      },
+      () => {
+        if (onComplete) onComplete();
+      }
+    );
+  }
+
+  _triggerScriptedBattle(enemyId, onComplete) {
+    if (!this.battleScene) { if (onComplete) onComplete(); return; }
+
+    const enemy = createEnemy(enemyId);
+    if (!enemy) { if (onComplete) onComplete(); return; }
+
+    const party = this.gameState ? this.gameState.party.active : [];
+    if (party.length === 0) { if (onComplete) onComplete(); return; }
+
+    this._inBattle = true;
+    this.sceneManager.switch('battle');
+    audioManager.playBGM('battle_boss');
+    this.battleScene.startBattle(party, [enemy], (result, expGained) => {
+      if (result === 'victory') {
+        for (const member of party) {
+          if (member.currentHp > 0) {
+            gainExp(member, expGained);
+          }
+        }
+        this.transitions.fadeToBlack(
+          () => { this.sceneManager.switch('overworld'); },
+          () => {
+            this._inBattle = false;
+            audioManager.playBGM('overworld');
+            if (onComplete) onComplete();
+          }
+        );
+      } else {
+        this.transitions.fadeToBlack(
+          () => {
+            this._inBattle = false;
+            this.sceneManager.switch('title');
+          },
+          null
+        );
+      }
+    });
+  }
+
   _handleEvent(evt) {
     if (evt.type === 'warp') {
       // Arc ordering enforcement: block warps to maps the player hasn't unlocked
       if (evt.targetMap && this.gameState && !this.gameState.canAccessMap(evt.targetMap)) {
-        return; // silently block — player hasn't reached this arc yet
+        // Show feedback instead of silently blocking
+        this.input.context = InputContext.DIALOGUE;
+        this.dialogue.open({
+          start: {
+            speaker: null,
+            text: "You're not ready to go there yet.",
+            next: null,
+          },
+        });
+        return;
       }
       this._pendingWarp = evt;
       this.transitions.fadeToBlack(
@@ -590,6 +657,11 @@ export class OverworldScene {
       // Support flag guard: skip if the guard flag is already set
       if (evt.flag && this.gameState && this.gameState.questFlags[evt.flag]) {
         return;
+      }
+      // Support prerequisite flags: skip if any required flag is not set
+      if (evt.requires && this.gameState) {
+        const missing = evt.requires.some(f => !this.gameState.questFlags[f]);
+        if (missing) return;
       }
 
       let commands;

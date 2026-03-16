@@ -167,6 +167,7 @@ export const MAP = {
       commands: [
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'satan_temptation_1' },
+        { type: 'startBattle', enemyId: 'satan' },
         { type: 'setFlag', flag: 'temptation_1_resolved', value: true },
         { type: 'fadeIn' },
       ],
@@ -177,6 +178,7 @@ export const MAP = {
       commands: [
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'satan_temptation_2' },
+        { type: 'startBattle', enemyId: 'satan' },
         { type: 'setFlag', flag: 'temptation_2_resolved', value: true },
         { type: 'fadeIn' },
       ],
@@ -184,12 +186,14 @@ export const MAP = {
     temptation_3: {
       type: 'cutscene',
       flag: 'temptation_3_resolved',
+      requires: ['temptation_1_resolved', 'temptation_2_resolved'],
       commands: [
         { type: 'fadeOut' },
         { type: 'dialogue', data: 'satan_temptation_3' },
+        { type: 'startBattle', enemyId: 'satan' },
         { type: 'setFlag', flag: 'temptation_3_resolved', value: true },
         { type: 'dialogue', data: 'angel_minister' },
-        { type: 'fadeIn' },
+        { type: 'warp', targetMap: 'galilee', targetX: 14, targetY: 18 },
       ],
     },
   },

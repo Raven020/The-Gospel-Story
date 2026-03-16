@@ -8,7 +8,7 @@ export const ENEMIES = {
   doubt: {
     id: 'doubt',
     name: 'Doubt',
-    stats: { hp: 60, str: 15, wis: 20, spd: 18 },
+    stats: { hp: 60, str: 15, def: 8, wis: 20, spd: 18 },
     exp: 12,
     ai: 'basic',
     weakness: 'truth',
@@ -19,7 +19,7 @@ export const ENEMIES = {
   fear: {
     id: 'fear',
     name: 'Fear',
-    stats: { hp: 55, str: 20, wis: 12, spd: 22 },
+    stats: { hp: 55, str: 20, def: 10, wis: 12, spd: 22 },
     exp: 14,
     ai: 'basic',
     weakness: 'prayer',
@@ -30,7 +30,7 @@ export const ENEMIES = {
   temptation: {
     id: 'temptation',
     name: 'Temptation',
-    stats: { hp: 70, str: 18, wis: 25, spd: 16 },
+    stats: { hp: 70, str: 18, def: 12, wis: 25, spd: 16 },
     exp: 16,
     ai: 'basic',
     weakness: 'scripture',
@@ -41,7 +41,7 @@ export const ENEMIES = {
   pride: {
     id: 'pride',
     name: 'Pride',
-    stats: { hp: 80, str: 22, wis: 18, spd: 15 },
+    stats: { hp: 80, str: 22, def: 15, wis: 18, spd: 15 },
     exp: 18,
     ai: 'basic',
     weakness: 'truth',
@@ -52,7 +52,7 @@ export const ENEMIES = {
   greed: {
     id: 'greed',
     name: 'Greed',
-    stats: { hp: 65, str: 16, wis: 22, spd: 20 },
+    stats: { hp: 65, str: 16, def: 8, wis: 22, spd: 20 },
     exp: 15,
     ai: 'basic',
     weakness: 'miracle',
@@ -63,7 +63,7 @@ export const ENEMIES = {
   deception: {
     id: 'deception',
     name: 'Deception',
-    stats: { hp: 50, str: 12, wis: 28, spd: 24 },
+    stats: { hp: 50, str: 12, def: 10, wis: 28, spd: 24 },
     exp: 13,
     ai: 'basic',
     weakness: 'truth',
@@ -76,7 +76,7 @@ export const ENEMIES = {
   satan: {
     id: 'satan',
     name: 'Satan',
-    stats: { hp: 300, str: 40, wis: 50, spd: 30 },
+    stats: { hp: 300, str: 40, def: 25, wis: 50, spd: 30 },
     exp: 100,
     ai: 'boss',
     weakness: 'scripture',

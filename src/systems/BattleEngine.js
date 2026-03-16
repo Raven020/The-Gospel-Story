@@ -205,7 +205,7 @@ export class BattleEngine {
 
   _doAttack(attacker, target, power) {
     let str = attacker.stats.str;
-    const def = target.stats.def !== undefined ? target.stats.def : (target.stats.str || 0);
+    const def = target.stats.def ?? 0;
 
     // Apply buff_str to attacker
     if (this.buffs.some((b) => b.target === attacker && b.type === 'buff_str')) {
@@ -366,7 +366,7 @@ export class BattleEngine {
 
   _executeEnemyAbility(enemy, ability, target) {
     if (ability.type === 'damage') {
-      const def = target.stats.def !== undefined ? target.stats.def : target.stats.str;
+      const def = target.stats.def ?? 0;
       let defVal = def;
       if (this.buffs.some((b) => b.target === target && b.type === 'defend')) {
         defVal = defVal * 2;
@@ -442,7 +442,7 @@ export class BattleEngine {
       str = Math.floor(str * 1.5);
     }
 
-    const def = target.stats.def !== undefined ? target.stats.def : target.stats.str;
+    const def = target.stats.def ?? 0;
     let defVal = def;
     if (this.buffs.some((b) => b.target === target && b.type === 'defend')) {
       defVal = defVal * 2;

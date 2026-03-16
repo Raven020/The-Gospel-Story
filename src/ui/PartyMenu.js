@@ -304,10 +304,12 @@ export class PartyMenu {
 
     // Core stats
     drawText(ctx, `STR ${stats.str}`, col1X, sy, Colors.TEXT_LIGHT);
-    drawText(ctx, `WIS ${stats.wis}`, col2X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `DEF ${stats.def}`, col2X, sy, Colors.TEXT_LIGHT);
     sy += 12;
-    drawText(ctx, `FAI ${stats.fai}`, col1X, sy, Colors.TEXT_LIGHT);
-    drawText(ctx, `SPD ${stats.spd}`, col2X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `WIS ${stats.wis}`, col1X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `FAI ${stats.fai}`, col2X, sy, Colors.TEXT_LIGHT);
+    sy += 12;
+    drawText(ctx, `SPD ${stats.spd}`, col1X, sy, Colors.TEXT_LIGHT);
     sy += 14;
 
     // EXP

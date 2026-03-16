@@ -68,7 +68,6 @@ export const ARC2_DIALOGUE = {
     start: {
       speaker: 'Satan',
       text: 'If you are the Son of God, command these stones to become bread!',
-      effects: [{ type: 'setFlag', flag: 'temptation_1_resolved', value: true }],
       next: null,
     },
   },
@@ -76,7 +75,6 @@ export const ARC2_DIALOGUE = {
     start: {
       speaker: 'Satan',
       text: 'If you are the Son of God, throw yourself down from the pinnacle of the temple!',
-      effects: [{ type: 'setFlag', flag: 'temptation_2_resolved', value: true }],
       next: null,
     },
   },
@@ -84,7 +82,6 @@ export const ARC2_DIALOGUE = {
     start: {
       speaker: 'Satan',
       text: 'All these kingdoms I will give you, if you fall down and worship me!',
-      effects: [{ type: 'setFlag', flag: 'temptation_3_resolved', value: true }],
       next: null,
     },
   },
