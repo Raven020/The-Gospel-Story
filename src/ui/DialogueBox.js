@@ -7,6 +7,7 @@ import { drawText, drawTextPartial, wordWrap, CELL_W, CELL_H } from '../lib/draw
 import { drawPanel, drawAdvanceArrow, drawCursor } from './UIChrome.js';
 import { Colors } from './Colors.js';
 import { SCREEN_WIDTH } from '../engine/Display.js';
+import { gameSettings } from './gameSettings.js';
 
 // Layout constants per spec
 const BOX_X = 0;
@@ -84,7 +85,7 @@ export class DialogueBox {
     if (!page) return;
 
     const totalChars = page.lines.reduce((sum, l) => sum + l.length, 0);
-    this.revealIndex += CHARS_PER_FRAME;
+    this.revealIndex += gameSettings.textSpeed;
 
     if (this.revealIndex >= totalChars) {
       this.revealIndex = totalChars;

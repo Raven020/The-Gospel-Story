@@ -11,6 +11,7 @@ import { Actions, InputContext } from '../systems/InputSystem.js';
 import { SaveLoadMenu } from './SaveLoadMenu.js';
 import { PartyMenu } from './PartyMenu.js';
 import { ItemMenu } from './ItemMenu.js';
+import { OptionsMenu } from './OptionsMenu.js';
 
 const PANEL_X = 60;
 const PANEL_Y = 30;
@@ -44,10 +45,15 @@ export class PauseMenu {
 
       this.itemMenu = new ItemMenu({ input, gameState });
       this.itemMenu.onClose = () => { this._activeSubMenu = null; };
+
+      this.optionsMenu = new OptionsMenu({ input });
+      this.optionsMenu.onClose = () => { this._activeSubMenu = null; };
     } else {
       this.saveLoadMenu = null;
       this.partyMenu = null;
       this.itemMenu = null;
+      this.optionsMenu = new OptionsMenu({ input });
+      this.optionsMenu.onClose = () => { this._activeSubMenu = null; };
     }
   }
 
@@ -107,6 +113,9 @@ export class PauseMenu {
     } else if (option === 'load' && this.saveLoadMenu) {
       this.saveLoadMenu.open('load');
       this._activeSubMenu = this.saveLoadMenu;
+    } else if (option === 'options' && this.optionsMenu) {
+      this.optionsMenu.open();
+      this._activeSubMenu = this.optionsMenu;
     } else {
       // Fallback for options without sub-menu or no gameState
       this.onSelect(option);

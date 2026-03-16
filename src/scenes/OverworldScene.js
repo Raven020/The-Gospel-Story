@@ -26,6 +26,7 @@ import { Follower } from '../systems/Follower.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
 import { SCREEN_WIDTH } from '../engine/Display.js';
 import { audioManager } from '../audio/AudioManager.js';
+import { getCurrentObjective } from '../data/objectives.js';
 
 // Location name display per specs/ui-hud.md §6
 const LOC_FADE_IN = 20;
@@ -358,6 +359,8 @@ export class OverworldScene {
 
     if (this._showLocName) {
       this._renderLocationName(ctx);
+    } else if (!this.dialogue.isOpen && !this.pauseMenu.active && !this._inBattle) {
+      this._renderObjectiveMarker(ctx);
     }
 
     // Dialogue box renders on top of everything
@@ -475,6 +478,20 @@ export class OverworldScene {
     ctx.fillRect(2, 2, textW + 4, 12);
     drawText(ctx, this._locName, 4, 4, Colors.TEXT_LIGHT);
     ctx.globalAlpha = 1;
+  }
+
+  _renderObjectiveMarker(ctx) {
+    if (!this.gameState) return;
+    const text = getCurrentObjective(this.gameState.questFlags);
+    if (!text) return;
+
+    // Truncate to 30 chars with ellipsis if needed
+    const display = text.length > 30 ? text.slice(0, 27) + '...' : text;
+    const textW = measureText(display);
+
+    ctx.fillStyle = Colors.BG_DARK;
+    ctx.fillRect(2, 2, textW + 4, 12);
+    drawText(ctx, display, 4, 4, Colors.TEXT_LIGHT);
   }
 
   _openNPCDialogue(npc) {
