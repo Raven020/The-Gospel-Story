@@ -34,6 +34,14 @@ export class Display {
   _onResize() {
     const scaleX = window.innerWidth / this.width;
     const scaleY = window.innerHeight / this.height;
+    // Integer-only scaling is intentional for this GBA-style game.
+    // Math.floor ensures the canvas is always scaled by a whole-number multiplier
+    // (1×, 2×, 3×, …), which preserves pixel-perfect rendering — every logical
+    // pixel maps to an exact integer number of physical pixels with no sub-pixel
+    // blending. The trade-off is that at certain window sizes the canvas does not
+    // fill the full window, leaving letterbox bars. This is the correct behaviour;
+    // fractional CSS scaling would introduce anti-aliasing artefacts that break
+    // the crisp pixel-art aesthetic. (See P5.31 — resolved as intentional.)
     const scale = Math.max(1, Math.floor(Math.min(scaleX, scaleY)));
     this.canvas.style.width = `${this.width * scale}px`;
     this.canvas.style.height = `${this.height * scale}px`;

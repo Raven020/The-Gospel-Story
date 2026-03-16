@@ -413,9 +413,8 @@ src/
     ...
   tilesets/
     overworld.js       # grass, path, water, trees — used by outdoor maps
-    interior.js        # floors, walls, furniture — used by buildings
+    interior.js        # floors, walls, furniture — used by buildings and temples
     desert.js          # sand, rock, dunes
-    temple.js          # marble, pillars, sacred objects
 ```
 
 Each map's `tileset` field is the filename stem (e.g., `'overworld'` → `src/tilesets/overworld.js`), imported dynamically or bundled at load time.

@@ -206,6 +206,94 @@ describe('DialogueSystem', () => {
     expect(ds2._currentNodeId).toBe('start');
   });
 
+  // --- T6: autoAdvanceSingleChoice path ---
+  it('auto-advances past a single filtered choice without player input', () => {
+    const dialogue = {
+      start: {
+        speaker: 'NPC',
+        text: 'Ready to go?',
+        autoAdvanceSingleChoice: true,
+        choices: [
+          // This choice is hidden by its condition
+          { text: 'No way', next: 'refuse', condition: { flag: 'can_refuse', op: 'eq', value: true } },
+          // Only this choice passes
+          { text: 'Yes', next: 'accept' },
+        ],
+      },
+      accept: {
+        speaker: 'NPC',
+        text: 'Great!',
+        next: null,
+      },
+      refuse: {
+        speaker: 'NPC',
+        text: 'Hmm.',
+        next: null,
+      },
+    };
+
+    const ds = new DialogueSystem({ questFlags: { can_refuse: false } });
+    ds.open(dialogue, 'start');
+
+    // autoAdvanceSingleChoice should have bypassed the choice UI and navigated
+    // directly to the single valid choice's next node
+    expect(ds._currentNodeId).toBe('accept');
+    // No choices are shown — box.choices is null (choice UI was never displayed)
+    expect(ds.box.choices).toBeNull();
+  });
+
+  it('auto-advances single choice and fires choice effects before navigating', () => {
+    const onEffect = vi.fn();
+    const dialogue = {
+      start: {
+        speaker: 'NPC',
+        text: 'Proceed?',
+        autoAdvanceSingleChoice: true,
+        choices: [
+          {
+            text: 'Continue',
+            next: 'result',
+            effects: [{ type: 'giveItem', item: 'key', quantity: 1 }],
+          },
+        ],
+      },
+      result: {
+        speaker: 'NPC',
+        text: 'Done.',
+        next: null,
+      },
+    };
+
+    const ds = new DialogueSystem({ onEffect });
+    ds.open(dialogue, 'start');
+
+    expect(onEffect).toHaveBeenCalledWith({ type: 'giveItem', item: 'key', quantity: 1 });
+    expect(ds._currentNodeId).toBe('result');
+  });
+
+  it('does NOT auto-advance when multiple choices remain after filtering', () => {
+    const dialogue = {
+      start: {
+        speaker: 'NPC',
+        text: 'Choose wisely.',
+        autoAdvanceSingleChoice: true,
+        choices: [
+          { text: 'Option A', next: 'a' },
+          { text: 'Option B', next: 'b' },
+        ],
+      },
+      a: { text: 'A', next: null },
+      b: { text: 'B', next: null },
+    };
+
+    const ds = new DialogueSystem({ questFlags: {} });
+    ds.open(dialogue, 'start');
+
+    // Both choices pass — should show the choice UI on 'start'
+    expect(ds._currentNodeId).toBe('start');
+    expect(ds.box.choices).toHaveLength(2);
+  });
+
   it('close resets everything', () => {
     const ds = new DialogueSystem({});
     ds.open(simpleDialogue, 'start');

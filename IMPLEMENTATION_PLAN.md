@@ -17,21 +17,11 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ### P2 — Spec Divergence (Visible to Player)
 
-- **P5.16 — Enemy sprites are placeholder colored rectangles**
-  - `BattleHUD.js:62` explicitly comments "Placeholder enemy sprite (colored rectangle)"
-  - `#8B0000` for bosses, `#604080` for generic enemies — no real art integrated
-  - Need: integrate actual enemy battle sprites (64×64 per art-style.md spec)
-
 - **P5.17 — Map `detail` and `above` layers are empty across all maps**
   - Every map has `detail = fill(W * H, 0)` and `above = fill(W * H, 0)` (except 2 boats in galilee)
   - Tileset IDs 100–299 (detail/above) have zero tile definitions in any tileset
   - Maps render completely flat with no depth layering above player sprite
   - Need: add detail/above tile definitions to tilesets; populate layers for visual depth
-
-- **P5.18 — No temple.js tileset (spec lists it)**
-  - Spec lists `temple.js` as a tileset; current code has unspecced `shoreline.js` instead
-  - `temple.js` map references `tileset: 'interior'` as fallback
-  - Need: create temple tileset or update spec to acknowledge interior reuse
 
 ### P3 — Content & Data Gaps
 
@@ -48,11 +38,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - The entire Judas betrayal mechanic is data-only scaffolding
   - Post-MVP scope (Arc 11+), but the detection mechanic could be wired now
 
-- **P5.23 — Mountain summit cutscene does not spawn disciple NPCs**
-  - `summit_choosing` cutscene has only `fadeOut`, `dialogue`, `setFlag`, `dialogue`, `fadeIn`
-  - No `spawnNPC` commands — the "Jesus calling the twelve on the mountain" scene has no visual NPC population
-  - EventSystem's `spawnNPC` command is implemented but never used anywhere in the codebase
-
 - **P5.24 — Missing quest flags for later disciples**
   - `questFlags.js` has no `recruited_thomas`, `recruited_james_alphaeus`, `recruited_thaddaeus`, `recruited_simon_zealot`, `recruited_judas`
   - These characters exist in ROSTER but their recruitment can't be tracked
@@ -62,16 +47,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - Post-MVP (Arc 6) but worth noting for future planning
 
 ### P4 — Polish & Minor Issues
-
-- **P5.31 — Display uses integer-only scaling (Math.floor)**
-  - At certain window sizes the canvas is noticeably smaller than the window
-  - Spec says "responsively scaled to fill browser window" — could use CSS transform for fractional scaling
-  - Trade-off: integer scaling preserves pixel-perfect rendering — likely intentional
-
-- **P5.34 — Morale system entirely missing (MVP-scope says "stub OK")**
-  - No `morale` field anywhere in GameState, ROSTER, or createMember()
-  - Even a stubbed numeric field would support future integration
-  - Per mvp-scope.md this can be a stub, but currently not even data-scaffolded
 
 - **P5.35 — Healing Encounters not implemented**
   - `combat.md` defines a distinct encounter type for the sick/possessed resolved via Prayer/Miracles
@@ -118,8 +93,13 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags — covers all arc 1-3 progression states. Hidden during dialogue, menus, battles, and location name display. Font extended with > and < glyphs.
 - **P6.8** — EventSystem._cameraOverride replaced with public getter (get cameraOverride()). OverworldScene now uses the getter.
 - **P6.9** — DMG_MISS color now used for miss and blocked damage floaters in BattleScene._showResult().
+- **P6.6** — Already resolved — arc1_started set in main.js onNewGame.
 
 ### P5 Fixes
+- **P5.18** — RESOLVED. The temple map correctly uses the `interior` tileset (`src/tilesets/interior.js`), which provides stone/marble floors, walls, pillars, doors, scroll shelves, carpet, and benches — all tiles used by the Temple of Jerusalem map. The spec’s listing of a separate `temple.js` tileset was aspirational; `tilemap-format.md` updated to remove `temple.js` and note that `interior.js` covers both buildings and temples.
+- **P5.16** — Enemy battle sprites created (16×16 pixel art, 2x scaled to 32×32 in BattleHUD). All 7 enemies have distinctive designs: doubt (shadowy wisp), fear (dark shape with red eyes), temptation (flame form), pride (crowned figure), greed (grasping claws), deception (serpent), satan (horned boss).
+- **P5.23** — Summit cutscene now spawns 7 disciple NPCs in semicircle via spawnNPC commands before the choosing dialogue.
+- **P5.34** — Morale field stubbed on party members (default 100, serialized/deserialized with ?? fallback for old saves).
 - **P5.20** — RESOLVED. dialogue-system.md updated to match ui-hud.md: 240×42 box, 38 chars/line, 2 lines.
 - **P5.26** — Peter recruitment dialogue expanded from 3 to 9 nodes with miraculous catch of fish (Luke 5:1-11).
 - **P5.28** — EventSystem fadeOut onMidpoint documented as intentional (visual-only effect).
@@ -142,6 +122,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P5.9** — Dialogue fast-forward on held confirm now wired. OverworldScene checks `input.held(Actions.CONFIRM)` in addition to `input.pressed()`, calling `dialogue.onActionPress()` every frame while held.
 - **P5.11** — NPC post-discovery dialogue implemented for all Arc 1 NPCs. DialogueSystem enhanced with `conditionFail` field on nodes — when a node's condition is false, navigates to `conditionFail` instead of `next`. All 7 Arc 1 NPCs (townsperson 1-5, temple guard, temple teachers 1-2, mary_worried) now have post-`found_jesus_in_temple` dialogue variants.
 - **P5.27** — Jerusalem townsperson_4 and townsperson_5 now have unique dialogue trees instead of reusing townsperson_1/townsperson_3 keys.
+- **P5.31** — RESOLVED (intentional). Integer-only scaling via `Math.floor` is the correct design for a GBA-style pixel-art game. It guarantees every logical pixel maps to a whole-number multiple of physical pixels, preserving pixel-perfect crispness. The visible letterbox at certain window sizes is an accepted trade-off; fractional CSS scaling would introduce sub-pixel blending that breaks the pixel-art aesthetic. A comment documenting this decision has been added to `Display._onResize()`.
 - **P5.32** — RESOLVED. `overflow: hidden` is set on both `html` and `body` in `index.html`.
 
 ### Pre-existing Test Bug Fix

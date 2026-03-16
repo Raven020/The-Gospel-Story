@@ -642,6 +642,49 @@ describe('OverworldScene', () => {
     expect(scn.player.tileY).toBe(7);
   });
 
+  // --- T5: registerMap / getMapEntry ---
+  describe('registerMap / getMapEntry', () => {
+    it('stores a map entry and retrieves it by id', () => {
+      const map = createTestMap();
+      const tileset = createTestTileset();
+      scene.registerMap('bethlehem', map, tileset);
+
+      const entry = scene.getMapEntry('bethlehem');
+      expect(entry).toBeDefined();
+      expect(entry.map).toBe(map);
+      expect(entry.tileset).toBe(tileset);
+    });
+
+    it('returns undefined for an unregistered map id', () => {
+      expect(scene.getMapEntry('nonexistent')).toBeUndefined();
+    });
+
+    it('overwrites a previously registered entry for the same id', () => {
+      const mapA = createTestMap();
+      mapA.name = 'Map A';
+      const mapB = createTestMap();
+      mapB.name = 'Map B';
+      const tileset = createTestTileset();
+
+      scene.registerMap('nazareth', mapA, tileset);
+      scene.registerMap('nazareth', mapB, tileset);
+
+      expect(scene.getMapEntry('nazareth').map.name).toBe('Map B');
+    });
+
+    it('registers multiple distinct map ids independently', () => {
+      const mapA = createTestMap();
+      const mapB = createTestMap();
+      const tileset = createTestTileset();
+
+      scene.registerMap('map_a', mapA, tileset);
+      scene.registerMap('map_b', mapB, tileset);
+
+      expect(scene.getMapEntry('map_a').map).toBe(mapA);
+      expect(scene.getMapEntry('map_b').map).toBe(mapB);
+    });
+  });
+
   // --- P3.6: Defeat path ---
   it('defeat transitions to title screen', () => {
     const gameState = {

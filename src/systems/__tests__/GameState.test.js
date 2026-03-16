@@ -236,6 +236,48 @@ describe('GameState', () => {
     });
   });
 
+  describe('getMember', () => {
+    it('returns a member from the active party by id', () => {
+      const gs = new GameState();
+      gs.newGame();
+      const member = gs.getMember('joseph');
+      expect(member).not.toBeNull();
+      expect(member.id).toBe('joseph');
+    });
+
+    it('returns a member from the bench by id', () => {
+      const gs = new GameState();
+      gs.newGame();
+      // Fill active to 5 so the next recruit goes to bench
+      gs.recruitMember('peter');
+      gs.recruitMember('andrew');
+      gs.recruitMember('james');
+      gs.recruitMember('john');
+      gs.recruitMember('philip'); // bench
+      const member = gs.getMember('philip');
+      expect(member).not.toBeNull();
+      expect(member.id).toBe('philip');
+    });
+
+    it('returns null for an id not in active or bench', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.getMember('judas')).toBeNull();
+    });
+
+    it('prefers the active party over bench when the same id appears in both', () => {
+      // Directly construct an edge-case state where the same id is in both lists
+      const gs = new GameState();
+      gs.newGame();
+      const peter = { id: 'peter', name: 'Peter' };
+      gs.party.active.push(peter);
+      gs.party.bench.push({ id: 'peter', name: 'Peter (bench copy)' });
+
+      const found = gs.getMember('peter');
+      expect(found).toBe(peter);
+    });
+  });
+
   describe('advanceArc', () => {
     it('advances current_arc forward', () => {
       const gs = new GameState();
