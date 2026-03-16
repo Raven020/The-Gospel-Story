@@ -419,3 +419,26 @@ src/
 ```
 
 Each map's `tileset` field is the filename stem (e.g., `'overworld'` → `src/tilesets/overworld.js`), imported dynamically or bundled at load time.
+
+---
+
+## 12. Map Connectivity & Progression (CRITICAL)
+
+**Every map MUST have at least one working warp exit that allows the player to leave and progress through the game.** This is a hard requirement — a map with no reachable exit is a game-breaking bug.
+
+### Requirements
+
+1. **Every map must have at least one warp event** leading to another map (unless it is an intentionally sealed story moment with a scripted exit trigger).
+2. **Warp tiles must be walkable.** The collision layer must have `0` on every tile that contains a warp event ID. A warp placed on a collision-blocked tile is unreachable and therefore broken.
+3. **Warp tiles must be reachable.** There must be a clear, unblocked path from the player spawn point to every exit warp. No exit should be walled off by collision tiles, NPCs, or missing event IDs.
+4. **Map edges that represent logical exits** (e.g., the south edge of a town leading to a road) should have warp events on the edge tiles. Do not rely on the player "walking off the map" — the collision check already blocks out-of-bounds movement.
+5. **After completing a map's objectives** (e.g., finding boy Jesus in the Temple), the game must either (a) automatically warp/transition the player to the next area, or (b) ensure an exit warp is available and clearly indicated so the player knows where to go.
+6. **Test every map by walking from spawn to each exit.** If the player cannot reach an exit, the map is broken.
+
+### Common Bugs to Avoid
+
+- Placing warp event IDs in the event layer but forgetting to define them in the `events` table
+- Collision layer blocking the doorway/exit tiles
+- NPC standing on the exit tile with no way to move them
+- Event-triggered map transitions that never fire because the trigger condition is wrong
+- Maps where the player spawns inside a walled area with no exit

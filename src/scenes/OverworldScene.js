@@ -22,6 +22,7 @@ import { DialogueSystem } from '../systems/DialogueSystem.js';
 import { EventSystem } from '../systems/EventSystem.js';
 import { PauseMenu } from '../ui/PauseMenu.js';
 import { Colors } from '../ui/Colors.js';
+import { Follower } from '../systems/Follower.js';
 import { Actions, InputContext } from '../systems/InputSystem.js';
 import { SCREEN_WIDTH } from '../engine/Display.js';
 import { audioManager } from '../audio/AudioManager.js';
@@ -42,6 +43,9 @@ export class OverworldScene {
     this.camera = new Camera();
     this.player = new Player(9, 5);
     this.npcManager = new NPCManager();
+
+    // Follower companion (Mary in Arc 1). Null when no follower is active.
+    this.follower = null;
 
     // Use gameState.questFlags as the single source of truth for quest flags.
     // Both DialogueSystem and EventSystem must reference the same object so that
@@ -123,10 +127,13 @@ export class OverworldScene {
     this.tileset = tileset;
     this.tilesetId = map.tileset;
     this.npcManager.loadFromMap(map);
-    this.player.teleport(
-      spawnX !== undefined ? spawnX : 9,
-      spawnY !== undefined ? spawnY : 5
-    );
+    const sx = spawnX !== undefined ? spawnX : 9;
+    const sy = spawnY !== undefined ? spawnY : 5;
+    this.player.teleport(sx, sy);
+
+    // Position follower 1 tile behind the player (or same tile if blocked)
+    this._syncFollower(sx, sy);
+
     this.camera.follow(this.player.pixelX, this.player.pixelY, map.width, map.height);
 
     this._locName = map.name || '';
@@ -144,6 +151,9 @@ export class OverworldScene {
       // so condition checks and flag writes stay in sync.
       this.dialogue.questFlags = this.gameState.questFlags;
       this.eventSystem.questFlags = this.gameState.questFlags;
+
+      // Set up or remove follower based on arc
+      this._updateFollowerForArc();
     }
 
   }
@@ -238,10 +248,15 @@ export class OverworldScene {
     if (!this.player.moving) {
       const dir = this.input.getDirectionalHeld();
       if (dir) {
+        const prevX = this.player.tileX;
+        const prevY = this.player.tileY;
         const isTileBlocked = (tx, ty) => {
           return isBlocked(this.map, tx, ty) || this.npcManager.isNPCAt(tx, ty);
         };
-        this.player.tryMove(dir, isTileBlocked);
+        const moved = this.player.tryMove(dir, isTileBlocked);
+        if (moved && this.follower) {
+          this.follower.onPlayerMove(prevX, prevY, dir);
+        }
       }
 
       // NPC interaction
@@ -261,6 +276,7 @@ export class OverworldScene {
     }
 
     this.player.update(dt);
+    if (this.follower) this.follower.update(dt);
 
     if (this.player.justArrived) {
       // Track player position in game state
@@ -318,6 +334,17 @@ export class OverworldScene {
     this.pauseMenu.render(ctx, this.getFrameCount());
   }
 
+  /**
+   * Get the sprite key for the current player character.
+   * Uses the party leader's sprite field so it's Joseph in Arc 1, Jesus in Arc 2+.
+   */
+  _getPlayerSpriteKey() {
+    if (this.gameState && this.gameState.party.active.length > 0) {
+      return this.gameState.party.active[0].sprite;
+    }
+    return 'jesus';
+  }
+
   _renderEntities(ctx, cameraX, cameraY) {
     const entities = [];
 
@@ -327,6 +354,16 @@ export class OverworldScene {
       facing: this.player.facing,
       type: 'player',
     });
+
+    // Add follower as a renderable entity
+    if (this.follower && this.follower.visible) {
+      entities.push({
+        pixelX: this.follower.pixelX,
+        pixelY: this.follower.pixelY,
+        facing: this.follower.facing,
+        type: 'follower',
+      });
+    }
 
     for (const npc of this.npcManager.npcs) {
       entities.push({
@@ -345,7 +382,9 @@ export class OverworldScene {
       const screenY = Math.round(ent.pixelY - cameraY - TILE_SIZE);
 
       if (ent.type === 'player') {
-        this._renderCharacterSprite(ctx, 'jesus', ent.facing, screenX, screenY);
+        this._renderCharacterSprite(ctx, this._getPlayerSpriteKey(), ent.facing, screenX, screenY);
+      } else if (ent.type === 'follower') {
+        this._renderCharacterSprite(ctx, this.follower.spriteKey, ent.facing, screenX, screenY);
       } else if (ent.type === 'npc') {
         this._renderCharacterSprite(ctx, ent.npc.sprite, ent.facing, screenX, screenY);
       }
@@ -433,7 +472,13 @@ export class OverworldScene {
         if (effect.value && typeof effect.flag === 'string') {
           const match = effect.flag.match(/^arc(\d+)_complete$/);
           if (match) {
-            this.gameState.advanceArc(Number(match[1]) + 1);
+            const completedArc = Number(match[1]);
+            this.gameState.advanceArc(completedArc + 1);
+            // Arc 1→2 transition: swap Joseph for Jesus, remove Mary follower
+            if (completedArc === 1) {
+              this.gameState.transitionToArc2();
+              this.follower = null;
+            }
           }
         }
         break;
@@ -688,5 +733,40 @@ export class OverworldScene {
 
       this.eventSystem.startEvent(resolved);
     }
+  }
+
+  /**
+   * Create or remove the follower based on current arc.
+   * Arc 1: Mary follows Joseph. Arc 2+: no follower.
+   */
+  _updateFollowerForArc() {
+    if (!this.gameState) return;
+    const arc = this.gameState.questFlags.current_arc || 1;
+    if (arc === 1) {
+      if (!this.follower) {
+        this.follower = new Follower('mary', this.player.tileX, this.player.tileY, this.player.facing);
+      }
+      // Position Mary 1 tile behind the player
+      this._syncFollower(this.player.tileX, this.player.tileY);
+    } else {
+      this.follower = null;
+    }
+  }
+
+  /**
+   * Position the follower 1 tile behind the player's spawn position.
+   * Uses the player's facing direction to determine "behind".
+   */
+  _syncFollower(spawnX, spawnY) {
+    if (!this.follower) return;
+    // Place follower 1 tile behind relative to facing direction
+    const facing = this.player.facing;
+    let fx = spawnX;
+    let fy = spawnY;
+    if (facing === Actions.UP) fy = spawnY + 1;
+    else if (facing === Actions.DOWN) fy = spawnY - 1;
+    else if (facing === Actions.LEFT) fx = spawnX + 1;
+    else if (facing === Actions.RIGHT) fx = spawnX - 1;
+    this.follower.teleport(fx, fy, facing);
   }
 }

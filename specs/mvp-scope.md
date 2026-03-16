@@ -7,10 +7,12 @@ Build Arcs 1-3 as a playable demo to dial in the art style, core gameplay mechan
 
 ### Arc 1 — The Boy Jesus (Luke 2:41-52)
 - **Location:** Jerusalem / Temple of Jerusalem
-- **Player character:** Mary and Joseph (not Jesus)
+- **Player character:** Joseph (with Mary following as a visible companion — see party-system.md)
+- **Mary follows Joseph:** Mary walks 1 tile behind Joseph at all times, making it visually obvious that Joseph and Mary are searching together as a pair
 - **Gameplay:** Tutorial arc — exploration, NPC dialogue, "find the boy" puzzle
 - **Encounters:** Simplified NPC dialogue encounters (no full combat). A teacher mentions a boy with wondrous knowledge in the Temple as a breadcrumb.
 - **Mini-game:** Temple wisdom Q&A witnessed upon finding Jesus (not player-controlled combat)
+- **Map progression:** After finding Jesus in the Temple, the player must be able to exit the Temple and Jerusalem. All maps in Arc 1 must have working, reachable exit warps. Verify that no map traps the player.
 - **Ends with:** Cutscene of Jesus growing up in Nazareth
 
 ### Arc 2 — The Baptism & Temptation (Matthew 3-4, Mark 1, Luke 3-4)

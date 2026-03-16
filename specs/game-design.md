@@ -43,6 +43,9 @@
 - Party growth through disciple recruitment and stat development
 - Morale system influenced by player choices
 
+### Map Progression (CRITICAL)
+**The player must always be able to leave every map and progress to the next area.** Every map must have clearly reachable exit warps. After completing an area's objectives, the path forward must be obvious — either via an automatic transition or a clearly indicated exit. A map that traps the player is a game-breaking bug and must be treated as a P0 issue. See `tilemap-format.md` §12 for detailed requirements.
+
 ## Tone
 - Reverent but engaging — not preachy
 - Emotional weight in later arcs (Trials, Crucifixion, Resurrection)

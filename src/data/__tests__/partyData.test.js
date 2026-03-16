@@ -3,7 +3,9 @@ import { ROSTER, createMember, gainExp, expForLevel } from '../partyData.js';
 
 describe('partyData', () => {
   describe('ROSTER', () => {
-    it('has Jesus and all 12 disciples', () => {
+    it('has Joseph, Mary, Jesus and all 12 disciples', () => {
+      expect(ROSTER.joseph).toBeDefined();
+      expect(ROSTER.mary).toBeDefined();
       expect(ROSTER.jesus).toBeDefined();
       expect(ROSTER.peter).toBeDefined();
       expect(ROSTER.andrew).toBeDefined();
@@ -17,7 +19,7 @@ describe('partyData', () => {
       expect(ROSTER.thaddaeus).toBeDefined();
       expect(ROSTER.simon_zealot).toBeDefined();
       expect(ROSTER.judas).toBeDefined();
-      expect(Object.keys(ROSTER)).toHaveLength(13); // Jesus + 12
+      expect(Object.keys(ROSTER)).toHaveLength(15); // Joseph + Mary + Jesus + 12
     });
 
     it('all roster entries have required fields', () => {

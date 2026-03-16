@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 566 tests passing across 39 test suites (vitest)
+- **Tests:** 575 tests passing across 40 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -16,14 +16,6 @@
 Items sorted by priority. Each is confirmed missing/broken via code search.
 
 ### P0 — Game-Breaking / Core MVP Gaps
-
-- **P5.1 — Arc 1 protagonist is Jesus instead of Joseph+Mary follower**
-  - `main.js` newGame() creates Jesus as sole party member; spec says Arc 1 is Joseph with Mary following
-  - Joseph and Mary are not in `ROSTER` at all (partyData.js)
-  - No follower/companion system exists anywhere in the codebase
-  - Spec (`party-system.md`) requires: Mary walks 1 tile behind Joseph using breadcrumb-trail pattern, faces same direction, stops when Joseph talks to NPCs, stands beside him during cutscenes
-  - Need: Joseph+Mary in ROSTER, follower system in Player.js or NPCManager.js, arc-conditional protagonist swap
-  - Blocked by: new sprite data for Joseph & Mary overworld sprites (already exist in `specs/sprites/mary-joseph.js`)
 
 ### P1 — Core Feature Incomplete
 
@@ -199,6 +191,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 ## Resolved Items
 
 ### P5 Fixes
+- **P5.1** — Joseph+Mary are now the Arc 1 protagonists. Joseph and Mary added to ROSTER (partyData.js) with full stats/sprites. GameState.newGame() creates Joseph as party leader. Follower class implements breadcrumb-trail pattern for Mary (1-tile delay, same facing, clears on teleport). OverworldScene dynamically resolves player sprite from party leader's sprite field. transitionToArc2() swaps Joseph→Jesus when arc1_complete is set. Mary follower is removed on arc transition.
 - **P5.2** — After `arc2_complete`, `temptation_3` cutscene auto-warps player to galilee (14,18) via new `warp` EventSystem command; `onWarp` callback wired in OverworldScene.
 - **P5.3** — Temptation events now trigger scripture-selection boss battles via new `startBattle` EventSystem command; Satan dialogue no longer sets flags directly (flags set by cutscene after battle victory); `BattleScene._pickScriptureChallenge` selects the correct challenge per encounter.
 - **P5.4** — Arc-blocked warp now shows feedback dialogue ("You're not ready to go there yet.") instead of silently returning.

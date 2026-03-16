@@ -23,12 +23,12 @@ describe('GameState', () => {
   });
 
   describe('newGame', () => {
-    it('initializes with Jesus in party', () => {
+    it('initializes with Joseph in party (Arc 1 protagonist)', () => {
       const gs = new GameState();
       gs.newGame();
       expect(gs.party.active).toHaveLength(1);
-      expect(gs.party.active[0].id).toBe('jesus');
-      expect(gs.party.active[0].isJesus).toBe(true);
+      expect(gs.party.active[0].id).toBe('joseph');
+      expect(gs.party.active[0].role).toBe('guardian');
     });
   });
 
@@ -83,6 +83,8 @@ describe('GameState', () => {
     it('cannot swap Jesus to bench', () => {
       const gs = new GameState();
       gs.newGame();
+      // Transition to Arc 2 so Jesus is party leader
+      gs.transitionToArc2();
       gs.recruitMember('peter');
       gs.recruitMember('andrew');
       gs.recruitMember('james');
@@ -122,7 +124,7 @@ describe('GameState', () => {
       const loaded = gs2.load(0);
       expect(loaded).toBe(true);
       expect(gs2.party.active).toHaveLength(2);
-      expect(gs2.party.active[0].id).toBe('jesus');
+      expect(gs2.party.active[0].id).toBe('joseph');
       expect(gs2.party.active[1].id).toBe('peter');
       expect(gs2.inventory.count('bread')).toBe(5);
       expect(gs2.questFlags.arc1_started).toBe(true);
@@ -154,9 +156,9 @@ describe('GameState', () => {
       gs2.load(0);
       const member = gs2.party.active[0];
       // createMember sets these fields — verify they survive re-hydration
-      expect(member.role).toBe('leader');
-      expect(member.sprite).toBe('jesus');
-      expect(member.isJesus).toBe(true);
+      expect(member.role).toBe('guardian');
+      expect(member.sprite).toBe('joseph');
+      expect(member.id).toBe('joseph');
     });
 
     it('returns false for empty slot', () => {
@@ -168,6 +170,29 @@ describe('GameState', () => {
       const gs = new GameState();
       expect(() => gs.save(-1)).toThrow();
       expect(() => gs.save(3)).toThrow();
+    });
+  });
+
+  describe('transitionToArc2', () => {
+    it('swaps Joseph for Jesus as party leader', () => {
+      const gs = new GameState();
+      gs.newGame();
+      expect(gs.party.active[0].id).toBe('joseph');
+
+      gs.transitionToArc2();
+      expect(gs.party.active[0].id).toBe('jesus');
+      expect(gs.party.active[0].isJesus).toBe(true);
+      expect(gs.getMember('joseph')).toBeNull();
+    });
+
+    it('preserves other party members during transition', () => {
+      const gs = new GameState();
+      gs.newGame();
+      gs.recruitMember('peter');
+      gs.transitionToArc2();
+      expect(gs.party.active).toHaveLength(2);
+      expect(gs.party.active[0].id).toBe('jesus');
+      expect(gs.party.active[1].id).toBe('peter');
     });
   });
 

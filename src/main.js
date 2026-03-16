@@ -54,6 +54,11 @@ import {
   PALETTE as youngJesusPalette,
   YOUNG_JESUS, YOUNG_JESUS_BACK, YOUNG_JESUS_LEFT,
 } from '../specs/sprites/young-jesus.js';
+import {
+  PALETTE as maryJosephPalette,
+  MARY, MARY_BACK, MARY_LEFT,
+  JOSEPH, JOSEPH_BACK, JOSEPH_LEFT,
+} from '../specs/sprites/mary-joseph.js';
 
 const display = new Display();
 const input = new InputSystem();
@@ -111,6 +116,14 @@ const spriteRegistry = {
   young_jesus: {
     palette: youngJesusPalette,
     sprites: { front: YOUNG_JESUS, back: YOUNG_JESUS_BACK, left: YOUNG_JESUS_LEFT },
+  },
+  joseph: {
+    palette: maryJosephPalette,
+    sprites: { front: JOSEPH, back: JOSEPH_BACK, left: JOSEPH_LEFT },
+  },
+  mary: {
+    palette: maryJosephPalette,
+    sprites: { front: MARY, back: MARY_BACK, left: MARY_LEFT },
   },
 };
 

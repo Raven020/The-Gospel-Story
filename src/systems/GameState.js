@@ -41,10 +41,12 @@ export class GameState {
   }
 
   /**
-   * Initialize a new game state. Jesus starts in party.
+   * Initialize a new game state.
+   * Arc 1 starts with Joseph (Mary follows as NPC companion).
+   * Jesus joins the party at Arc 2 start.
    */
   newGame() {
-    this.party.active = [createMember('jesus', 1)];
+    this.party.active = [createMember('joseph', 1)];
     this.party.bench = [];
     this.inventory = new Inventory();
     this.questFlags = createQuestFlags();
@@ -53,6 +55,17 @@ export class GameState {
     this.playerY = 18;
     this.playerFacing = 'down';
     this.playtime = 0;
+  }
+
+  /**
+   * Transition party from Arc 1 (Joseph) to Arc 2 (Jesus).
+   * Removes Joseph from party, adds Jesus as leader.
+   */
+  transitionToArc2() {
+    this.removeMember('joseph');
+    if (!this.getMember('jesus')) {
+      this.party.active = [createMember('jesus', 1), ...this.party.active];
+    }
   }
 
   /**

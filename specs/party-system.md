@@ -1,8 +1,24 @@
 # Party System Specification
 
 ## Overview
-- Player controls Jesus as the protagonist throughout the game
+- Player controls Jesus as the protagonist from Arc 2 onward
+- **Arc 1 exception:** Arc 1 is a tutorial arc where the player controls Mary and Joseph searching for young Jesus in the Temple (Luke 2:41-52); Jesus becomes the playable protagonist starting in Arc 2
 - 12 disciples serve as recruitable party members (recruited primarily in Arc 3)
+
+## Arc 1 — Mary Following Joseph
+
+In Arc 1 (The Boy Jesus), the player controls Joseph. **Mary must visibly follow Joseph as an NPC companion** — she walks behind him, mirroring his movement with a 1-tile delay (classic RPG party-follow behavior). This makes it immediately obvious to the player that they are controlling Joseph and Mary together as a pair searching for their son.
+
+- Mary is rendered as a separate sprite walking 1 tile behind Joseph at all times
+- She follows Joseph's exact path with a step delay (breadcrumb-trail follower pattern)
+- She faces the same direction Joseph last moved
+- She does not block Joseph's movement or collide with him
+- If Joseph talks to an NPC, Mary stops and waits
+- During cutscenes (e.g., finding Jesus in the Temple), Mary moves to stand beside Joseph
+
+This follower behavior clearly communicates "Joseph and Mary are searching together" without requiring the player to read dialogue first.
+
+---
 
 ## Roster
 All twelve apostles are usable party members:

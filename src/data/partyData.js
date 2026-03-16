@@ -16,9 +16,28 @@ export const Stats = {
 
 /**
  * Base roster definitions. Level 1 base stats.
+ * Arc 1: Joseph (player) + Mary (follower). Arc 2+: Jesus (leader).
  * MVP disciples: Peter, Andrew, James, John, Philip, Nathanael (Bartholomew)
  */
 export const ROSTER = {
+  joseph: {
+    id: 'joseph',
+    name: 'Joseph',
+    role: 'guardian',
+    sprite: 'joseph',
+    baseStats: { hp: 160, sp: 60, str: 35, def: 30, wis: 40, fai: 50, spd: 28 },
+    growth: { hp: 10, sp: 5, str: 3, def: 2, wis: 3, fai: 4, spd: 2 },
+    abilities: ['prayer_heal'],
+  },
+  mary: {
+    id: 'mary',
+    name: 'Mary',
+    role: 'companion',
+    sprite: 'mary',
+    baseStats: { hp: 120, sp: 80, str: 15, def: 15, wis: 55, fai: 70, spd: 25 },
+    growth: { hp: 8, sp: 7, str: 1, def: 1, wis: 4, fai: 5, spd: 2 },
+    abilities: ['prayer_heal'],
+  },
   jesus: {
     id: 'jesus',
     name: 'Jesus',
