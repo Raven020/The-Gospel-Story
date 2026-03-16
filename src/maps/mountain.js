@@ -169,6 +169,14 @@ export const MAP = {
       flag: 'arc3_complete',
       commands: [
         { type: 'fadeOut' },
+        // Spawn the twelve (MVP seven) disciples in a semicircle around the summit clearing
+        { type: 'spawnNPC', npcId: 'peter',     sprite: 'peter',     x: 7,  y: 3 },
+        { type: 'spawnNPC', npcId: 'andrew',    sprite: 'andrew',    x: 9,  y: 3 },
+        { type: 'spawnNPC', npcId: 'james',     sprite: 'james',     x: 11, y: 3 },
+        { type: 'spawnNPC', npcId: 'john',      sprite: 'john',      x: 8,  y: 1 },
+        { type: 'spawnNPC', npcId: 'philip',    sprite: 'philip',    x: 7,  y: 2 },
+        { type: 'spawnNPC', npcId: 'nathanael', sprite: 'nathanael', x: 12, y: 2 },
+        { type: 'spawnNPC', npcId: 'matthew',   sprite: 'matthew',   x: 11, y: 1 },
         { type: 'dialogue', data: 'mountain_choosing' },
         { type: 'setFlag', flag: 'arc3_complete', value: true },
         { type: 'dialogue', data: 'arc3_ending' },

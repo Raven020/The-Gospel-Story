@@ -33,8 +33,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - `temple.js` map references `tileset: 'interior'` as fallback
   - Need: create temple tileset or update spec to acknowledge interior reuse
 
-- **P5.20 — RESOLVED. See Resolved Items / Spec Inconsistencies.**
-
 ### P3 — Content & Data Gaps
 
 - **P5.21 — Five disciples have no recruitment dialogue or map placement**
@@ -63,20 +61,7 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - `combat.md` names Legion as a boss-level demon; `enemies.js` has only `doubt`, `fear`, `temptation`, `pride`, `greed`, `deception`, `satan`
   - Post-MVP (Arc 6) but worth noting for future planning
 
-- **P5.26 — Peter recruitment lacks "miraculous catch of fish" scene**
-  - `story.md` and `mvp-scope.md` reference this; `peter_recruit` in arc3.js is pure dialogue (3 nodes)
-  - No cutscene commands, no visual event, no sound effects
-  - Need: at minimum, dialogue describing the miracle; ideally a cutscene event sequence with fadeOut/spawnNPC/dialogue
-
 ### P4 — Polish & Minor Issues
-
-- **P5.28 — `EventSystem.fadeOut` onMidpoint callback is a no-op lambda**
-  - Line 129: `() => {}` — fadeOut events complete visually but perform no mid-transition action
-  - Need: either connect to a meaningful callback or document as intentional
-
-- **P5.29 — `exit()` methods on BattleScene and OverworldScene are empty**
-  - No cleanup of input context, dialogue state, or audio on scene exit
-  - Could cause stale state if scenes are switched mid-action
 
 - **P5.31 — Display uses integer-only scaling (Math.floor)**
   - At certain window sizes the canvas is noticeably smaller than the window
@@ -102,15 +87,6 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
   - Spec: "certain arcs restrict the party to only the disciples present in the biblical account"
   - No party-restriction mechanism exists; all recruited members are freely swappable
   - Post-MVP (applies mainly to Arc 8 Transfiguration: Peter/James/John only)
-
-- **P6.8 — EventSystem._cameraOverride accessed as private field from OverworldScene**
-  - `OverworldScene.update()` reads `this.eventSystem._cameraOverride` directly
-  - Encapsulation violation; if field is renamed, overworld silently breaks
-  - Need: add a public getter on EventSystem (e.g., `get cameraOverride()`)
-
-- **P6.9 — `DMG_MISS` color token defined but never used**
-  - `Colors.js` defines `DMG_MISS: '#F8F8F8'` but no code references it
-  - BattleScene/BattleHUD should use it for miss floaters
 
 ### Test Coverage Gaps (non-blocking but tracked)
 
@@ -140,8 +116,14 @@ Items sorted by priority. Each is confirmed missing/broken via code search.
 - **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When dialogue box text is fully revealed, held confirm is ignored — only a fresh press advances to the next node. Prevents dialogue from auto-skipping through entire sequences.
 - **P5.13** — OptionsMenu implemented with Text Speed (Slow/Normal/Fast), BGM toggle, and SFX toggle. gameSettings singleton drives DialogueBox typewriter speed. Wired into PauseMenu via standard sub-menu pattern.
 - **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags — covers all arc 1-3 progression states. Hidden during dialogue, menus, battles, and location name display. Font extended with > and < glyphs.
+- **P6.8** — EventSystem._cameraOverride replaced with public getter (get cameraOverride()). OverworldScene now uses the getter.
+- **P6.9** — DMG_MISS color now used for miss and blocked damage floaters in BattleScene._showResult().
 
 ### P5 Fixes
+- **P5.20** — RESOLVED. dialogue-system.md updated to match ui-hud.md: 240×42 box, 38 chars/line, 2 lines.
+- **P5.26** — Peter recruitment dialogue expanded from 3 to 9 nodes with miraculous catch of fish (Luke 5:1-11).
+- **P5.28** — EventSystem fadeOut onMidpoint documented as intentional (visual-only effect).
+- **P5.29** — BattleScene.exit() and OverworldScene.exit() now perform cleanup (reset flags, close dialogue/menus, stop BGM).
 - **P5.33** — `clearTileCache()` is now called at the start of `OverworldScene.loadMap()`, preventing stale pre-baked tile canvases from persisting across map transitions.
 - **P5.30** — DialogueSystem effects are now deferred until the player advances past the node. A `_pendingEffects` array accumulates effects on node enter; they flush when the dialogue reaches 'done' or a choice result is selected. Action nodes (triggerEvent etc.) still execute immediately as per spec.
 - **P5.19** — Jordan River east warp moved from column 29 (water) to column 23 (sandy bank edge, tile 4) rows 9-10. The manual collision override that opened water tiles was removed. `wilderness.js` return warp target updated from x=28 (water) to x=22 (sandy bank).

@@ -192,6 +192,7 @@ export function createMember(rosterId, level = 1) {
     abilities: [...def.abilities],
     isJesus: def.isJesus || false,
     betrayalStat: def.betrayalStat !== undefined ? def.betrayalStat : undefined,
+    morale: 100, // stub: 0-100 scale, no gameplay integration yet
   };
 }
 

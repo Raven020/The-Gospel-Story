@@ -4,6 +4,18 @@ import { BattlePhase } from '../../systems/BattleEngine.js';
 import { Actions, InputContext } from '../../systems/InputSystem.js';
 import { createEnemy } from '../../data/enemies.js';
 
+// Mock OffscreenCanvas for sprite scaling in BattleHUD
+class MockCanvas {
+  constructor(w, h) { this.width = w; this.height = h; }
+  getContext() {
+    return {
+      fillStyle: '', fillRect: vi.fn(),
+      drawImage: vi.fn(), imageSmoothingEnabled: true,
+    };
+  }
+}
+vi.stubGlobal('OffscreenCanvas', MockCanvas);
+
 function makeMember(overrides = {}) {
   return {
     id: 'peter',

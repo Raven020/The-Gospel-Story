@@ -273,6 +273,7 @@ function serializeMember(m) {
     abilities: [...m.abilities],
     isJesus: m.isJesus,
     betrayalStat: m.betrayalStat,
+    morale: m.morale,
   };
 }
 
@@ -289,5 +290,6 @@ function deserializeMember(data) {
     currentSp: data.currentSp,
     abilities: [...data.abilities],
     betrayalStat: data.betrayalStat,
+    morale: data.morale ?? fresh.morale,
   };
 }

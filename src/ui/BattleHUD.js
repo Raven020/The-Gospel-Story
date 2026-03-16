@@ -9,6 +9,7 @@ import { drawText } from '../lib/drawText.js';
 import { drawBar, drawPanel, drawCursor } from './UIChrome.js';
 import { Colors } from './Colors.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
+import { ENEMY_BATTLE_SPRITES } from '../data/enemySprites.js';
 
 const PARTY_STRIP_Y = 100;
 const SLOT_WIDTH = 47;
@@ -47,6 +48,43 @@ export class BattleHUD {
     });
   }
 
+  /**
+   * Render a sprite array + palette at 2x scale using an offscreen canvas.
+   * @param {CanvasRenderingContext2D} ctx
+   * @param {string[][]} spriteData - 2D array of palette keys
+   * @param {Object} palette - map of key -> CSS color string
+   * @param {number} dx - destination x (top-left)
+   * @param {number} dy - destination y (top-left)
+   * @param {number} scale - integer pixel scale factor (default 2)
+   */
+  _renderSpriteScaled(ctx, spriteData, palette, dx, dy, scale = 2) {
+    const h = spriteData.length;
+    const w = spriteData[0].length;
+
+    // Use a tiny offscreen canvas at 1x, then drawImage scaled
+    let offscreen;
+    if (typeof OffscreenCanvas !== 'undefined') {
+      offscreen = new OffscreenCanvas(w, h);
+    } else {
+      offscreen = document.createElement('canvas');
+      offscreen.width = w;
+      offscreen.height = h;
+    }
+    const oc = offscreen.getContext('2d');
+    for (let row = 0; row < h; row++) {
+      for (let col = 0; col < w; col++) {
+        const key = spriteData[row][col];
+        if (key === '_' || !palette[key]) continue;
+        oc.fillStyle = palette[key];
+        oc.fillRect(col, row, 1, 1);
+      }
+    }
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(offscreen, Math.round(dx), Math.round(dy), w * scale, h * scale);
+    ctx.imageSmoothingEnabled = true;
+  }
+
   renderEnemies(ctx, enemies, frameCount) {
     const alive = enemies.filter((e) => e.currentHp > 0);
     const count = alive.length;
@@ -57,18 +95,24 @@ export class BattleHUD {
     for (let i = 0; i < count; i++) {
       const enemy = alive[i];
       const cx = Math.floor(spacing * (i + 1));
-      const y = 20;
+      const y = 10;
 
-      // Placeholder enemy sprite (colored rectangle)
-      ctx.fillStyle = enemy.isBoss ? '#8B0000' : '#604080';
-      ctx.fillRect(cx - 16, y, 32, 32);
+      // Render enemy sprite (2x scaled from 16x16 → 32x32)
+      const spriteEntry = ENEMY_BATTLE_SPRITES[enemy.id];
+      if (spriteEntry) {
+        this._renderSpriteScaled(ctx, spriteEntry.sprites, spriteEntry.palette, cx - 16, y, 2);
+      } else {
+        // Fallback colored rectangle for unknown enemies
+        ctx.fillStyle = enemy.isBoss ? '#8B0000' : '#604080';
+        ctx.fillRect(cx - 16, y, 32, 32);
+      }
 
       // Name
       const nameX = cx - Math.floor(enemy.name.length * 3);
-      drawText(ctx, enemy.name, nameX, y + 39, Colors.TEXT_LIGHT);
+      drawText(ctx, enemy.name, nameX, y + 37, Colors.TEXT_LIGHT);
 
       // HP bar
-      drawBar(ctx, cx - 20, y + 44, enemy.currentHp, enemy.stats.hp, 40, 3, 'hp');
+      drawBar(ctx, cx - 20, y + 42, enemy.currentHp, enemy.stats.hp, 40, 3, 'hp');
     }
   }
 
