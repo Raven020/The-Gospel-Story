@@ -251,6 +251,7 @@ export const ARC1_DIALOGUE = {
     start: {
       speaker: '',
       text: 'The years passed in Nazareth. Jesus grew in wisdom and stature, and in favor with God and man.',
+      effects: [{ type: 'setFlag', flag: 'arc2_started', value: true }],
       next: 'calling',
     },
     calling: {

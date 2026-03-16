@@ -26,7 +26,7 @@ const TEXT_X = PANEL_X + 16;
 const OPTIONS = ['Party', 'Items', 'Save', 'Load', 'Options', 'Close'];
 
 export class PauseMenu {
-  constructor({ input, onSelect, onClose, gameState }) {
+  constructor({ input, onSelect, onClose, gameState, spriteRegistry }) {
     this.input = input;
     this.onSelect = onSelect || (() => {});
     this.onClose = onClose || (() => {});
@@ -40,7 +40,7 @@ export class PauseMenu {
       this.saveLoadMenu = new SaveLoadMenu({ input, gameState, mode: 'save' });
       this.saveLoadMenu.onClose = () => { this._activeSubMenu = null; };
 
-      this.partyMenu = new PartyMenu({ input, gameState });
+      this.partyMenu = new PartyMenu({ input, gameState, spriteRegistry });
       this.partyMenu.onClose = () => { this._activeSubMenu = null; };
 
       this.itemMenu = new ItemMenu({ input, gameState });

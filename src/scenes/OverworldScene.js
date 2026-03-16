@@ -10,6 +10,7 @@ import {
   isBlocked,
   getEvent,
   checkEncounterZone,
+  clearTileCache,
   TILE_SIZE,
 } from '../engine/TilemapRenderer.js';
 import { createEnemy } from '../data/enemies.js';
@@ -84,6 +85,7 @@ export class OverworldScene {
     this.pauseMenu = new PauseMenu({
       input,
       gameState: gameState || null,
+      spriteRegistry: this.spriteRegistry,
       onSelect: (option) => this._handleMenuSelect(option),
       onClose: () => { this.input.context = InputContext.OVERWORLD; },
     });
@@ -135,6 +137,7 @@ export class OverworldScene {
   }
 
   loadMap(map, tileset, spawnX, spawnY) {
+    clearTileCache();
     this.map = map;
     this.tileset = tileset;
     this.tilesetId = map.tileset;

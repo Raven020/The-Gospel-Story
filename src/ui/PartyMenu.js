@@ -6,6 +6,7 @@
 
 import { drawPanel, drawCursor, drawBar } from './UIChrome.js';
 import { drawText } from '../lib/drawText.js';
+import { renderSprite } from '../lib/renderSprite.js';
 import { Colors } from './Colors.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../engine/Display.js';
 import { Actions } from '../systems/InputSystem.js';
@@ -29,9 +30,10 @@ const State = {
 };
 
 export class PartyMenu {
-  constructor({ input, gameState }) {
+  constructor({ input, gameState, spriteRegistry }) {
     this.input = input;
     this.gameState = gameState;
+    this.spriteRegistry = spriteRegistry || {};
     this.active = false;
     this.cursor = 0;
     this.state = State.LIST;
@@ -248,27 +250,41 @@ export class PartyMenu {
         ctx.fillRect(PANEL_X + 2, y, PANEL_W - 4, ROW_HEIGHT - 1);
       }
 
+      // Member sprite (16x16, rendered at list row left side)
+      this._renderMemberSprite(ctx, member, TEXT_X, y + 4);
+
       // Active/Bench indicator
       const tag = i < activeLen ? 'A' : 'B';
-      drawText(ctx, tag, TEXT_X, y + 2, i < activeLen ? Colors.TEXT_GOLD : Colors.TEXT_DIM);
+      drawText(ctx, tag, TEXT_X + 18, y + 2, i < activeLen ? Colors.TEXT_GOLD : Colors.TEXT_DIM);
 
       // Name (dimmed for bench members)
       const nameColor = i < activeLen ? Colors.TEXT_LIGHT : Colors.TEXT_DIM;
-      drawText(ctx, member.name, TEXT_X + 12, y + 2, nameColor);
+      drawText(ctx, member.name, TEXT_X + 28, y + 2, nameColor);
 
       // Level
-      drawText(ctx, `Lv${member.level}`, TEXT_X + 72, y + 2, Colors.TEXT_DIM);
+      drawText(ctx, `Lv${member.level}`, TEXT_X + 84, y + 2, Colors.TEXT_DIM);
 
       // Role
       const roleStr = member.role.slice(0, 6);
-      drawText(ctx, roleStr, TEXT_X + 108, y + 2, Colors.TEXT_DIM);
+      drawText(ctx, roleStr, TEXT_X + 118, y + 2, Colors.TEXT_DIM);
 
       // HP bar
-      const barX = TEXT_X + 150;
+      const barX = TEXT_X + 156;
       drawBar(ctx, barX, y + 2, member.currentHp, member.stats.hp, 60, 4, 'hp');
 
       // SP bar
       drawBar(ctx, barX, y + 8, member.currentSp, member.stats.sp, 60, 4, Colors.SP_BAR);
+    }
+  }
+
+  _renderMemberSprite(ctx, member, x, y) {
+    const reg = this.spriteRegistry[member.sprite];
+    if (reg && reg.sprites && reg.sprites.front) {
+      renderSprite(ctx, reg.sprites.front, reg.palette, x, y);
+    } else {
+      // Fallback: small colored rectangle
+      ctx.fillStyle = Colors.TEXT_DIM;
+      ctx.fillRect(x + 2, y + 2, 12, 12);
     }
   }
 
@@ -278,10 +294,13 @@ export class PartyMenu {
 
     drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
 
-    // Name and role
-    drawText(ctx, member.name, PANEL_X + 10, 10, Colors.TEXT_LIGHT);
-    drawText(ctx, member.role, PANEL_X + 80, 10, Colors.TEXT_DIM);
-    drawText(ctx, `Lv ${member.level}`, PANEL_X + 140, 10, Colors.TEXT_GOLD);
+    // Member sprite in detail view
+    this._renderMemberSprite(ctx, member, PANEL_X + 10, 8);
+
+    // Name and role (shifted right for sprite)
+    drawText(ctx, member.name, PANEL_X + 28, 10, Colors.TEXT_LIGHT);
+    drawText(ctx, member.role, PANEL_X + 96, 10, Colors.TEXT_DIM);
+    drawText(ctx, `Lv ${member.level}`, PANEL_X + 152, 10, Colors.TEXT_GOLD);
 
     // Separator
     ctx.fillStyle = Colors.BORDER;

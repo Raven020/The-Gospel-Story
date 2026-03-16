@@ -29,7 +29,6 @@ export const ARC2_DIALOGUE = {
       text: 'Let it be so now, for thus it is fitting to fulfill all righteousness.',
       effects: [
         { type: 'setFlag', flag: 'baptism_complete', value: true },
-        { type: 'setFlag', flag: 'arc2_started', value: true },
       ],
       next: 'narrator',
     },
