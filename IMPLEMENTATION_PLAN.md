@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 632 tests passing across 42 test suites (vitest)
+- **Tests:** 637 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -30,19 +30,8 @@ All P1 gaps resolved.
   - Scripture challenges exist in `scriptures.js` but not wired to a choice UI
   - Listed as MVP system in `mvp-scope.md`
 
-- **CONTENT-02: Baptism power-up/transformation has no visual or stat effect**
-  - `baptism_complete` flag is set but no visual event, stat change, or cutscene
-  - Spec says "baptism triggers visual transformation/power-up"
-
-- **CONTENT-03: Arc 3 missing opening ministry proclamation**
-  - Player warps to Galilee and immediately encounters fishermen
-  - No "Repent, for the kingdom of heaven is near" preaching scene
-
 ### P3 — Test & Code Quality
 
-- **TEST-02:** No test for `_handleRetry()` defeat-to-retry path
-- **TEST-03:** No test for `requires` guard on cutscene events
-- **TEST-04:** No test for `_executeScriptedWarp()` from cutscene warp command
 - **TEST-05:** No test for follower creation/breadcrumb/rendering
 - **TEST-06:** No test for arc-blocked warp feedback dialogue
 - **TEST-07:** No test for cross-map warp integration (tile event → loadMap)
@@ -94,6 +83,13 @@ All P1 gaps resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Content & Test Fixes (P7 Audit — Batch 2)
+- **CONTENT-02** — Baptism power-up: Jesus gains +10 WIS, +10 FAI, +5 SP when `baptism_complete` is set.
+- **CONTENT-03** — Galilee arrival proclamation cutscene added: narrator (Matt 4:12) → Jesus: "Repent, for the kingdom of heaven is at hand" → narrator summary. Sets `arc3_started` flag. Fires once on arrival tile (14,18).
+- **TEST-02** — Added tests for `_handleRetry()`: save-found-reload and no-save-fallback-to-title paths.
+- **TEST-03** — Added tests for `requires` guard: cutscene skipped with missing flags, fires with all flags present.
+- **TEST-04** — Added test for `_executeScriptedWarp()`: loads registered map at target coordinates.
 
 ### Content Fixes (P7 Audit)
 - **CONTENT-04** — Jesus's Scripture rebuttals added to all three temptation dialogues (Matt 4:4, 4:7, 4:10). Satan temptation 2 also gets his misquoted Scripture (Psalm 91:11-12).

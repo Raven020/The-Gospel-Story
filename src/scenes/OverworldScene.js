@@ -545,6 +545,16 @@ export class OverworldScene {
               this._pendingArcCutscene = 'arc1_transition';
             }
           }
+          // Baptism power-up: boost Jesus's stats when baptism completes
+          if (effect.flag === 'baptism_complete') {
+            const jesus = this.gameState.party.find(m => m.id === 'jesus');
+            if (jesus) {
+              jesus.stats.wis += 10;
+              jesus.stats.fai += 10;
+              jesus.stats.sp += 5;
+              jesus.currentSp = Math.min(jesus.currentSp + 5, jesus.stats.sp);
+            }
+          }
         }
         break;
       case 'recruitMember':

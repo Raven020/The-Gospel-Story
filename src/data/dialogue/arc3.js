@@ -6,6 +6,25 @@
  */
 
 export const ARC3_DIALOGUE = {
+  // --- Galilee arrival proclamation (Matthew 4:12-17) ---
+  galilee_arrival: {
+    start: {
+      speaker: '',
+      text: 'When Jesus heard that John had been arrested, he withdrew into Galilee and settled by the sea.',
+      next: 'proclamation',
+    },
+    proclamation: {
+      speaker: 'Jesus',
+      text: 'Repent, for the kingdom of heaven is at hand.',
+      next: 'narrator_end',
+    },
+    narrator_end: {
+      speaker: '',
+      text: 'And he went throughout all Galilee, teaching and proclaiming the good news of the kingdom.',
+      next: null,
+    },
+  },
+
   // --- Fishermen at the Sea of Galilee ---
 
   peter_recruit: {

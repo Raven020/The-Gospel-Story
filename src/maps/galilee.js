@@ -131,6 +131,8 @@ for (let y = 0; y < H; y++) {
 
 // Event layer: warp at south
 const event = fill(W * H, 0);
+// Arrival proclamation trigger (row 18, col 14 — warp-in tile)
+event[18 * W + 14] = 'galilee_arrival';
 // South warp to capernaum (row 19, cols 13-16)
 for (let x = 13; x <= 16; x++) {
   event[(H - 1) * W + x] = 'warp_capernaum';
@@ -152,6 +154,14 @@ export const MAP = {
   },
 
   events: {
+    galilee_arrival: {
+      type: 'cutscene',
+      flag: 'arc3_started',
+      commands: [
+        { type: 'dialogue', data: 'galilee_arrival' },
+        { type: 'setFlag', flag: 'arc3_started', value: true },
+      ],
+    },
     warp_capernaum: {
       type: 'warp',
       targetMap: 'capernaum',

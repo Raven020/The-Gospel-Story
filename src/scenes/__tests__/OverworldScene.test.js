@@ -785,4 +785,198 @@ describe('OverworldScene', () => {
     // Should switch to title screen
     expect(mockSceneManager.switch).toHaveBeenCalledWith('title');
   });
+
+  // --- TEST-02: _handleRetry defeat-to-retry path ---
+  it('retry after defeat reloads from save slot', () => {
+    const gameState = {
+      questFlags: {},
+      currentMap: 'test',
+      playerX: 3,
+      playerY: 4,
+      playerFacing: Actions.RIGHT,
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [{ id: 'jesus', name: 'Jesus', level: 1, stats: { hp: 200, sp: 50, str: 30, wis: 25, fai: 20, spd: 30, def: 15 }, currentHp: 200, currentSp: 50, abilities: [] }], bench: [] },
+      load: vi.fn(() => true),
+    };
+    const battleStartBattle = vi.fn();
+    const battleScene = { startBattle: battleStartBattle };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+      battleScene,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+    scn.registerMap('test', createTestMap(), createTestTileset());
+
+    // Store a save slot (simulate)
+    scn._findLatestSaveSlot = vi.fn(() => 0);
+
+    scn._startBattle('doubt');
+    const onComplete = battleStartBattle.mock.calls[0][2];
+    onComplete('retry', 0);
+
+    // Should have triggered fadeToBlack for retry
+    expect(transitions.active).toBe(true);
+
+    // Complete the transition (mid-point fires the callback)
+    for (let i = 0; i < 60; i++) {
+      transitions.update();
+    }
+
+    expect(gameState.load).toHaveBeenCalledWith(0);
+    expect(mockSceneManager.switch).toHaveBeenCalledWith('overworld');
+  });
+
+  it('retry with no save falls back to title', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [{ id: 'jesus', name: 'Jesus', level: 1, stats: { hp: 200, sp: 50, str: 30, wis: 25, fai: 20, spd: 30, def: 15 }, currentHp: 200, currentSp: 50, abilities: [] }], bench: [] },
+      load: vi.fn(() => false),
+    };
+    const battleStartBattle = vi.fn();
+    const battleScene = { startBattle: battleStartBattle };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+      battleScene,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+    scn._findLatestSaveSlot = vi.fn(() => -1);
+
+    scn._startBattle('doubt');
+    const onComplete = battleStartBattle.mock.calls[0][2];
+    onComplete('retry', 0);
+
+    // Complete the transition
+    for (let i = 0; i < 60; i++) {
+      transitions.update();
+    }
+
+    expect(mockSceneManager.switch).toHaveBeenCalledWith('title');
+  });
+
+  // --- TEST-03: requires guard on cutscene events ---
+  it('cutscene with requires guard skips when flags missing', () => {
+    const gameState = {
+      questFlags: { temptation_1_resolved: true },
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+    });
+
+    const map = createTestMap();
+    map.layers.event[6 * 10 + 5] = 'guarded_cutscene';
+    map.events.guarded_cutscene = {
+      type: 'cutscene',
+      flag: 'boss_defeated',
+      requires: ['temptation_1_resolved', 'temptation_2_resolved'],
+      commands: [
+        { type: 'setFlag', flag: 'boss_defeated', value: true },
+      ],
+    };
+
+    scn.loadMap(map, createTestTileset(), 5, 5);
+
+    // Move player to event tile
+    input.getDirectionalHeld.mockReturnValue(Actions.DOWN);
+    scn.update(1 / 60);
+    input.getDirectionalHeld.mockReturnValue(null);
+    for (let i = 0; i < 20; i++) scn.update(1 / 60);
+
+    // Flag should NOT be set — requires guard blocked the cutscene
+    expect(gameState.questFlags.boss_defeated).toBeUndefined();
+  });
+
+  it('cutscene with requires guard fires when all flags present', () => {
+    const gameState = {
+      questFlags: { temptation_1_resolved: true, temptation_2_resolved: true },
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+    });
+
+    const map = createTestMap();
+    map.layers.event[6 * 10 + 5] = 'guarded_cutscene';
+    map.events.guarded_cutscene = {
+      type: 'cutscene',
+      flag: 'boss_defeated',
+      requires: ['temptation_1_resolved', 'temptation_2_resolved'],
+      commands: [
+        { type: 'setFlag', flag: 'boss_defeated', value: true },
+      ],
+    };
+
+    scn.loadMap(map, createTestTileset(), 5, 5);
+
+    // Move player to event tile
+    input.getDirectionalHeld.mockReturnValue(Actions.DOWN);
+    scn.update(1 / 60);
+    input.getDirectionalHeld.mockReturnValue(null);
+    for (let i = 0; i < 20; i++) scn.update(1 / 60);
+
+    // Cutscene should fire and set the flag
+    expect(gameState.questFlags.boss_defeated).toBe(true);
+  });
+
+  // --- TEST-04: _executeScriptedWarp ---
+  it('scripted warp loads registered map', () => {
+    const gameState = {
+      questFlags: {},
+      currentMap: 'test',
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+    };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+    });
+    const targetMap = createTestMap();
+    targetMap.id = 'target';
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+    scn.registerMap('target', targetMap, createTestTileset());
+
+    const onComplete = vi.fn();
+    scn._executeScriptedWarp('target', 3, 7, onComplete);
+
+    // Complete the full transition (FADE_OUT 30 + BLACK 15 + FADE_IN 30 = 75+ frames)
+    for (let i = 0; i < 80; i++) {
+      transitions.update();
+    }
+
+    expect(scn.player.tileX).toBe(3);
+    expect(scn.player.tileY).toBe(7);
+    expect(onComplete).toHaveBeenCalled();
+  });
 });
