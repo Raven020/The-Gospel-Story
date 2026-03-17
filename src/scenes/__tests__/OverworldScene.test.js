@@ -516,6 +516,34 @@ describe('OverworldScene', () => {
     expect(scn._pendingArcCutscene).toBe('arc1_transition');
   });
 
+  it('baptism_complete boosts Jesus stats via getMember (BUG-P0-01)', () => {
+    const jesus = { id: 'jesus', stats: { wis: 10, fai: 10, sp: 20 }, currentSp: 15 };
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn() },
+      recruitMember: vi.fn(),
+      advanceArc: vi.fn(),
+      transitionToArc2: vi.fn(),
+      getMember: vi.fn((id) => id === 'jesus' ? jesus : null),
+      party: { active: [jesus], bench: [] },
+    };
+    const scn = new OverworldScene({
+      input: createMockInput(),
+      transitions: new TransitionManager(),
+      sceneManager: { switch: vi.fn() },
+      spriteRegistry: {},
+      gameState,
+    });
+    scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+    scn._handleDialogueEffect({ type: 'setFlag', flag: 'baptism_complete', value: true });
+
+    expect(jesus.stats.wis).toBe(20);
+    expect(jesus.stats.fai).toBe(20);
+    expect(jesus.stats.sp).toBe(25);
+    expect(jesus.currentSp).toBe(20);
+  });
+
   it('pending arc cutscene fires after dialogue closes', () => {
     const gameState = {
       questFlags: {},

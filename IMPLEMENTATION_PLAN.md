@@ -2,80 +2,128 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 653 tests passing across 43 test suites (vitest)
+- **Tests:** 663 tests passing across 43 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
 - **All 10 implementation phases COMPLETE**
-- **Comprehensive audit completed 2026-03-17** — 3 game-breaking bugs found, 9 major gaps, 7 content gaps
+- **Comprehensive audit completed 2026-03-17** — 0 game-breaking bugs, 8 functional gaps, 5 content gaps, 11 UI/visual gaps
 
 ---
 
-## Remaining Work — P7 Comprehensive Audit (2026-03-17)
+## Remaining Work — Comprehensive Audit (2026-03-17)
 
 Items sorted by priority tier. Each confirmed via code-level audit.
 
 ### P0 — Game-Breaking Bugs
 
-All P0 bugs resolved.
+All P0 bugs resolved. See "Resolved Items" section below.
 
 ### P1 — Major Functional Gaps
 
-All P1 gaps resolved.
+- **FUNC-01:** All ability damage uses `caster.stats.wis` (BattleEngine.js:341), including "physical" abilities like `zealous_strike` and `fishing_net`. STR is only used for basic ATTACK action. No physical/magical distinction exists. **Fix:** Use `caster.stats.str` for MIRACLE-category abilities and `caster.stats.wis` for PRAYER/TRUTH/SCRIPTURE categories, or add an explicit `stat` field to each ability.
+
+- **FUNC-02:** `fear` enemy weakness `'prayer'` is unreachable. The only ability with `bonusVsWeakness: 'prayer'` is `prayer_heal`, which targets allies (SINGLE_ALLY) and never enters the damage branch where weakness bonus is checked. **Fix:** Create an offensive prayer ability (e.g., `prayer_rebuke`) with `bonusVsWeakness: 'prayer'` and enemy targeting, OR change `fear.weakness` to a reachable weakness type.
+
+- **FUNC-03:** `autoAdvanceSingleChoice` is checked on `node.autoAdvanceSingleChoice` (DialogueSystem.js:180) but the spec says it is a tree-level property. No dialogue tree sets this property, making it dead code. **Fix:** Check on the tree root object, not the node.
+
+- **FUNC-04:** Menu panels use `Colors.BG_DARK` (`#181018`) for fill. Spec §1 color table and §7 palette reference specify `Colors.BG_LIGHT` (`#D8C8A0`) for menu panels. The spec has an internal contradiction (§3 says "same fill as dialogue box" for PauseMenu), but the color table is authoritative. **Fix:** Change PauseMenu, PartyMenu, ItemMenu, SaveLoadMenu to use `Colors.BG_LIGHT` for panel fill and `Colors.TEXT_DARK` for text.
+
+- **FUNC-05:** Fishermen NPCs in Galilee (Peter, Andrew, James, John) have no `arc3_started` quest flag guard. Player can recruit disciples before the Galilee proclamation cutscene fires. **Fix:** Add `requires: ['arc3_started']` or `condition` on recruitment dialogue roots.
+
+- **FUNC-06:** Defensive input context re-assertion after New Game fade-in. `main.js:143` calls `transitions.fadeIn()` with no `onComplete` callback. If any future code in `TitleScene.exit()` touches context, the player would be permanently locked. **Fix:** Pass `onComplete` callback that re-asserts `input.context = InputContext.OVERWORLD`.
 
 ### P2 — Content & Narrative Gaps
 
-All P2 content gaps resolved.
+- **CONTENT-08:** No baptism visual event. The Jordan River map has no cutscene event for the baptism moment — only a dialogue text node mentions the dove/heavens. Spec requires "baptism visual transformation/power-up" with visual effects. **Fix:** Add a cutscene command sequence (flash white, camera effects) triggered by the `baptism_complete` effect.
 
-### P3 — Test & Code Quality
+- **CONTENT-09:** No Nazareth "growing up" visual cutscene. `arc1_transition` plays text narration on a black screen then warps to Jordan River. Spec says "Cutscene of Jesus growing up in Nazareth." **Fix:** At minimum add visual commands (fade effects, maybe a brief scene) to the transition. A dedicated Nazareth map is optional for MVP.
 
-All P3 test gaps resolved.
+- **CONTENT-10:** No "teacher on the road" breadcrumb NPC in Jerusalem before Temple entry. `mvp-scope.md` says "A teacher encountered along the way mentions a boy with wondrous knowledge." `townsperson_3` partially fills this but is generic. **Fix:** Add or restyle a scholar/teacher NPC on the street with explicit breadcrumb dialogue.
 
-- **T11:** `demo.js` excluded from map validation (intentional — placeholder NPC keys)
+- **CONTENT-11:** Matthew is fully implemented (recruitment dialogue, NPC placement, mountain cutscene) despite being listed as out-of-scope in `mvp-scope.md`. Not a bug — likely intentional scope expansion. **Note:** Update `mvp-scope.md` to include Matthew in the MVP roster, or remove him.
 
-- **CODE-04:** Exports used only by tests: `getSpriteSize`/`clearSpriteCache` (renderSprite.js), `drawChar`/`GLYPH_W`/`GLYPH_H` (drawText.js), `expForLevel`/`calcDamage`/`calcHeal` — acceptable, kept for test coverage
+### P3 — UI & Visual Gaps
+
+- **UI-01:** DialogueBox renders choices OR text body, never both. When `this.choices` is set, `render()` skips `_renderTextBody()`. Even after BUG-P0-02 is fixed (deferring choice display), the box should ideally show question text above choices. **Fix:** When choices are active, render the last page of text above the choice list, or at minimum show speaker name + question as a header.
+
+- **UI-02:** Choice display has no scroll limit. Spec says "up to 4 visible with scroll." Implementation renders all choices without capping at 4 or providing a scroll offset. **Fix:** Add `_choiceScrollOffset` and cap visible choices at 4.
+
+- **UI-03:** Advance arrow is 5×3 px (5-wide, 3-tall downward triangle). Spec says 3×5 custom glyph. **Fix:** Adjust `drawAdvanceArrow` in UIChrome.js.
+
+- **UI-04:** Party screen missing "Active: N" count in header. Spec shows `"PARTY   Active: 5"`. **Fix:** Draw active count right-aligned in header.
+
+- **UI-05:** Party detail stat names use STR/WIS/FAI; spec says ATK/DEF/SPD/LUK. Also has EXP display and Abilities list not in spec. **Fix:** Align stat display names with spec, or update spec to match implementation.
+
+- **UI-06:** Party detail Swap/Back is a text hint (`"Z=Swap  X=Back"`), not navigable cursor rows as spec requires. **Fix:** Add cursor-navigable Swap/Back option rows.
+
+- **UI-07:** No party-target highlight in battle HUD for healing. Spec says "highlight bar under targeted member's name in party strip." **Fix:** Add `renderPartyTargetCursor` to BattleHUD.
+
+- **UI-08:** No sub-menu slide-in animation for battle action sub-menus. Spec says "sub-menus slide in from the right." **Fix:** Add slide-in transition for Miracles/Items/Prayer/Scripture sub-panels.
+
+- **UI-09:** Speaker name plate rendered as plain text + 1px rule. Spec §5 says 9-slice name plate sprite with min 48px / max 112px width. **Fix (low priority):** The IMPLEMENTATION_PLAN previously noted this as cosmetic-only since the spec's ui-hud.md §2 does NOT require 9-slice — it describes plain gold text + rule. The dialogue-system.md §5 contradicts this. Treat as spec ambiguity.
+
+- **UI-10:** Speaker name separator rule drawn at `NAME_Y + CELL_H` (128) using cell height 8; spec implies glyph height 7, placing it at 127. 1px discrepancy. **Fix (low priority):** Use `GLYPH_H` instead of `CELL_H`.
+
+- **UI-11:** Location name display and objective marker implemented in OverworldScene.js (confirmed working). No gap.
 
 ### P4 — Post-MVP (Tracked for Reference)
 
-- P5.21: 5 disciples have no recruitment dialogue/map placement (post-MVP)
-- P5.22: Judas `betrayalStat` never incremented (post-MVP, Arc 11+)
-- P5.25: Legion boss absent from enemy data (post-MVP, Arc 6)
-- P5.35: Healing Encounters not implemented (post-MVP, Arc 4+)
-- P5.36: Debate/Riddle Battles not implemented (post-MVP, Arc 4+)
-- P5.37: Narrative party locking not implemented (post-MVP, Arc 8)
-- Morale system gameplay integration (stubbed only)
-- Dynamic speaker name plate with 9-slice and min/max width (spec does not require this — cosmetic only)
+- Healing Encounters not implemented (combat.md — requires non-hostile encounter mode)
+- Debate/Riddle Battles not implemented (combat.md — Pharisee confrontations)
+- Legion boss absent from enemy data (combat.md, story.md Arc 6)
+- Morale system gameplay integration (stubbed only — party-system.md)
+- Narrative party locking not implemented (party-system.md — arc-specific party restrictions)
+- 5 disciples have `role: 'tbd'` and empty abilities (james_alphaeus, thaddaeus, simon_zealot + 2 post-MVP)
+- Judas `betrayalStat` never incremented (post-MVP, Arc 11+)
+- Currency/gold system for Matthew's abilities (no gold field anywhere)
 - Dynamic import for dialogue modules (currently pre-loaded)
 - Per-character dialogue files (currently 3 flat arc files)
+- Decorative border around canvas (technical.md — "decorative border" mentioned but not implemented)
+- WebGL rendering (technical.md says "canvas/WebGL" — implementation uses 2D canvas only)
+- Follower `pause()`/`resume()` during NPC dialogue (party-system.md)
+- Follower scripted `moveTo()` for cutscenes (only `teleport()` exists)
+- Battle-duration item use path in combat (oil item has `duration: 'battle'` but no in-battle use code)
 
 ---
 
 ## Spec Inconsistencies (Documentation Only)
 
-1. `dialogue-system.md` §4b says 6px cell width; §12 says 8px — contradictory
+1. `dialogue-system.md` §4b says 6px cell width; §12 says 8px — contradictory. Implementation uses 6px (correct per ui-hud.md).
 2. `dialogue-system.md` §9 has duplicate `greet` key in example (acknowledged)
 3. `party-system.md` stat display says ATK/DEF; code uses STR/WIS/FAI/SPD
 4. `tilemap-format.md` §11 filenames use hyphens; actual files use underscores
 5. `dialogue-system.md` uses `root` field; implementation uses `start` key convention
 6. `dialogue-system.md` constructor takes inventory/party/eventBus; implementation uses `onEffect` callback
 7. AudioManager spec shows object literal; implementation uses class
+8. `ui-hud.md` §3 says PauseMenu "same fill as dialogue box" (dark); §1 color table says menu panels use BG_LIGHT (parchment) — contradictory
+9. `dialogue-system.md` §5 says 9-slice name plate; `ui-hud.md` §2 says plain gold text + rule — contradictory
+10. `tilemap-format.md` §11 lists 3 tilesets; implementation has 4 (shoreline.js undocumented in spec)
+11. `mvp-scope.md` lists 6 MVP disciples; implementation includes 7 (Matthew)
 
 ---
 
 ## Items Confirmed Resolved by This Audit
 
-- **P5.24** — Post-MVP disciple quest flags NOW present in `questFlags.js` (working tree change)
-- **T9** — Encounter via natural movement IS now tested (`OverworldScene.test.js` lines 646-701)
-- All 7 MVP disciples fully defined with stats, abilities, sprites
-- All quest flags for arcs 1-3 properly defined
-- All objectives complete for arcs 1-3
-- Save/load working with 3 slots
-- All warps bidirectional (except GAP-01 jordan_river landing position)
-- All 8 dialogue effect types wired and forwarded correctly
+- **Victory screen** — Fully implemented in BattleScene.js (lines 834-853). 30-frame fade, VICTORY panel, EXP, level-ups.
+- **Defeat screen** — Fully implemented in BattleScene.js (lines 879-923). 60-frame fade, FALLEN panel, Retry/Title options.
+- **Objective marker** — Fully implemented in OverworldScene.js (lines 497-508). Dark bg, text at (4,4), 30-char truncation.
+- **Location name display** — Fully implemented in OverworldScene.js. 20-frame fade-in, 120-frame hold, 20-frame fade-out.
+- **TransitionManager** — Fully implemented (123 lines). fadeToBlack, fadeIn, flashWhite with proper state machines.
+- **Scripture combat** — One-step flow (pick verse → auto-targets). No two-step target selection issue.
+- **All warp tiles walkable** — Confirmed collision=0 on all warp tiles across all 8 maps.
+- **All maps have exits** — Confirmed at least one working warp per map (demo.js self-warp is intentional dev map).
+- **All 659 tests passing** — No skipped, todo, or focused tests. No flaky tests (all Math.random properly mocked except one loose-assertion test in BattleEngine).
+- **No TODO/FIXME/HACK comments** in source code.
+- **Rabbi Q&A data is correct** — All three `qN_ask` nodes have both `text` (question) and `choices` (answers). The bug is in the rendering engine (BUG-P0-02), not the data.
 
 ---
 
 ## Resolved Items (Prior Audits)
+
+### P0 Bug Fixes (2026-03-17)
+- **BUG-P0-01** — `OverworldScene.js:550` crashed on `this.gameState.party.find(...)` because `gameState.party` is `{ active, bench }`, not an array. Fixed to use `this.gameState.getMember('jesus')`. Test added.
+- **BUG-P0-02** — DialogueBox rendered choices OR text, never both. When a node had both `text` and `choices` (e.g., Rabbi Q&A), `showChoices()` was called in the same frame as `open()`, causing choices to hide the question text. Fixed by deferring choices in `DialogueSystem._navigateToNode()` via `_deferredChoices` — text is fully revealed and acknowledged before choices appear. 3 tests added, 2 existing tests updated.
 
 ### Battle HUD Enhancements
 - **HP-ON-HIT** — Enemy HP number now displayed for 30 frames after taking damage. BattleHUD tracks per-enemy timers via `_hpShowTimers` Map. `showEnemyHp(id)` triggered from BattleScene `_showResult()` for both damage and scripture hit types. 6 tests added.

@@ -547,7 +547,7 @@ export class OverworldScene {
           }
           // Baptism power-up: boost Jesus's stats when baptism completes
           if (effect.flag === 'baptism_complete') {
-            const jesus = this.gameState.party.find(m => m.id === 'jesus');
+            const jesus = this.gameState.getMember('jesus');
             if (jesus) {
               jesus.stats.wis += 10;
               jesus.stats.fai += 10;

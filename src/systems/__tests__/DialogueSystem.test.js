@@ -174,6 +174,13 @@ describe('DialogueSystem', () => {
     const ds = new DialogueSystem({ questFlags: { can_say_yes: false } });
     ds.open(dialogue, 'start');
 
+    // Choices are deferred until text is fully revealed and acknowledged
+    expect(ds.box.choices).toBeNull();
+
+    // Advance past the text
+    ds.onActionPress(); // fast-forward text
+    ds.onActionPress(); // 'done' — deferred choices now appear
+
     // Only 'No' should be visible since condition fails
     expect(ds.box.choices).toHaveLength(1);
     expect(ds.box.choices[0].text).toBe('No');
@@ -311,9 +318,105 @@ describe('DialogueSystem', () => {
     const ds = new DialogueSystem({ questFlags: {} });
     ds.open(dialogue, 'start');
 
-    // Both choices pass — should show the choice UI on 'start'
+    // Both choices pass — deferred until text is acknowledged
     expect(ds._currentNodeId).toBe('start');
+    expect(ds.box.choices).toBeNull();
+
+    // Advance past the text
+    ds.onActionPress(); // fast-forward text
+    ds.onActionPress(); // 'done' — deferred choices now appear
+
     expect(ds.box.choices).toHaveLength(2);
+  });
+
+  it('defers choices until text is acknowledged when node has both (BUG-P0-02)', () => {
+    const dialogue = {
+      start: {
+        speaker: 'Teacher',
+        text: 'What is the greatest commandment?',
+        choices: [
+          { text: 'Love the Lord', next: 'correct' },
+          { text: 'Remember Sabbath', next: 'wrong' },
+        ],
+      },
+      correct: { text: 'Well said!', next: null },
+      wrong: { text: 'Not quite.', next: null },
+    };
+
+    const ds = new DialogueSystem({ questFlags: {} });
+    ds.open(dialogue, 'start');
+
+    // Text should be showing, choices deferred
+    expect(ds.box.active).toBe(true);
+    expect(ds.box.choices).toBeNull();
+    expect(ds._deferredChoices).toHaveLength(2);
+
+    // Fast-forward text
+    ds.onActionPress();
+    // Acknowledge text — choices appear
+    ds.onActionPress();
+
+    expect(ds.box.choices).toHaveLength(2);
+    expect(ds.box.choices[0].text).toBe('Love the Lord');
+    expect(ds._deferredChoices).toBeNull();
+
+    // Select first choice
+    const result = ds.box.onConfirm();
+    expect(result.choice.next).toBe('correct');
+  });
+
+  it('shows choices immediately when node has choices but no text', () => {
+    const dialogue = {
+      start: {
+        speaker: 'NPC',
+        choices: [
+          { text: 'Option A', next: 'a' },
+          { text: 'Option B', next: 'b' },
+        ],
+      },
+      a: { text: 'A', next: null },
+      b: { text: 'B', next: null },
+    };
+
+    const ds = new DialogueSystem({ questFlags: {} });
+    ds.open(dialogue, 'start');
+
+    // No text — choices shown immediately
+    expect(ds.box.choices).toHaveLength(2);
+    expect(ds._deferredChoices).toBeNull();
+  });
+
+  it('flushes pending effects when choice is selected after deferred display', () => {
+    const onEffect = vi.fn();
+    const flags = {};
+    const dialogue = {
+      start: {
+        speaker: 'NPC',
+        text: 'A question with effects.',
+        effects: [{ type: 'setFlag', flag: 'question_asked', value: true }],
+        choices: [
+          { text: 'Answer', next: 'done_node' },
+        ],
+      },
+      done_node: { text: 'Done.', next: null },
+    };
+
+    const ds = new DialogueSystem({ questFlags: flags, onEffect });
+    ds.open(dialogue, 'start');
+
+    // Effects not yet fired
+    expect(flags.question_asked).toBeUndefined();
+
+    // Advance past text to show choices
+    ds.onActionPress(); // fast-forward
+    ds.onActionPress(); // 'done' → show deferred choices
+
+    // Effects still not fired (waiting for choice selection)
+    expect(flags.question_asked).toBeUndefined();
+
+    // Select choice — effects flush
+    ds.onActionPress();
+    expect(flags.question_asked).toBe(true);
   });
 
   it('close resets everything', () => {

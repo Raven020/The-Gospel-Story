@@ -39,6 +39,7 @@ export class DialogueSystem {
     this._currentNodeId = null;
     this._currentNode = null;
     this._pendingEffects = []; // effects deferred until player advances past text
+    this._deferredChoices = null; // choices deferred until text is fully revealed and acknowledged
   }
 
   get isOpen() {
@@ -61,6 +62,7 @@ export class DialogueSystem {
     this._currentNodeId = null;
     this._currentNode = null;
     this._pendingEffects = [];
+    this._deferredChoices = null;
   }
 
   /**
@@ -81,6 +83,13 @@ export class DialogueSystem {
     if (result === null) return; // text still revealing
 
     if (result === 'done') {
+      // If choices were deferred (node had both text and choices), show them now
+      if (this._deferredChoices) {
+        const choices = this._deferredChoices;
+        this._deferredChoices = null;
+        this.box.showChoices(choices);
+        return;
+      }
       // End of current node's text — flush deferred effects now that player has advanced
       this._flushPendingEffects();
       if (this._currentNode && this._currentNode.next) {
@@ -192,7 +201,13 @@ export class DialogueSystem {
           }
           return;
         }
-        this.box.showChoices(validChoices);
+        // If node has both text and choices, defer choices until text is fully
+        // revealed and acknowledged — prevents choices from hiding the question text
+        if (node.text) {
+          this._deferredChoices = validChoices;
+        } else {
+          this.box.showChoices(validChoices);
+        }
       }
     }
   }
