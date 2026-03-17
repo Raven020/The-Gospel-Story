@@ -2,139 +2,226 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 626 tests passing across 42 test suites (vitest)
+- **Tests:** 628 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
 - **All 10 implementation phases COMPLETE**
-- **All P0–P3 audit items RESOLVED** (61 items total)
+- **Comprehensive audit completed 2026-03-17** — 3 game-breaking bugs found, 9 major gaps, 7 content gaps
 
 ---
 
-## Remaining Work — P6 Comprehensive Audit (2026-03-16)
+## Remaining Work — P7 Comprehensive Audit (2026-03-17)
 
-Items sorted by priority. Each is confirmed missing/broken via code search.
+Items sorted by priority tier. Each confirmed via code-level audit.
 
-### P3 — Content & Data Gaps
+### P0 — Game-Breaking Bugs
 
-- **P5.21 — Five disciples have no recruitment dialogue or map placement**
-  - Thomas, James son of Alphaeus, Thaddaeus, Simon the Zealot, Judas
-  - `partyData.js` has roster entries but no dialogue trees in `arc3.js`, no NPCs on maps
-  - James A., Thaddaeus, Simon Z. have `role: 'tbd'` and `abilities: []`
-  - MVP scope says only 6 disciples (Peter, Andrew, James, John, Philip, Nathanael) + Matthew is implemented as 7th
-  - Need: decide if Thomas+Judas are MVP (they have abilities defined) vs post-MVP
+All P0 bugs resolved.
 
-- **P5.22 — Judas betrayalStat never incremented**
-  - `betrayalStat: 0` in partyData.js, persisted in GameState serialize/deserialize
-  - No code path ever increments it; Thomas's `doubt_detect` never reads it in combat
-  - The entire Judas betrayal mechanic is data-only scaffolding
-  - Post-MVP scope (Arc 11+), but the detection mechanic could be wired now
+### P1 — Major Functional Gaps
 
-- **P5.24 — Missing quest flags for later disciples**
-  - `questFlags.js` has no `recruited_thomas`, `recruited_james_alphaeus`, `recruited_thaddaeus`, `recruited_simon_zealot`, `recruited_judas`
-  - These characters exist in ROSTER but their recruitment can't be tracked
+- **GAP-01: Jordan River `warp_south` lands at wrong end of Jerusalem**
+  - `jordan_river.js` sends player to `jerusalem` at (14, 1) — the NORTH side
+  - Should land near SOUTH gate (14, 18)
+  - Fix: change `targetY` from 1 to 18 in jordan_river.js `warp_south`
 
-- **P5.25 — Legion boss absent from enemy data**
-  - `combat.md` names Legion as a boss-level demon; `enemies.js` has only `doubt`, `fear`, `temptation`, `pride`, `greed`, `deception`, `satan`
-  - Post-MVP (Arc 6) but worth noting for future planning
+- **GAP-02: Above-layer footprint tiles not collision-blocked**
+  - Jerusalem trees (rows 7, 17) and Galilee reeds are in the above layer but ground tiles have `collision=0`
+  - Spec §4 requires above-layer footprint tiles to be blocked
+  - Fix: add `collision=1` for above-layer occupied tiles in `jerusalem.js` and `galilee.js`
 
-### P4 — Polish & Minor Issues
+- **GAP-03: Temple, Capernaum, Wilderness, Mountain have empty detail/above layers**
+  - `interior.js` defines floor patterns (100), rug borders (101), pillar tops (200), arches (201) — ALL unused in `temple.js`
+  - `desert.js` defines scattered rocks (100), sand ripples (101), rock overhangs (200) — ALL unused in `wilderness.js`
+  - `overworld.js` has detail/above tiles unused in `capernaum.js` and `mountain.js`
+  - Fix: populate detail/above layers in these 4 maps
 
-- **P5.35 — Healing Encounters not implemented**
-  - `combat.md` defines a distinct encounter type for the sick/possessed resolved via Prayer/Miracles
-  - No `HealingEncounter` scene or non-combat resolution path exists
-  - Post-MVP but should be planned for Arc 4+
+- **GAP-04: Wilderness `temptation_3` tile at (13,16) blocked by cactus**
+  - Cactus at x=13, y=16 sets `collision=1`, but event `temptation_3` is placed there
+  - Two of three trigger tiles still work, so not fully game-breaking
+  - Fix: move the cactus or the event tile
 
-- **P5.36 — Debate/Riddle Battles not implemented**
-  - `combat.md` defines a dialogue-tree-style battle for Pharisee/teacher confrontations
-  - No debate-battle mode exists; only standard combat + scripture mini-game
-  - Post-MVP but should be planned for Arc 4+
+- **GAP-05: Effect parameter naming mismatches vs. spec**
+  - `giveItem`/`removeItem`: code reads `effect.itemId`/`effect.count`, spec says `effect.item`/`effect.qty`
+  - `playSound`: code reads `effect.sfxId`, spec says `effect.soundId`
+  - Latent — no arc data currently exercises these effects
+  - Fix: accept both naming conventions in code, or update spec
 
-- **P5.37 — Narrative party locking not implemented**
-  - Spec: "certain arcs restrict the party to only the disciples present in the biblical account"
-  - No party-restriction mechanism exists; all recruited members are freely swappable
-  - Post-MVP (applies mainly to Arc 8 Transfiguration: Peter/James/John only)
+- **GAP-06: Healing formula ignores `fai` stat**
+  - `BattleEngine._executeAbility` calcHeal uses only `caster.stats.wis`
+  - John (healer) has `fai: 55` but healing calculated off `wis: 50` only
+  - Fix: use `Math.max(caster.stats.wis, caster.stats.fai)` or spec-appropriate formula
 
-### Test Coverage Gaps (non-blocking but tracked)
+- **GAP-07: Oil item consumed silently from field menu**
+  - `inventory.js useItem()` skips STR buff for battle-duration items
+  - Using oil from pause menu wastes the item with no effect and no feedback
+  - Fix: prevent using battle-only items from field menu, or show a message
 
-- **T9** — OverworldScene encounter trigger via natural movement (bypassed — tests call `_triggerEncounter` directly)
-- **T10** — `main.js` has zero test coverage (entry point wiring, onNewGame/onContinue handlers, playtime)
-- **T11** — `demo.js` excluded from maps.test.js structural validation (intentional — placeholder NPC dialogue keys `dlg_test_greeting`/`dlg_test_elder` are not registered in arc dialogue files)
+- **GAP-08: Mary follower initialization on New Game — verify**
+  - `main.js onNewGame` sets `arc1_started` and loads jerusalem, but never explicitly assigns follower
+  - `_updateFollowerForArc()` creates Mary if arc=1 and gameState exists on loadMap
+  - Needs verification: does loadMap trigger _updateFollowerForArc after gameState is set?
 
-Resolved: T1 (item flow end-to-end), T2 (ITEM action useItemFn + missing-callback guard), T3 (status_shield blocking), T4 (bonusVsWeakness 1.5x), T5 (registerMap/getMapEntry), T6 (autoAdvanceSingleChoice), T7 (renderGroundLayers/renderAboveLayer composite layer tests), T8 (getMember), T12 (enemy AI deterministic via Math.random mock + basic-attack path test)
+- **GAP-09: BGM ID mismatch — `'battle_boss'` vs spec `'boss'`**
+  - `OverworldScene.js` line 708 uses `'battle_boss'`; spec names it `'boss'`
+  - Low priority (audio stubbed), but should be fixed before audio implementation
+
+### P2 — Content & Narrative Gaps
+
+- **CONTENT-01: Scripture-selection combat not implemented (MVP System #6)**
+  - Satan temptation battles use standard `startBattle` — no Scripture choice mechanic
+  - Three Satan dialogue trees in `arc2.js` are single-node stubs
+  - Scripture challenges exist in `scriptures.js` but not wired to a choice UI
+  - Listed as MVP system in `mvp-scope.md`
+
+- **CONTENT-02: Baptism power-up/transformation has no visual or stat effect**
+  - `baptism_complete` flag is set but no visual event, stat change, or cutscene
+  - Spec says "baptism triggers visual transformation/power-up"
+
+- **CONTENT-03: Arc 3 missing opening ministry proclamation**
+  - Player warps to Galilee and immediately encounters fishermen
+  - No "Repent, for the kingdom of heaven is near" preaching scene
+
+- **CONTENT-04: Jesus's Scripture rebuttals absent from temptation dialogues**
+  - No Jesus-speaker nodes with "Man shall not live by bread alone" etc.
+  - Satan stubs have one line each with no response
+
+- **CONTENT-05: Baptism narration truncated**
+  - "This is my beloved Son" — missing "with him I am well pleased" (Matthew 3:17)
+
+- **CONTENT-06: Joseph NPC absent from Jerusalem**
+  - Arc 1 premise has Mary AND Joseph searching; only `mary_worried` NPC present
+
+- **CONTENT-07: `gold_find` ability description misleading**
+  - Description says "Increase item drops" but actually gives 1.5x EXP; no item drop system exists
+
+### P3 — Test & Code Quality
+
+- **TEST-01: Unsafe `Math.random` override in OverworldScene test**
+  - Lines 683-700 use manual `Math.random = () => 0` assignment
+  - If test throws, `Math.random` is never restored, corrupting subsequent tests
+  - Fix: use `vi.spyOn(Math, 'random')` pattern
+
+- **TEST-02:** No test for `_handleRetry()` defeat-to-retry path
+- **TEST-03:** No test for `requires` guard on cutscene events
+- **TEST-04:** No test for `_executeScriptedWarp()` from cutscene warp command
+- **TEST-05:** No test for follower creation/breadcrumb/rendering
+- **TEST-06:** No test for arc-blocked warp feedback dialogue
+- **TEST-07:** No test for cross-map warp integration (tile event → loadMap)
+- **T10:** `main.js` has zero test coverage
+- **T11:** `demo.js` excluded from map validation (intentional — placeholder NPC keys)
+
+- **CODE-01:** `CHARS_PER_FRAME` constant is dead code in `DialogueBox.js` line 24 (update() uses `gameSettings.textSpeed`)
+- **CODE-02:** `panCamera` initial position uses hardcoded 112 instead of `SCREEN_WIDTH/2` (120) in `EventSystem.js` line 183
+- **CODE-03:** `_handleMenuSelect()` is dead code in `OverworldScene.js` lines 614-616 (empty method, all options handled by sub-menus)
+- **CODE-04:** Dead exports never imported in production: `getSpriteSize`/`clearSpriteCache` (renderSprite.js), `drawChar`/`GLYPH_W`/`GLYPH_H` (drawText.js), `expForLevel`/`calcDamage`/`calcHeal` (exported but only used internally + tests)
+
+### P4 — Post-MVP (Tracked for Reference)
+
+- P5.21: 5 disciples have no recruitment dialogue/map placement (post-MVP)
+- P5.22: Judas `betrayalStat` never incremented (post-MVP, Arc 11+)
+- P5.25: Legion boss absent from enemy data (post-MVP, Arc 6)
+- P5.35: Healing Encounters not implemented (post-MVP, Arc 4+)
+- P5.36: Debate/Riddle Battles not implemented (post-MVP, Arc 4+)
+- P5.37: Narrative party locking not implemented (post-MVP, Arc 8)
+- Morale system gameplay integration (stubbed only)
+- Enemy HP number on hit (30-frame timer) not in BattleHUD
+- Victory/defeat fade overlays use timers not actual globalAlpha fades
+- 9-slice speaker name plate with min/max width scaling
+- Dynamic import for dialogue modules (currently pre-loaded)
+- Per-character dialogue files (currently 3 flat arc files)
 
 ---
 
-## Resolved Items
+## Spec Inconsistencies (Documentation Only)
+
+1. `dialogue-system.md` §4b says 6px cell width; §12 says 8px — contradictory
+2. `dialogue-system.md` §9 has duplicate `greet` key in example (acknowledged)
+3. `party-system.md` stat display says ATK/DEF; code uses STR/WIS/FAI/SPD
+4. `tilemap-format.md` §11 filenames use hyphens; actual files use underscores
+5. `dialogue-system.md` uses `root` field; implementation uses `start` key convention
+6. `dialogue-system.md` constructor takes inventory/party/eventBus; implementation uses `onEffect` callback
+7. AudioManager spec shows object literal; implementation uses class
+
+---
+
+## Items Confirmed Resolved by This Audit
+
+- **P5.24** — Post-MVP disciple quest flags NOW present in `questFlags.js` (working tree change)
+- **T9** — Encounter via natural movement IS now tested (`OverworldScene.test.js` lines 646-701)
+- All 7 MVP disciples fully defined with stats, abilities, sprites
+- All quest flags for arcs 1-3 properly defined
+- All objectives complete for arcs 1-3
+- Save/load working with 3 slots
+- All warps bidirectional (except GAP-01 jordan_river landing position)
+- All 8 dialogue effect types wired and forwarded correctly
+
+---
+
+## Resolved Items (Prior Audits)
+
+### P0 Bug Fixes (P7 Audit)
+- **BUG-01** — `setFlag` effects now forwarded to `onEffect` callback in `DialogueSystem._executeEffect`. Arc-advancement via dialogue setFlag (e.g., `arc1_complete` → `advanceArc(2)`) now works. Test added.
+- **BUG-02** — Desert tileset duplicate palette key `OH` renamed to `RH` for rock overhang base. Oasis water highlight `OH` (#5AAACC) now renders correctly.
+- **BUG-03** — BattleHUD `imageSmoothingEnabled` already set to `false` (confirmed resolved in prior commit).
 
 ### P6 Fixes
 - **P6.7** — `arc2_started` moved from arc2.js baptism_complete node to arc1.js arc1_transition.start, so the flag is set when Arc 2 begins rather than when baptism completes.
 - **P6.6** — `arc1_started` flag is now set in main.js onNewGame handler, resolving the declared-but-never-set gap.
-- **P6.5** — RESOLVED for MVP. All 14 MVP sprite keys (jesus, joseph, mary, young_jesus, 7 disciples, john_baptist, 2 townspeople) are properly registered in the sprite registry. 5 post-MVP disciple sprites (thomas, james_alphaeus, thaddaeus, simon_zealot, judas) are data-only stubs.
-- **P6.4** — Wisdom Q&A implemented as dialogue-tree variant in young_jesus dialogue (arc1.js). Three questions covering Deut 6:5, Isaiah 9:6, Micah 5:2 with correct/wrong answer paths. wisdom_qa_complete flag gates replay. Non-blocking wrong answers per spec.
-- **P6.1** — SaveLoadMenu.onLoad now wired in OverworldScene constructor. _reloadFromSave() fades to black, looks up saved map in _mapRegistry, calls loadMap() with restored coordinates and facing. Pattern matches existing _handleRetry() approach.
-- **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When dialogue box text is fully revealed, held confirm is ignored — only a fresh press advances to the next node. Prevents dialogue from auto-skipping through entire sequences.
-- **P5.13** — OptionsMenu implemented with Text Speed (Slow/Normal/Fast), BGM toggle, and SFX toggle. gameSettings singleton drives DialogueBox typewriter speed. Wired into PauseMenu via standard sub-menu pattern.
-- **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags — covers all arc 1-3 progression states. Hidden during dialogue, menus, battles, and location name display. Font extended with > and < glyphs.
-- **P6.8** — EventSystem._cameraOverride replaced with public getter (get cameraOverride()). OverworldScene now uses the getter.
-- **P6.9** — DMG_MISS color now used for miss and blocked damage floaters in BattleScene._showResult().
+- **P6.5** — RESOLVED for MVP. All 14 MVP sprite keys properly registered in sprite registry. 5 post-MVP disciple sprites are data-only stubs.
+- **P6.4** — Wisdom Q&A implemented as dialogue-tree variant in young_jesus dialogue (arc1.js). Three questions covering Deut 6:5, Isaiah 9:6, Micah 5:2.
+- **P6.1** — SaveLoadMenu.onLoad now wired in OverworldScene constructor. _reloadFromSave() fades to black, looks up saved map in _mapRegistry, calls loadMap() with restored coordinates and facing.
+- **P6.2** — Held-confirm fast-forward now only accelerates typewriter reveal. When text is fully revealed, held confirm is ignored.
+- **P6.3** — Objective marker rendered at (4,4) on overworld HUD. getCurrentObjective() derives text from questFlags.
+- **P6.8** — EventSystem._cameraOverride replaced with public getter.
+- **P6.9** — DMG_MISS color now used for miss and blocked damage floaters.
 
 ### P5 Fixes
-- **P5.17** — Detail and above tile definitions added to all 4 tilesets. Jerusalem and Galilee maps populated with environmental details (flowers, path marks, tree canopy, shells, reeds).
-- **P5.18** — RESOLVED. The temple map correctly uses the `interior` tileset (`src/tilesets/interior.js`), which provides stone/marble floors, walls, pillars, doors, scroll shelves, carpet, and benches — all tiles used by the Temple of Jerusalem map. The spec’s listing of a separate `temple.js` tileset was aspirational; `tilemap-format.md` updated to remove `temple.js` and note that `interior.js` covers both buildings and temples.
-- **P5.16** — Enemy battle sprites created (16×16 pixel art, 2x scaled to 32×32 in BattleHUD). All 7 enemies have distinctive designs: doubt (shadowy wisp), fear (dark shape with red eyes), temptation (flame form), pride (crowned figure), greed (grasping claws), deception (serpent), satan (horned boss).
-- **P5.23** — Summit cutscene now spawns 7 disciple NPCs in semicircle via spawnNPC commands before the choosing dialogue.
-- **P5.34** — Morale field stubbed on party members (default 100, serialized/deserialized with ?? fallback for old saves).
-- **P5.20** — RESOLVED. dialogue-system.md updated to match ui-hud.md: 240×42 box, 38 chars/line, 2 lines.
+- **P5.17** — Detail and above tile definitions added to all 4 tilesets. Jerusalem and Galilee maps populated with environmental details.
+- **P5.18** — Temple map correctly uses `interior` tileset. `tilemap-format.md` updated to remove separate `temple.js`.
+- **P5.16** — Enemy battle sprites created (16x16 pixel art, 2x scaled to 32x32). All 7 enemies have distinctive designs.
+- **P5.23** — Summit cutscene spawns 7 disciple NPCs in semicircle via spawnNPC commands.
+- **P5.34** — Morale field stubbed on party members (default 100, serialized/deserialized).
+- **P5.20** — dialogue-system.md updated to match ui-hud.md: 240x42 box, 38 chars/line, 2 lines.
 - **P5.26** — Peter recruitment dialogue expanded from 3 to 9 nodes with miraculous catch of fish (Luke 5:1-11).
-- **P5.28** — EventSystem fadeOut onMidpoint documented as intentional (visual-only effect).
-- **P5.29** — BattleScene.exit() and OverworldScene.exit() now perform cleanup (reset flags, close dialogue/menus, stop BGM).
-- **P5.33** — `clearTileCache()` is now called at the start of `OverworldScene.loadMap()`, preventing stale pre-baked tile canvases from persisting across map transitions.
-- **P5.30** — DialogueSystem effects are now deferred until the player advances past the node. A `_pendingEffects` array accumulates effects on node enter; they flush when the dialogue reaches 'done' or a choice result is selected. Action nodes (triggerEvent etc.) still execute immediately as per spec.
-- **P5.19** — Jordan River east warp moved from column 29 (water) to column 23 (sandy bank edge, tile 4) rows 9-10. The manual collision override that opened water tiles was removed. `wilderness.js` return warp target updated from x=28 (water) to x=22 (sandy bank).
-- **P5.15** — PartyMenu now renders 16×16 member sprites in both the list and detail views using `renderSprite`. `spriteRegistry` is passed down through the PauseMenu constructor chain so PartyMenu can access character pixel data.
-- **P5.14** — PartyMenu `ROW_HEIGHT` updated from 18 to 26 and HP/SP bar `maxW` updated from 50 to 60, matching the ui-hud.md spec.
-- **P5.1** — Joseph+Mary are now the Arc 1 protagonists. Joseph and Mary added to ROSTER (partyData.js) with full stats/sprites. GameState.newGame() creates Joseph as party leader. Follower class implements breadcrumb-trail pattern for Mary (1-tile delay, same facing, clears on teleport). OverworldScene dynamically resolves player sprite from party leader's sprite field. transitionToArc2() swaps Joseph→Jesus when arc1_complete is set. Mary follower is removed on arc transition.
-- **P5.2** — After `arc2_complete`, `temptation_3` cutscene auto-warps player to galilee (14,18) via new `warp` EventSystem command; `onWarp` callback wired in OverworldScene.
-- **P5.3** — Temptation events now trigger scripture-selection boss battles via new `startBattle` EventSystem command; Satan dialogue no longer sets flags directly (flags set by cutscene after battle victory); `BattleScene._pickScriptureChallenge` selects the correct challenge per encounter.
-- **P5.4** — Arc-blocked warp now shows feedback dialogue ("You're not ready to go there yet.") instead of silently returning.
-- **P5.5** — Capernaum→Mountain warp now spawns player at base (`targetY: 23`) instead of summit (`targetY: 1`).
-- **P5.7** — Defeat screen now shows a "FALLEN" panel with 60-frame slow fade, flavor text, and a two-option menu: "Retry from last save" (loads most recent save via GameState) and "Return to title". OverworldScene handles 'retry' result by finding latest save slot and restoring full game state. Defeat no longer auto-advances to title.
-- **P5.8** — Victory screen now awards EXP inside BattleScene (via gainExp), displays per-member level-up stat reveals with typewriter animation (2 chars/frame), and shows aggregated stat gains. Panel renders after a 30-frame fade to black. Player presses Z to advance through each member's level-ups, or auto-advances after 3 seconds of inactivity. OverworldScene no longer duplicates EXP awarding.
-- **P5.10** — `def` stat added to all 13 ROSTER entries and all 7 enemies; STR fallback removed from `BattleEngine._doAttack`.
-- **P5.12** — `temptation_3` cutscene now requires both `temptation_1_resolved` AND `temptation_2_resolved` via a `requires` array; OverworldScene enforces `requires` prerequisite guard on cutscene events.
-- **P5.6** — Arc-transition cutscenes now fully implemented. Arc 1→2 has fadeOut + narrator dialogue ("years passed in Nazareth") + warp to jordan_river. Arc 2→3 has angel_minister dialogue + narrator transition ("returned to Galilee in the power of the Spirit") + warp to galilee. Arc 3 ending has mountain commission dialogue + narrator closing ("the twelve were chosen") + fadeIn. All transition dialogue defined in arc1.js, arc2.js, arc3.js; cutscene sequences in wilderness.js and mountain.js.
-- **P5.9** — Dialogue fast-forward on held confirm now wired. OverworldScene checks `input.held(Actions.CONFIRM)` in addition to `input.pressed()`, calling `dialogue.onActionPress()` every frame while held.
-- **P5.11** — NPC post-discovery dialogue implemented for all Arc 1 NPCs. DialogueSystem enhanced with `conditionFail` field on nodes — when a node's condition is false, navigates to `conditionFail` instead of `next`. All 7 Arc 1 NPCs (townsperson 1-5, temple guard, temple teachers 1-2, mary_worried) now have post-`found_jesus_in_temple` dialogue variants.
-- **P5.27** — Jerusalem townsperson_4 and townsperson_5 now have unique dialogue trees instead of reusing townsperson_1/townsperson_3 keys.
-- **P5.31** — RESOLVED (intentional). Integer-only scaling via `Math.floor` is the correct design for a GBA-style pixel-art game. It guarantees every logical pixel maps to a whole-number multiple of physical pixels, preserving pixel-perfect crispness. The visible letterbox at certain window sizes is an accepted trade-off; fractional CSS scaling would introduce sub-pixel blending that breaks the pixel-art aesthetic. A comment documenting this decision has been added to `Display._onResize()`.
-- **P5.32** — RESOLVED. `overflow: hidden` is set on both `html` and `body` in `index.html`.
-
-### Pre-existing Test Bug Fix
-- "pending arc cutscene fires after dialogue closes" test needed two confirm presses (typewriter skip + advance), not one.
+- **P5.28** — EventSystem fadeOut onMidpoint documented as intentional.
+- **P5.29** — BattleScene.exit() and OverworldScene.exit() now perform cleanup.
+- **P5.33** — clearTileCache() called at start of OverworldScene.loadMap().
+- **P5.30** — DialogueSystem effects deferred until player advances past the node. _pendingEffects array accumulates effects; flush on 'done' or choice result.
+- **P5.19** — Jordan River east warp moved from water to sandy bank edge.
+- **P5.15** — PartyMenu renders 16x16 member sprites via renderSprite. spriteRegistry passed through PauseMenu chain.
+- **P5.14** — PartyMenu ROW_HEIGHT updated to 26, HP/SP bar maxW updated to 60.
+- **P5.13** — OptionsMenu implemented with Text Speed, BGM toggle, SFX toggle.
+- **P5.1** — Joseph+Mary are Arc 1 protagonists. Follower class implements breadcrumb-trail for Mary. transitionToArc2() swaps Joseph→Jesus.
+- **P5.2** — After arc2_complete, temptation_3 cutscene auto-warps player to galilee via warp EventSystem command.
+- **P5.3** — Temptation events trigger scripture-selection boss battles via startBattle EventSystem command.
+- **P5.4** — Arc-blocked warp shows feedback dialogue.
+- **P5.5** — Capernaum→Mountain warp spawns at base (targetY: 23).
+- **P5.7** — Defeat screen with "FALLEN" panel, retry/title options.
+- **P5.8** — Victory screen awards EXP, displays per-member level-up stat reveals.
+- **P5.10** — def stat added to all 13 ROSTER entries and 7 enemies.
+- **P5.12** — temptation_3 requires both temptation_1_resolved AND temptation_2_resolved.
+- **P5.6** — Arc-transition cutscenes fully implemented.
+- **P5.9** — Dialogue fast-forward on held confirm wired.
+- **P5.11** — NPC post-discovery dialogue with conditionFail field.
+- **P5.27** — Jerusalem townsperson_4 and townsperson_5 have unique dialogue trees.
+- **P5.31** — Integer-only scaling confirmed intentional for pixel-art crispness.
+- **P5.32** — overflow: hidden set on html and body.
 
 ### P4 Fixes
-P4.4 (gold_bonus effectType handled in BattleEngine — applies buff, 1.5x EXP on victory), P4.7 (checkEncounterZone JSDoc corrected to string|null), P4.14 (arc ordering enforcement via MAP_ARC_REQUIREMENTS, canAccessMap(), advanceArc(), auto-advance on arc*_complete).
+P4.4 (gold_bonus effectType), P4.7 (checkEncounterZone JSDoc), P4.14 (arc ordering enforcement).
 
-### P3 Fixes (spec-correctness & polish)
-P3.19 (evalCondition unknown op defaulted true → false), P3.20 (evalCondition undefined flag defaulted 0 → false), P3.21 (playtime counter never incremented), P3.22 (damage floater fade timing 30→40 frames), P3.23 (cursor blink suppressed in choice/action menus), P3.24 (Display missing CSS image-rendering:pixelated and canvas centering), P3.25 (DMG_MISS color token missing from Colors.js), P3.26 (BattleHUD enemy name-to-HP-bar gap 10px→5px), P3.27 (Scan ability result never rendered in BattleScene), P3.28 (status_shield buff type never checked — Bartholomew's Sincere Guard inert), P3.29 (pause overlay didn't persist beneath sub-screens), P3.30 (PartyMenu ROW_HEIGHT too small, HP bar too narrow, bench names not dimmed), P3.31 (Prayer/Miracle abilities missing bonusVsWeakness), P3.32 (AoE bonusVsWeakness checked against null instead of per-target), P3.33 (DialogueBox redundant advance arrow if-blocks).
+### P3 Fixes
+P3.19–P3.33 (evalCondition defaults, playtime counter, damage floater timing, cursor blink, Display CSS, DMG_MISS color, BattleHUD gap, Scan rendering, status_shield, pause overlay, PartyMenu layout, bonusVsWeakness, DialogueBox cleanup).
 
 ### Earlier P3 Fixes
-P3.1–P3.18 (Display tests, tileset tests, UIChrome/Colors tests, EventSystem command tests, BattleScene tests + target selection bug, OverworldScene gap tests, PauseMenu delegation tests, ability menu drawPanel, dialogue key/warp validation, Inventory.fromJSON filtering, dialogue effects, enemy AI, dead code cleanup).
+P3.1–P3.18 (Display tests, tileset tests, UIChrome/Colors tests, EventSystem commands, BattleScene tests + target selection bug, OverworldScene gaps, PauseMenu delegation, ability menu, dialogue validation, Inventory.fromJSON, dialogue effects, enemy AI, dead code cleanup).
 
 ### Notable Bug Fixes
-- **BattleScene target selection** — `_handleActionInput()` had `if (this._selectingTarget) return;` which silently dropped all target input. Fixed to call `_handleTargetInput()`.
-- **Flaky enemy AI test** — "enemy attacks a party member" expected result always `'damage'` but enemy AI can use debuff/buff abilities (30% chance). Fixed to accept all valid result types.
-
----
-
-## Spec Inconsistencies
-
-1. **Text Box Dimensions** — RESOLVED (P5.20). `dialogue-system.md` updated to match `ui-hud.md` and implementation: 240×42 box, 38 chars/line, 2 lines per page. Full-width box is standard for 240px-wide GBA-style games.
-2. **Dialogue Module Paths** — Code uses flat string keys via `registerDialogue()`. Spec describes dynamic `import()` by module path. Current approach works; spec is aspirational.
-3. **DEF stat** — RESOLVED (P5.10). DEF is now a proper stat field on all party members and enemies; STR fallback removed.
-4. **Stat display labels** — Spec shows ATK/DEF in party detail; code shows STR/WIS/FAI/SPD.
-5. **Duplicate `greet` key in dialogue-system.md §9 example** — The Miriam example has two `greet` nodes in the same object literal. Second silently overwrites first. Not a runtime bug (it's spec example code) but misleading.
+- **BattleScene target selection** — _handleActionInput() had early return that dropped target input. Fixed to call _handleTargetInput().
+- **Flaky enemy AI test** — Fixed to accept all valid result types (damage, debuff, buff).
+- **Pre-existing test bug** — "pending arc cutscene fires after dialogue closes" needed two confirm presses.
 
 ---
 
@@ -148,7 +235,7 @@ All 10 phases confirmed complete by audit:
 5. Combat Systems (battle transition, turn engine, sprites, scripture, wisdom)
 6. Narrative & Events (15 command types; visual effects deferred)
 7. Arc 1 Content (Jerusalem, temple, NPCs, cutscenes)
-8. Arc 2 Content (Jordan River, wilderness, Satan encounters ×3)
+8. Arc 2 Content (Jordan River, wilderness, Satan encounters x3)
 9. Arc 3 Content (Galilee, Capernaum, 7 disciple recruitments)
 10. Polish & Integration (title screen, encounters, arc transitions, audio stubs)
 
@@ -168,11 +255,11 @@ All 10 phases confirmed complete by audit:
 - **Dialogue effects** — All 8 effect types fully wired (setFlag, giveItem, removeItem, recruitMember, playSound, playMusic, setNpcState, triggerEvent)
 - **Gold Find ability** — Matthew's gold_find applies a gold_bonus buff; grants 1.5x EXP on victory (no gold currency system — EXP is the only reward)
 - **Arc ordering** — MAP_ARC_REQUIREMENTS maps each map to its minimum arc; current_arc tracked in questFlags; auto-advances when arc*_complete flags are set via dialogue effects
-- **Dialogue string-key resolution** — OverworldScene resolves string keys to data objects from `_dialogueCache` before passing to EventSystem, both for triggerEvent and inline cutscene commands
-- **EventSystem extended commands** — EventSystem now supports `startBattle` (triggers scripture-selection boss battle via callback to OverworldScene) and `warp` (teleports player to target map/coords via onWarp callback) command types
-- **Cutscene prerequisites** — Cutscene events support a `requires` array of flag names; OverworldScene skips the event unless all listed flags are set in questFlags
-- **Text speed** — configurable via Options menu (1/2/4 chars per frame); gameSettings singleton replaces hardcoded CHARS_PER_FRAME
-- **Sprite registry** — passed from OverworldScene through PauseMenu to PartyMenu for consistent character rendering across overworld and menus
+- **Dialogue string-key resolution** — OverworldScene resolves string keys to data objects from `_dialogueCache` before passing to EventSystem
+- **EventSystem extended commands** — startBattle (scripture-selection boss battle) and warp (teleport to target map/coords) command types
+- **Cutscene prerequisites** — `requires` array of flag names; OverworldScene skips event unless all flags are set
+- **Text speed** — Configurable via Options menu (1/2/4 chars per frame); gameSettings singleton
+- **Sprite registry** — Passed from OverworldScene through PauseMenu to PartyMenu for consistent rendering
 
 ---
 

@@ -508,3 +508,4 @@ Numeric flags are used for morale scores, stat deltas from choices, and multi-st
 | ID | Description | Status |
 |---|---|---|
 | DLG-BUG-01 | Dialogue sequences are being automatically skipped — the system advances through nodes without waiting for player input, causing players to miss dialogue text entirely. The typewriter reveal and/or advance logic is not gating on an explicit action button press before moving to the next node. | Resolved |
+| DLG-BUG-02 | `setFlag` effects were not forwarded to `onEffect` callback, blocking arc advancement. Fixed: `_executeEffect` now calls `this.onEffect(effect)` after writing the flag locally. Test added. | Resolved |

@@ -642,6 +642,64 @@ describe('OverworldScene', () => {
     expect(scn.player.tileY).toBe(7);
   });
 
+  // --- T9: Encounter trigger via natural player movement ---
+  it('triggers encounter when player walks into an encounter zone', () => {
+    const gameState = {
+      questFlags: {},
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: {
+        active: [{
+          id: 'jesus', name: 'Jesus', level: 1,
+          stats: { hp: 200, sp: 50, str: 30, wis: 25, fai: 20, spd: 30, def: 15 },
+          currentHp: 200, currentSp: 50, abilities: [],
+        }],
+        bench: [],
+      },
+    };
+    const battleScene = { startBattle: vi.fn() };
+    const mockSceneManager = { switch: vi.fn() };
+    const mockInput = createMockInput();
+    const scn = new OverworldScene({
+      input: mockInput,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+      battleScene,
+    });
+
+    // Create a map with an encounter zone covering row 6
+    const map = createTestMap();
+    map.encounters = {
+      enabled: true,
+      zones: [
+        { x: 0, y: 6, w: 10, h: 1, rate: 1.0, table: [{ enemy: 'doubt', weight: 1 }] },
+      ],
+    };
+    scn.loadMap(map, createTestTileset(), 5, 5);
+
+    // Mock Math.random to guarantee encounter triggers
+    const origRandom = Math.random;
+    Math.random = () => 0;
+
+    // Start movement downward (5,5 → 5,6 which is in the encounter zone)
+    mockInput.getDirectionalHeld.mockReturnValue(Actions.DOWN);
+    scn.update(1 / 60); // starts movement
+    expect(scn.player.moving).toBe(true);
+
+    // Stop holding direction and advance frames until player arrives
+    mockInput.getDirectionalHeld.mockReturnValue(null);
+    for (let i = 0; i < 20; i++) {
+      scn.update(1 / 60);
+    }
+
+    // Player should have arrived at (5,6) and triggered an encounter
+    expect(scn._inBattle).toBe(true);
+
+    Math.random = origRandom;
+  });
+
   // --- T5: registerMap / getMapEntry ---
   describe('registerMap / getMapEntry', () => {
     it('stores a map entry and retrieves it by id', () => {

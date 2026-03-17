@@ -91,6 +91,28 @@ describe('DialogueSystem', () => {
     expect(flags.found_item).toBe(true);
   });
 
+  it('forwards setFlag effects to onEffect callback (BUG-01)', () => {
+    const onEffect = vi.fn();
+    const flags = {};
+    const dialogue = {
+      start: {
+        speaker: '',
+        text: 'Arc complete!',
+        effects: [{ type: 'setFlag', flag: 'arc1_complete', value: true }],
+        next: null,
+      },
+    };
+
+    const ds = new DialogueSystem({ questFlags: flags, onEffect });
+    ds.open(dialogue, 'start');
+
+    ds.onActionPress(); // fast-forward text
+    ds.onActionPress(); // confirm 'done' — effects fire here
+
+    expect(flags.arc1_complete).toBe(true);
+    expect(onEffect).toHaveBeenCalledWith({ type: 'setFlag', flag: 'arc1_complete', value: true });
+  });
+
   it('calls onEffect for non-flag effects after player advances past text', () => {
     const onEffect = vi.fn();
     const dialogue = {

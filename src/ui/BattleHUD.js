@@ -82,7 +82,7 @@ export class BattleHUD {
 
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(offscreen, Math.round(dx), Math.round(dy), w * scale, h * scale);
-    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingEnabled = false;
   }
 
   renderEnemies(ctx, enemies, frameCount) {

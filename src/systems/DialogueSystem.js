@@ -212,6 +212,7 @@ export class DialogueSystem {
     switch (effect.type) {
       case 'setFlag':
         this.questFlags[effect.flag] = effect.value;
+        this.onEffect(effect);
         break;
       case 'giveItem':
       case 'removeItem':

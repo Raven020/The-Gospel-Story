@@ -35,6 +35,13 @@ export const INITIAL_FLAGS = {
   recruited_matthew: false,
   arc3_complete: false,
 
+  // Later disciples (post-MVP, tracked for future arcs)
+  recruited_thomas: false,
+  recruited_james_alphaeus: false,
+  recruited_thaddaeus: false,
+  recruited_simon_zealot: false,
+  recruited_judas: false,
+
   // General
   current_arc: 1,
 };

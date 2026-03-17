@@ -36,7 +36,7 @@ export const PALETTE = {
   WV:  '#D0B060',   // sand ripple warm
   WK:  '#C0A050',   // sand ripple dark
   WL:  '#E0C070',   // sand ripple light
-  OH:  '#7A6A5A',   // rock overhang base
+  RH:  '#7A6A5A',   // rock overhang base
   OK:  '#6A5A4A',   // rock overhang dark
   OL:  '#8A7A6A',   // rock overhang light
 };
@@ -254,19 +254,19 @@ export const TILES = {
 
   // --- Tile 200: Rock overhang (jutting cliff face overhead) ---
   200: [
-    ['OK','OH','OH','OH','OH','OL','OH','OH','OH','OH','OL','OH','OH','OK','_','_'],
-    ['OK','OH','OL','OH','OH','OH','OH','OH','OH','OH','OH','OH','OL','OK','_','_'],
-    ['OK','OL','OH','OH','OK','OH','OH','OH','OH','OH','OK','OH','OH','OL','OK','_'],
-    ['OK','OH','OH','OK','_','_','OK','OH','OH','OK','_','OK','OH','OH','OK','_'],
-    ['OK','OH','OK','_','_','_','_','OK','OK','_','_','_','_','OK','OH','OK'],
-    ['OK','OH','OK','_','_','_','_','_','_','_','_','_','_','OK','OH','OK'],
+    ['OK','RH','RH','RH','RH','OL','RH','RH','RH','RH','OL','RH','RH','OK','_','_'],
+    ['OK','RH','OL','RH','RH','RH','RH','RH','RH','RH','RH','RH','OL','OK','_','_'],
+    ['OK','OL','RH','RH','OK','RH','RH','RH','RH','RH','OK','RH','RH','OL','OK','_'],
+    ['OK','RH','RH','OK','_','_','OK','RH','RH','OK','_','OK','RH','RH','OK','_'],
+    ['OK','RH','OK','_','_','_','_','OK','OK','_','_','_','_','OK','RH','OK'],
+    ['OK','RH','OK','_','_','_','_','_','_','_','_','_','_','OK','RH','OK'],
     ['OK','OL','OK','_','_','_','_','_','_','_','_','_','_','OK','OL','OK'],
-    ['OK','OH','OK','_','_','_','_','_','_','_','_','_','_','OK','OH','OK'],
-    ['OK','OH','OK','_','_','_','_','_','_','_','_','_','_','OK','OH','OK'],
-    ['OK','OH','OH','OK','_','_','_','_','_','_','_','OK','OH','OH','OK','_'],
-    ['OK','OH','OH','OH','OK','OH','OH','OH','OH','OH','OK','OH','OH','OK','_','_'],
-    ['OK','OH','OL','OH','OH','OH','OH','OH','OH','OH','OH','OH','OL','OK','_','_'],
-    ['OK','OK','OH','OH','OL','OH','OH','OH','OH','OL','OH','OH','OK','OK','_','_'],
+    ['OK','RH','OK','_','_','_','_','_','_','_','_','_','_','OK','RH','OK'],
+    ['OK','RH','OK','_','_','_','_','_','_','_','_','_','_','OK','RH','OK'],
+    ['OK','RH','RH','OK','_','_','_','_','_','_','_','OK','RH','RH','OK','_'],
+    ['OK','RH','RH','RH','OK','RH','RH','RH','RH','RH','OK','RH','RH','OK','_','_'],
+    ['OK','RH','OL','RH','RH','RH','RH','RH','RH','RH','RH','RH','OL','OK','_','_'],
+    ['OK','OK','RH','RH','OL','RH','RH','RH','RH','OL','RH','RH','OK','OK','_','_'],
     ['_','OK','OK','OK','OK','OK','OK','OK','OK','OK','OK','OK','OK','_','_','_'],
     ['_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_'],
     ['_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_'],
