@@ -34,7 +34,7 @@ export const ARC2_DIALOGUE = {
     },
     narrator: {
       speaker: '',
-      text: 'And the heavens opened, and the Spirit descended like a dove. A voice said: This is my beloved Son.',
+      text: 'And the heavens opened, and the Spirit descended like a dove. A voice said: This is my beloved Son, with whom I am well pleased.',
       next: null,
     },
   },
@@ -67,6 +67,11 @@ export const ARC2_DIALOGUE = {
     start: {
       speaker: 'Satan',
       text: 'If you are the Son of God, command these stones to become bread!',
+      next: 'jesus_rebuttal',
+    },
+    jesus_rebuttal: {
+      speaker: 'Jesus',
+      text: 'It is written: Man shall not live by bread alone, but by every word that comes from the mouth of God.',
       next: null,
     },
   },
@@ -74,6 +79,16 @@ export const ARC2_DIALOGUE = {
     start: {
       speaker: 'Satan',
       text: 'If you are the Son of God, throw yourself down from the pinnacle of the temple!',
+      next: 'satan_quote',
+    },
+    satan_quote: {
+      speaker: 'Satan',
+      text: 'For it is written: He will command his angels concerning you, and they will lift you up in their hands.',
+      next: 'jesus_rebuttal',
+    },
+    jesus_rebuttal: {
+      speaker: 'Jesus',
+      text: 'Again it is written: You shall not put the Lord your God to the test.',
       next: null,
     },
   },
@@ -81,6 +96,11 @@ export const ARC2_DIALOGUE = {
     start: {
       speaker: 'Satan',
       text: 'All these kingdoms I will give you, if you fall down and worship me!',
+      next: 'jesus_rebuttal',
+    },
+    jesus_rebuttal: {
+      speaker: 'Jesus',
+      text: 'Be gone, Satan! For it is written: You shall worship the Lord your God, and him only shall you serve.',
       next: null,
     },
   },

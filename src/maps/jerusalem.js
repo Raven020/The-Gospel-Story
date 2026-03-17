@@ -212,6 +212,15 @@ export const MAP = {
       movement: 'static',
     },
     {
+      id: 'joseph_worried',
+      sprite: 'townspeople_elder_a',
+      x: 13,
+      y: 10,
+      facing: 'left',
+      dialogue: 'joseph_worried',
+      movement: 'static',
+    },
+    {
       id: 'townsperson_4',
       sprite: 'townspeople_elder_a',
       x: 5,

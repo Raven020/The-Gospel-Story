@@ -203,7 +203,7 @@ export const ABILITIES = {
     target: TargetType.SELF,
     spCost: 10,
     power: 0,
-    description: 'Increase item drops after battle.',
+    description: 'Gain 1.5x EXP after battle.',
     effectType: 'gold_bonus',
   },
   provision: {

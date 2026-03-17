@@ -276,4 +276,20 @@ export const ARC1_DIALOGUE = {
       next: null,
     },
   },
+
+  // Joseph searching dialogue — complements mary_worried
+  joseph_worried: {
+    start: {
+      condition: { flag: 'found_jesus_in_temple', op: 'eq', value: true },
+      conditionFail: 'default',
+      speaker: 'Joseph',
+      text: 'He is safe. The teachers say he amazed them with his understanding.',
+      next: null,
+    },
+    default: {
+      speaker: 'Joseph',
+      text: 'We have been searching for three days! I will ask the merchants near the market.',
+      next: null,
+    },
+  },
 };

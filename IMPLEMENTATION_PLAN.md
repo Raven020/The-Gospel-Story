@@ -27,7 +27,6 @@ All P1 gaps resolved.
 
 - **CONTENT-01: Scripture-selection combat not implemented (MVP System #6)**
   - Satan temptation battles use standard `startBattle` — no Scripture choice mechanic
-  - Three Satan dialogue trees in `arc2.js` are single-node stubs
   - Scripture challenges exist in `scriptures.js` but not wired to a choice UI
   - Listed as MVP system in `mvp-scope.md`
 
@@ -38,19 +37,6 @@ All P1 gaps resolved.
 - **CONTENT-03: Arc 3 missing opening ministry proclamation**
   - Player warps to Galilee and immediately encounters fishermen
   - No "Repent, for the kingdom of heaven is near" preaching scene
-
-- **CONTENT-04: Jesus's Scripture rebuttals absent from temptation dialogues**
-  - No Jesus-speaker nodes with "Man shall not live by bread alone" etc.
-  - Satan stubs have one line each with no response
-
-- **CONTENT-05: Baptism narration truncated**
-  - "This is my beloved Son" — missing "with him I am well pleased" (Matthew 3:17)
-
-- **CONTENT-06: Joseph NPC absent from Jerusalem**
-  - Arc 1 premise has Mary AND Joseph searching; only `mary_worried` NPC present
-
-- **CONTENT-07: `gold_find` ability description misleading**
-  - Description says "Increase item drops" but actually gives 1.5x EXP; no item drop system exists
 
 ### P3 — Test & Code Quality
 
@@ -108,6 +94,12 @@ All P1 gaps resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Content Fixes (P7 Audit)
+- **CONTENT-04** — Jesus's Scripture rebuttals added to all three temptation dialogues (Matt 4:4, 4:7, 4:10). Satan temptation 2 also gets his misquoted Scripture (Psalm 91:11-12).
+- **CONTENT-05** — Baptism narration completed: "with whom I am well pleased" appended (Matt 3:17).
+- **CONTENT-06** — Joseph NPC added to Jerusalem map at (13,10) facing Mary. Dialogue includes pre/post-discovery variants.
+- **CONTENT-07** — Gold Find ability description corrected from "Increase item drops" to "Gain 1.5x EXP after battle."
 
 ### Code Quality Fixes (P7 Audit)
 - **CODE-01** — Removed dead `CHARS_PER_FRAME` constant from DialogueBox.js.
