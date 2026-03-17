@@ -111,4 +111,72 @@ describe('DialogueBox', () => {
     const ctx = { fillStyle: '', fillRect: vi.fn(), globalAlpha: 1 };
     expect(() => box.render(ctx, 0)).not.toThrow();
   });
+
+  it('renders text body and choices together (UI-01)', () => {
+    const box = new DialogueBox();
+    box.open('Teacher', 'What is the greatest commandment?');
+    box.onConfirm(); // skip to full reveal
+    box.showChoices([
+      { text: 'Love the Lord', next: 'correct' },
+      { text: 'Honor the Sabbath', next: 'wrong' },
+    ]);
+
+    const ctx = { fillStyle: '', fillRect: vi.fn(), globalAlpha: 1 };
+    // Should render without errors — both question header and choices
+    expect(() => box.render(ctx, 0)).not.toThrow();
+    // Choices should be present alongside text pages
+    expect(box.choices).toHaveLength(2);
+    expect(box.pages.length).toBeGreaterThan(0);
+  });
+
+  it('caps visible choices at 4 with scroll (UI-02)', () => {
+    const box = new DialogueBox();
+    box.open('', 'Pick one:');
+    box.onConfirm();
+    box.showChoices([
+      { text: 'A', next: 'a' },
+      { text: 'B', next: 'b' },
+      { text: 'C', next: 'c' },
+      { text: 'D', next: 'd' },
+      { text: 'E', next: 'e' },
+    ]);
+
+    expect(box._choiceScrollOffset).toBe(0);
+
+    // Navigate down to choice E (index 4)
+    box.onDirection('down'); // index 1
+    box.onDirection('down'); // index 2
+    box.onDirection('down'); // index 3
+    box.onDirection('down'); // index 4 — should trigger scroll
+    expect(box.choiceIndex).toBe(4);
+    expect(box._choiceScrollOffset).toBe(1); // scrolled to show items 1-4
+
+    // Navigate back up to choice A (index 0)
+    box.onDirection('up'); // index 3
+    box.onDirection('up'); // index 2
+    box.onDirection('up'); // index 1
+    box.onDirection('up'); // index 0 — should scroll back
+    expect(box.choiceIndex).toBe(0);
+    expect(box._choiceScrollOffset).toBe(0);
+  });
+
+  it('renders choices with scroll offset without errors', () => {
+    const box = new DialogueBox();
+    box.open('', 'Pick:');
+    box.onConfirm();
+    box.showChoices([
+      { text: 'A', next: 'a' },
+      { text: 'B', next: 'b' },
+      { text: 'C', next: 'c' },
+      { text: 'D', next: 'd' },
+      { text: 'E', next: 'e' },
+    ]);
+    box.onDirection('down');
+    box.onDirection('down');
+    box.onDirection('down');
+    box.onDirection('down'); // scroll to show B-E
+
+    const ctx = { fillStyle: '', fillRect: vi.fn(), globalAlpha: 1 };
+    expect(() => box.render(ctx, 0)).not.toThrow();
+  });
 });

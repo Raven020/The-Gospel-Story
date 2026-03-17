@@ -542,6 +542,8 @@ describe('OverworldScene', () => {
     expect(jesus.stats.fai).toBe(20);
     expect(jesus.stats.sp).toBe(25);
     expect(jesus.currentSp).toBe(20);
+    // CONTENT-08: baptism_complete should also set pending cutscene
+    expect(scn._pendingArcCutscene).toBe('baptism_cutscene');
   });
 
   it('pending arc cutscene fires after dialogue closes', () => {

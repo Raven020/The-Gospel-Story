@@ -221,6 +221,15 @@ export const MAP = {
       movement: 'static',
     },
     {
+      id: 'road_teacher',
+      sprite: 'townspeople_elder_a',
+      x: 13,
+      y: 3,
+      facing: 'down',
+      dialogue: 'road_teacher',
+      movement: 'static',
+    },
+    {
       id: 'townsperson_4',
       sprite: 'townspeople_elder_a',
       x: 5,

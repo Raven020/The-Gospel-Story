@@ -210,8 +210,22 @@ for (const [key, data] of Object.entries(ARC3_DIALOGUE)) {
 // Register arc-transition cutscenes
 overworld.registerCutscene('arc1_transition', [
   { type: 'fadeOut' },
-  { type: 'dialogue', data: 'arc1_transition' },
+  { type: 'dialogue', data: 'arc1_transition_p1' },
+  { type: 'flash' },
+  { type: 'wait', frames: 20 },
+  { type: 'dialogue', data: 'arc1_transition_p2' },
+  { type: 'flash' },
+  { type: 'wait', frames: 10 },
   { type: 'warp', targetMap: 'jordan_river', targetX: 14, targetY: 18 },
+]);
+
+// Baptism visual cutscene — heavens open with flash effects (CONTENT-08)
+overworld.registerCutscene('baptism_cutscene', [
+  { type: 'wait', frames: 10 },
+  { type: 'flash' },
+  { type: 'wait', frames: 30 },
+  { type: 'flash' },
+  { type: 'wait', frames: 15 },
 ]);
 
 scenes.register('overworld', overworld);

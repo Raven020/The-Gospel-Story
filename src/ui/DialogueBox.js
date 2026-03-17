@@ -23,6 +23,7 @@ const MAX_CHARS_PER_LINE = 38;
 const LINES_PER_PAGE = 2;
 const ARROW_X = 231;
 const ARROW_Y = 149;
+const MAX_VISIBLE_CHOICES = 4;
 
 export class DialogueBox {
   constructor() {
@@ -60,11 +61,12 @@ export class DialogueBox {
   }
 
   /**
-   * Show choice options (replaces further pages).
+   * Show choice options (displayed below question text).
    */
   showChoices(choices) {
     this.choices = choices;
     this.choiceIndex = 0;
+    this._choiceScrollOffset = 0;
     this.fullyRevealed = true;
   }
 
@@ -128,6 +130,7 @@ export class DialogueBox {
 
   /**
    * Handle directional input for choice navigation.
+   * Caps visible choices at MAX_VISIBLE_CHOICES with scroll offset.
    */
   onDirection(dir) {
     if (!this.choices) return;
@@ -136,6 +139,14 @@ export class DialogueBox {
       this.choiceIndex = (this.choiceIndex - 1 + this.choices.length) % this.choices.length;
     } else if (dir === 'down') {
       this.choiceIndex = (this.choiceIndex + 1) % this.choices.length;
+    }
+    // Keep scroll offset so the selected choice is always visible
+    if (this.choices.length > MAX_VISIBLE_CHOICES) {
+      if (this.choiceIndex < this._choiceScrollOffset) {
+        this._choiceScrollOffset = this.choiceIndex;
+      } else if (this.choiceIndex >= this._choiceScrollOffset + MAX_VISIBLE_CHOICES) {
+        this._choiceScrollOffset = this.choiceIndex - MAX_VISIBLE_CHOICES + 1;
+      }
     }
   }
 
@@ -165,8 +176,9 @@ export class DialogueBox {
       ctx.fillRect(NAME_X, NAME_Y + CELL_H, nameW, 1);
     }
 
-    // Text body
+    // Text body — always rendered; choices rendered below when active
     if (this.choices) {
+      this._renderQuestionHeader(ctx);
       this._renderChoices(ctx, frameCount);
     } else {
       this._renderTextBody(ctx, frameCount);
@@ -195,12 +207,33 @@ export class DialogueBox {
     }
   }
 
-  _renderChoices(ctx, frameCount) {
-    for (let i = 0; i < this.choices.length; i++) {
-      const choice = this.choices[i];
-      const y = BODY_Y + i * LINE_HEIGHT;
+  /**
+   * Render the last page of question text as a header above choices.
+   * Shows speaker name context when choices are active (UI-01).
+   */
+  _renderQuestionHeader(ctx) {
+    const page = this.pages[this.pages.length - 1];
+    if (!page) return;
+    // Render first line of the last page as question header
+    const line = page.lines[0];
+    if (line) {
+      drawText(ctx, line, NAME_X, BODY_Y, Colors.TEXT_LIGHT);
+    }
+  }
 
-      if (i === this.choiceIndex) {
+  _renderChoices(ctx, frameCount) {
+    // Choices render one line below the question header (UI-01)
+    const choiceStartY = BODY_Y + LINE_HEIGHT;
+    const visibleCount = Math.min(this.choices.length, MAX_VISIBLE_CHOICES);
+    const offset = this._choiceScrollOffset || 0;
+
+    for (let i = 0; i < visibleCount; i++) {
+      const choiceIdx = offset + i;
+      if (choiceIdx >= this.choices.length) break;
+      const choice = this.choices[choiceIdx];
+      const y = choiceStartY + i * LINE_HEIGHT;
+
+      if (choiceIdx === this.choiceIndex) {
         // Highlight bar
         ctx.fillStyle = Colors.CURSOR_BG;
         ctx.fillRect(NAME_X, y - 1, BOX_W - NAME_X * 2, LINE_HEIGHT);

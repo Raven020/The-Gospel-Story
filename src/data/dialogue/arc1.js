@@ -246,7 +246,24 @@ export const ARC1_DIALOGUE = {
     },
   },
 
-  // Arc 1→2 transition cutscene narration (plays after arc1_complete on black screen)
+  // Arc 1→2 transition cutscene narration — split into two parts for visual flash effects between beats (CONTENT-09)
+  arc1_transition_p1: {
+    start: {
+      speaker: '',
+      text: 'The years passed in Nazareth. Jesus grew in wisdom and stature, and in favor with God and man.',
+      effects: [{ type: 'setFlag', flag: 'arc2_started', value: true }],
+      next: null,
+    },
+  },
+  arc1_transition_p2: {
+    start: {
+      speaker: '',
+      text: 'Now, in the fifteenth year of Tiberius Caesar, the word of God came to John in the wilderness...',
+      next: null,
+    },
+  },
+
+  // Legacy key kept for backward compatibility with any references
   arc1_transition: {
     start: {
       speaker: '',
@@ -257,6 +274,31 @@ export const ARC1_DIALOGUE = {
     calling: {
       speaker: '',
       text: 'Now, in the fifteenth year of Tiberius Caesar, the word of God came to John in the wilderness...',
+      next: null,
+    },
+  },
+
+  // Teacher breadcrumb NPC on the road to Temple (CONTENT-10)
+  road_teacher: {
+    start: {
+      condition: { flag: 'found_jesus_in_temple', op: 'eq', value: true },
+      conditionFail: 'default',
+      speaker: 'Teacher',
+      text: 'I came from the Temple — the boy has gone home with his family. I have never witnessed such understanding in one so young.',
+      next: null,
+    },
+    default: {
+      speaker: 'Teacher',
+      text: 'I am just returning from the Temple courts. There is a boy inside — no more than twelve — who has been conversing with the teachers for days. His knowledge of Scripture is wondrous.',
+      effects: [{ type: 'setFlag', flag: 'heard_about_temple_boy', value: true }],
+      choices: [
+        { text: 'A boy? Where exactly?', next: 'directions' },
+        { text: 'Thank you for telling us.', next: null },
+      ],
+    },
+    directions: {
+      speaker: 'Teacher',
+      text: 'In the inner court, just through the north gate. You cannot miss him — he is the one the elders cannot stop questioning.',
       next: null,
     },
   },

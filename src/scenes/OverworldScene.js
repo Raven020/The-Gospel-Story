@@ -554,6 +554,8 @@ export class OverworldScene {
               jesus.stats.sp += 5;
               jesus.currentSp = Math.min(jesus.currentSp + 5, jesus.stats.sp);
             }
+            // Trigger baptism visual cutscene after dialogue closes
+            this._pendingArcCutscene = 'baptism_cutscene';
           }
         }
         break;

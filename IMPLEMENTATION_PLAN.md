@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 663 tests passing across 43 test suites (vitest)
+- **Tests:** 666 tests passing across 43 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -25,19 +25,11 @@ All P1 functional gaps resolved. See "Resolved Items" section below.
 
 ### P2 — Content & Narrative Gaps
 
-- **CONTENT-08:** No baptism visual event. The Jordan River map has no cutscene event for the baptism moment — only a dialogue text node mentions the dove/heavens. Spec requires "baptism visual transformation/power-up" with visual effects. **Fix:** Add a cutscene command sequence (flash white, camera effects) triggered by the `baptism_complete` effect.
-
-- **CONTENT-09:** No Nazareth "growing up" visual cutscene. `arc1_transition` plays text narration on a black screen then warps to Jordan River. Spec says "Cutscene of Jesus growing up in Nazareth." **Fix:** At minimum add visual commands (fade effects, maybe a brief scene) to the transition. A dedicated Nazareth map is optional for MVP.
-
-- **CONTENT-10:** No "teacher on the road" breadcrumb NPC in Jerusalem before Temple entry. `mvp-scope.md` says "A teacher encountered along the way mentions a boy with wondrous knowledge." `townsperson_3` partially fills this but is generic. **Fix:** Add or restyle a scholar/teacher NPC on the street with explicit breadcrumb dialogue.
+All P2 content gaps resolved except CONTENT-11. See "Resolved Items" section below.
 
 - **CONTENT-11:** Matthew is fully implemented (recruitment dialogue, NPC placement, mountain cutscene) despite being listed as out-of-scope in `mvp-scope.md`. Not a bug — likely intentional scope expansion. **Note:** Update `mvp-scope.md` to include Matthew in the MVP roster, or remove him.
 
 ### P3 — UI & Visual Gaps
-
-- **UI-01:** DialogueBox renders choices OR text body, never both. When `this.choices` is set, `render()` skips `_renderTextBody()`. Even after BUG-P0-02 is fixed (deferring choice display), the box should ideally show question text above choices. **Fix:** When choices are active, render the last page of text above the choice list, or at minimum show speaker name + question as a header.
-
-- **UI-02:** Choice display has no scroll limit. Spec says "up to 4 visible with scroll." Implementation renders all choices without capping at 4 or providing a scroll offset. **Fix:** Add `_choiceScrollOffset` and cap visible choices at 4.
 
 - **UI-03:** Advance arrow is 5×3 px (5-wide, 3-tall downward triangle). Spec says 3×5 custom glyph. **Fix:** Adjust `drawAdvanceArrow` in UIChrome.js.
 
@@ -110,6 +102,13 @@ All P1 functional gaps resolved. See "Resolved Items" section below.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Content & UI Fixes (2026-03-17)
+- **CONTENT-08** — Baptism visual cutscene added. `baptism_complete` flag now triggers `_pendingArcCutscene = 'baptism_cutscene'` which fires double white flash effects after the John the Baptist dialogue closes. Registered in main.js.
+- **CONTENT-09** — Arc 1→2 transition cutscene enhanced with visual flash effects. Dialogue split into `arc1_transition_p1` and `arc1_transition_p2` keys with `flash` and `wait` commands between narration beats, simulating time passage.
+- **CONTENT-10** — Teacher breadcrumb NPC (`road_teacher`) added to Jerusalem map at (13, 3) on the north temple approach path. Teacher dialogue includes firsthand account of the boy's scriptural knowledge, sets `heard_about_temple_boy` flag, offers choice to ask for directions. Pre/post-discovery conditional branch.
+- **UI-01** — DialogueBox now shows question text above choices. New `_renderQuestionHeader()` displays the last page's first line as a header; choices render one `LINE_HEIGHT` below. Both text and choices visible simultaneously.
+- **UI-02** — Choice scroll limit added. `MAX_VISIBLE_CHOICES = 4` caps rendered choices. `_choiceScrollOffset` tracks scroll position; `onDirection()` adjusts offset to keep selected choice visible. 3 tests added.
 
 ### P1 Functional Gap Fixes (2026-03-17)
 - **FUNC-01** — Ability damage now uses STR for MIRACLE-category abilities and WIS for PRAYER/TRUTH categories. Both player (`_executeAbility`) and enemy (`_executeEnemyAbility`) paths in BattleEngine.js updated. Test updated.
