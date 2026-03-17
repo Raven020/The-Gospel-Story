@@ -680,8 +680,7 @@ describe('OverworldScene', () => {
     scn.loadMap(map, createTestTileset(), 5, 5);
 
     // Mock Math.random to guarantee encounter triggers
-    const origRandom = Math.random;
-    Math.random = () => 0;
+    vi.spyOn(Math, 'random').mockReturnValue(0);
 
     // Start movement downward (5,5 → 5,6 which is in the encounter zone)
     mockInput.getDirectionalHeld.mockReturnValue(Actions.DOWN);
@@ -697,7 +696,7 @@ describe('OverworldScene', () => {
     // Player should have arrived at (5,6) and triggered an encounter
     expect(scn._inBattle).toBe(true);
 
-    Math.random = origRandom;
+    vi.restoreAllMocks();
   });
 
   // --- T5: registerMap / getMapEntry ---

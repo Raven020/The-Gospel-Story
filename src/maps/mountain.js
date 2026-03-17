@@ -99,11 +99,29 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Detail layer: empty
+// Detail layer: flowers and rocks
 const detail = fill(W * H, 0);
+// Flowers on lower grass slopes
+detail[21 * W + 2] = 100;
+detail[21 * W + 17] = 100;
+detail[15 * W + 3] = 100;
+detail[15 * W + 16] = 100;
+// Rocks along stone path
+detail[12 * W + 8] = 102;
+detail[17 * W + 13] = 102;
+detail[22 * W + 11] = 102;
+detail[8 * W + 12] = 102;
 
-// Above layer: empty
+// Above layer: tree canopies on grass slopes, tall grass
 const above = fill(W * H, 0);
+// Tree canopies on lower grassy areas
+above[21 * W + 4] = 200;
+above[21 * W + 16] = 200;
+above[14 * W + 2] = 200;
+above[14 * W + 17] = 200;
+// Tall grass tops on grass patches
+above[16 * W + 4] = 201;
+above[16 * W + 17] = 201;
 
 // Collision layer
 const collision = [];
@@ -111,7 +129,9 @@ for (let y = 0; y < H; y++) {
   for (let x = 0; x < W; x++) {
     const idx = y * W + x;
     const tile = ground[idx];
-    if (tile === 5) {
+    if (above[idx] === 200) {
+      collision.push(1); // tree canopy footprint blocked
+    } else if (tile === 5) {
       collision.push(1); // rock walls blocked
     } else if (y === 0 || x === 0 || x === W - 1) {
       collision.push(1); // edges blocked

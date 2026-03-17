@@ -92,11 +92,31 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Detail layer: empty
+// Detail layer: scattered rocks and sand ripples
 const detail = fill(W * H, 0);
+// Scattered rocks on sandy areas
+detail[4 * W + 12] = 100;
+detail[6 * W + 18] = 100;
+detail[11 * W + 3] = 100;
+detail[14 * W + 20] = 100;
+detail[17 * W + 6] = 100;
+detail[9 * W + 22] = 100;
+// Sand ripples on open sand
+detail[2 * W + 15] = 101;
+detail[5 * W + 10] = 101;
+detail[8 * W + 2] = 101;
+detail[13 * W + 18] = 101;
+detail[16 * W + 22] = 101;
+detail[18 * W + 4] = 101;
 
-// Above layer: empty
+// Above layer: rock overhangs near cliff walls
 const above = fill(W * H, 0);
+// Rock overhangs jutting from cliff edges
+above[1 * W + 3] = 200;
+above[1 * W + 15] = 200;
+above[1 * W + 21] = 200;
+above[12 * W + 23] = 200;
+above[18 * W + 2] = 200;
 
 // Collision layer
 const collision = [];

@@ -91,11 +91,34 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Detail layer: empty
+// Detail layer: flowers, path marks, rocks
 const detail = fill(W * H, 0);
+// Flowers in open dirt/grass areas
+detail[2 * W + 3] = 100;
+detail[2 * W + 20] = 100;
+detail[16 * W + 4] = 100;
+detail[16 * W + 20] = 100;
+// Path marks on worn stone paths
+detail[10 * W + 6] = 101;
+detail[10 * W + 18] = 101;
+detail[8 * W + 10] = 101;
+detail[8 * W + 15] = 101;
+// Rocks scattered on dirt areas
+detail[7 * W + 2] = 102;
+detail[7 * W + 22] = 102;
+detail[17 * W + 3] = 102;
+detail[17 * W + 21] = 102;
 
-// Above layer: empty
+// Above layer: tree canopies and tall grass
 const above = fill(W * H, 0);
+// Tree canopies in open areas
+above[6 * W + 3] = 200;
+above[6 * W + 21] = 200;
+above[16 * W + 9] = 200;
+above[16 * W + 15] = 200;
+// Tall grass tops near residential areas
+above[14 * W + 2] = 201;
+above[14 * W + 22] = 201;
 
 // Collision layer
 const collision = [];
@@ -103,7 +126,9 @@ for (let y = 0; y < H; y++) {
   for (let x = 0; x < W; x++) {
     const idx = y * W + x;
     const tile = ground[idx];
-    if (tile === 5) {
+    if (above[idx] === 200) {
+      collision.push(1); // tree canopy footprint blocked
+    } else if (tile === 5) {
       collision.push(1); // walls, buildings, stalls blocked
     } else if (y === 0 || y === H - 1 || x === 0 || x === W - 1) {
       // Edge tiles: only gate openings passable

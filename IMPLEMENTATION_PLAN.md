@@ -21,11 +21,7 @@ All P0 bugs resolved.
 
 ### P1 — Major Functional Gaps
 
-- **GAP-03: Temple, Capernaum, Wilderness, Mountain have empty detail/above layers**
-  - `interior.js` defines floor patterns (100), rug borders (101), pillar tops (200), arches (201) — ALL unused in `temple.js`
-  - `desert.js` defines scattered rocks (100), sand ripples (101), rock overhangs (200) — ALL unused in `wilderness.js`
-  - `overworld.js` has detail/above tiles unused in `capernaum.js` and `mountain.js`
-  - Fix: populate detail/above layers in these 4 maps
+All P1 gaps resolved.
 
 ### P2 — Content & Narrative Gaps
 
@@ -57,11 +53,6 @@ All P0 bugs resolved.
   - Description says "Increase item drops" but actually gives 1.5x EXP; no item drop system exists
 
 ### P3 — Test & Code Quality
-
-- **TEST-01: Unsafe `Math.random` override in OverworldScene test**
-  - Lines 683-700 use manual `Math.random = () => 0` assignment
-  - If test throws, `Math.random` is never restored, corrupting subsequent tests
-  - Fix: use `vi.spyOn(Math, 'random')` pattern
 
 - **TEST-02:** No test for `_handleRetry()` defeat-to-retry path
 - **TEST-03:** No test for `requires` guard on cutscene events
@@ -120,6 +111,10 @@ All P0 bugs resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### GAP-03 & TEST-01 Fixes (P7 Audit)
+- **GAP-03** — All 4 maps (temple, capernaum, wilderness, mountain) now have populated detail and above layers using their tileset-defined tiles. Tree canopy footprints collision-blocked.
+- **TEST-01** — Unsafe `Math.random` override replaced with `vi.spyOn(Math, 'random').mockReturnValue(0)` + `vi.restoreAllMocks()`.
 
 ### P1 Gap Fixes (P7 Audit)
 - **GAP-01** — Jordan River `warp_south` targetY changed from 1 to 18 (south gate).

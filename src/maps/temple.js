@@ -75,11 +75,36 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-// Detail layer: empty
+// Detail layer: floor patterns and rug borders
 const detail = fill(W * H, 0);
+// Floor pattern inlays on marble floor (inner court corners)
+detail[2 * W + 2] = 100;
+detail[2 * W + 17] = 100;
+detail[4 * W + 2] = 100;
+detail[4 * W + 17] = 100;
+// Floor patterns in main hall
+detail[8 * W + 3] = 100;
+detail[8 * W + 16] = 100;
+detail[11 * W + 3] = 100;
+detail[11 * W + 16] = 100;
+// Rug border detail along carpet edges
+detail[8 * W + 7] = 101;
+detail[8 * W + 12] = 101;
+detail[13 * W + 7] = 101;
+detail[13 * W + 12] = 101;
 
-// Above layer: empty
+// Above layer: pillar tops and arches
 const above = fill(W * H, 0);
+// Pillar capitals overhanging from row-3 pillars
+above[3 * W + 4] = 200;
+above[3 * W + 9] = 200;
+above[3 * W + 10] = 200;
+above[3 * W + 15] = 200;
+// Pillar capitals overhanging from row-7 pillars
+above[7 * W + 4] = 200;
+above[7 * W + 9] = 200;
+above[7 * W + 10] = 200;
+above[7 * W + 15] = 200;
 
 // Collision layer: walls, pillars, shelves, benches are blocked
 const collision = [];
