@@ -534,13 +534,12 @@ describe('BattleEngine', () => {
       engWithout.execute();
       const damageWithout = engWithout.lastResult.damage;
 
-      // The bonus path uses power * 1.5 vs normal power; verify 1.5x ratio on base power
-      // calcDamage(wis=30, power=70, def=wis||0=22) vs calcDamage(wis=30, power=105, def=22)
+      // thunder_zeal is MIRACLE category → uses str (20) not wis (30)
       const basePower = 70;
       const boostedPower = Math.floor(basePower * 1.5);
       const def = greed.stats.wis || 0;
-      const expectedWithout = calcDamage(30, basePower, def);
-      const expectedWith = calcDamage(30, boostedPower, def);
+      const expectedWithout = calcDamage(20, basePower, def);
+      const expectedWith = calcDamage(20, boostedPower, def);
       expect(damageWithout).toBe(expectedWithout);
       expect(damageWithBonus).toBe(expectedWith);
       expect(damageWithBonus).toBeGreaterThan(damageWithout);

@@ -338,7 +338,9 @@ export class BattleEngine {
         if (ability.bonusVsWeakness && t.weakness === ability.bonusVsWeakness) {
           power = Math.floor(power * 1.5);
         }
-        const damage = calcDamage(caster.stats.wis, power, t.stats.wis || 0);
+        const atkStat = ability.category === AbilityCategory.MIRACLE
+          ? caster.stats.str : caster.stats.wis;
+        const damage = calcDamage(atkStat, power, t.stats.wis || 0);
         t.currentHp = Math.max(0, t.currentHp - damage);
         totalDamage += damage;
       }
@@ -379,7 +381,9 @@ export class BattleEngine {
         defVal = Math.floor(defVal * 0.5);
       }
 
-      let damage = calcDamage(enemy.stats.wis, ability.power, defVal);
+      const eAtkStat = ability.category === AbilityCategory.MIRACLE
+        ? enemy.stats.str : enemy.stats.wis;
+      let damage = calcDamage(eAtkStat, ability.power, defVal);
       if (this.buffs.some((b) => b.target === target && b.type === 'shield')) {
         damage = Math.max(1, Math.floor(damage * 0.5));
       }

@@ -152,7 +152,7 @@ export class ItemMenu {
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Main panel
-    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
+    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_LIGHT);
 
     // Header
     const headerText = 'ITEMS';
@@ -189,7 +189,8 @@ export class ItemMenu {
 
       // Item name
       const name = item.def ? item.def.name : item.id;
-      drawText(ctx, name, TEXT_X, y + 2, Colors.TEXT_LIGHT);
+      const nameColor = (i === this.cursor && this._state === State.ITEMS) ? Colors.TEXT_LIGHT : Colors.TEXT_DARK;
+      drawText(ctx, name, TEXT_X, y + 2, nameColor);
 
       // Quantity
       const qtyStr = `x${item.quantity}`;
@@ -222,7 +223,7 @@ export class ItemMenu {
     const party = this.gameState.party.active;
     const tpH = 10 + party.length * 18;
 
-    drawPanel(ctx, tpX, tpY, tpW, tpH, Colors.BG_DARK);
+    drawPanel(ctx, tpX, tpY, tpW, tpH, Colors.BG_LIGHT);
     drawText(ctx, 'Use on:', tpX + 4, tpY + 2, Colors.TEXT_GOLD);
 
     for (let i = 0; i < party.length; i++) {
@@ -235,7 +236,8 @@ export class ItemMenu {
         drawCursor(ctx, tpX + 4, y + 4, frameCount, Colors.TEXT_LIGHT);
       }
 
-      drawText(ctx, m.name, tpX + 14, y + 2, Colors.TEXT_LIGHT);
+      const tColor = i === this._targetCursor ? Colors.TEXT_LIGHT : Colors.TEXT_DARK;
+      drawText(ctx, m.name, tpX + 14, y + 2, tColor);
       drawBar(ctx, tpX + 14, y + 10, m.currentHp, m.stats.hp, 40, 3, 'hp');
     }
   }

@@ -21,17 +21,7 @@ All P0 bugs resolved. See "Resolved Items" section below.
 
 ### P1 — Major Functional Gaps
 
-- **FUNC-01:** All ability damage uses `caster.stats.wis` (BattleEngine.js:341), including "physical" abilities like `zealous_strike` and `fishing_net`. STR is only used for basic ATTACK action. No physical/magical distinction exists. **Fix:** Use `caster.stats.str` for MIRACLE-category abilities and `caster.stats.wis` for PRAYER/TRUTH/SCRIPTURE categories, or add an explicit `stat` field to each ability.
-
-- **FUNC-02:** `fear` enemy weakness `'prayer'` is unreachable. The only ability with `bonusVsWeakness: 'prayer'` is `prayer_heal`, which targets allies (SINGLE_ALLY) and never enters the damage branch where weakness bonus is checked. **Fix:** Create an offensive prayer ability (e.g., `prayer_rebuke`) with `bonusVsWeakness: 'prayer'` and enemy targeting, OR change `fear.weakness` to a reachable weakness type.
-
-- **FUNC-03:** `autoAdvanceSingleChoice` is checked on `node.autoAdvanceSingleChoice` (DialogueSystem.js:180) but the spec says it is a tree-level property. No dialogue tree sets this property, making it dead code. **Fix:** Check on the tree root object, not the node.
-
-- **FUNC-04:** Menu panels use `Colors.BG_DARK` (`#181018`) for fill. Spec §1 color table and §7 palette reference specify `Colors.BG_LIGHT` (`#D8C8A0`) for menu panels. The spec has an internal contradiction (§3 says "same fill as dialogue box" for PauseMenu), but the color table is authoritative. **Fix:** Change PauseMenu, PartyMenu, ItemMenu, SaveLoadMenu to use `Colors.BG_LIGHT` for panel fill and `Colors.TEXT_DARK` for text.
-
-- **FUNC-05:** Fishermen NPCs in Galilee (Peter, Andrew, James, John) have no `arc3_started` quest flag guard. Player can recruit disciples before the Galilee proclamation cutscene fires. **Fix:** Add `requires: ['arc3_started']` or `condition` on recruitment dialogue roots.
-
-- **FUNC-06:** Defensive input context re-assertion after New Game fade-in. `main.js:143` calls `transitions.fadeIn()` with no `onComplete` callback. If any future code in `TitleScene.exit()` touches context, the player would be permanently locked. **Fix:** Pass `onComplete` callback that re-asserts `input.context = InputContext.OVERWORLD`.
+All P1 functional gaps resolved. See "Resolved Items" section below.
 
 ### P2 — Content & Narrative Gaps
 
@@ -120,6 +110,14 @@ All P0 bugs resolved. See "Resolved Items" section below.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### P1 Functional Gap Fixes (2026-03-17)
+- **FUNC-01** — Ability damage now uses STR for MIRACLE-category abilities and WIS for PRAYER/TRUTH categories. Both player (`_executeAbility`) and enemy (`_executeEnemyAbility`) paths in BattleEngine.js updated. Test updated.
+- **FUNC-02** — Added offensive `prayer_rebuke` ability (power 50, SINGLE_ENEMY, bonusVsWeakness: 'prayer') to make fear enemy weakness reachable. Assigned to Andrew. Removed nonsensical `bonusVsWeakness` from `prayer_heal` (a healing ability that never enters the damage branch).
+- **FUNC-03** — `autoAdvanceSingleChoice` now reads from tree root (`this._nodes.autoAdvanceSingleChoice`) instead of individual node, matching the spec's "per-tree" design. Tests updated to place flag at tree root.
+- **FUNC-04** — Menu panels (PauseMenu, PartyMenu, ItemMenu, SaveLoadMenu) now use `Colors.BG_LIGHT` (#D8C8A0) for panel fill per spec §1 color table. Body text on menu panels uses `Colors.TEXT_DARK` for readability on light background; cursor-highlighted rows keep `Colors.TEXT_LIGHT`.
+- **FUNC-05** — Fishermen NPCs (Andrew, James, John) in Galilee now have `condition: { flag: 'arc3_started', op: 'eq', value: true }` on their start nodes, preventing recruitment before the Galilee proclamation cutscene. Peter's start node has a `recruited_peter` guard with post-recruit dialogue fallback. Each has a `conditionFail` fallback node.
+- **FUNC-06** — `transitions.fadeIn()` in main.js onNewGame and onContinue now passes `onComplete` callback that re-asserts `input.context = InputContext.OVERWORLD`. Added `InputContext` import.
 
 ### P0 Bug Fixes (2026-03-17)
 - **BUG-P0-01** — `OverworldScene.js:550` crashed on `this.gameState.party.find(...)` because `gameState.party` is `{ active, bench }`, not an array. Fixed to use `this.gameState.getMember('jesus')`. Test added.

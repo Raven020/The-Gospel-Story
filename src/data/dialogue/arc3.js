@@ -31,10 +31,17 @@ export const ARC3_DIALOGUE = {
     start: {
       speaker: 'Simon Peter',
       text: 'We have toiled all night and caught nothing... The nets are empty. There are no fish.',
+      condition: { flag: 'recruited_peter', op: 'neq', value: true },
+      conditionFail: 'post_recruit',
       choices: [
         { text: 'Put out into the deep water and let down your nets for a catch.', next: 'peter_doubt' },
         { text: 'How long have you been out?', next: 'fishing' },
       ],
+    },
+    post_recruit: {
+      speaker: 'Simon Peter',
+      text: 'I am ready to follow you, Lord. Where shall we go?',
+      next: null,
     },
     fishing: {
       speaker: 'Simon Peter',
@@ -87,10 +94,17 @@ export const ARC3_DIALOGUE = {
     start: {
       speaker: 'Andrew',
       text: 'My brother Simon speaks of you. Are you truly the one John spoke of?',
+      condition: { flag: 'arc3_started', op: 'eq', value: true },
+      conditionFail: 'not_yet',
       choices: [
         { text: 'Come and see.', next: 'andrew_response' },
         { text: 'Tell me about John.', next: 'about_john' },
       ],
+    },
+    not_yet: {
+      speaker: 'Andrew',
+      text: 'We are busy mending our nets. Come back later.',
+      next: null,
     },
     about_john: {
       speaker: 'Andrew',
@@ -112,10 +126,17 @@ export const ARC3_DIALOGUE = {
     start: {
       speaker: 'James',
       text: 'We are mending our nets. Our father Zebedee needs us here.',
+      condition: { flag: 'arc3_started', op: 'eq', value: true },
+      conditionFail: 'not_yet',
       choices: [
         { text: 'Come, follow me.', next: 'james_response' },
         { text: 'Your nets look worn.', next: 'nets' },
       ],
+    },
+    not_yet: {
+      speaker: 'James',
+      text: 'We are busy with our father\'s nets. Perhaps another time.',
+      next: null,
     },
     nets: {
       speaker: 'James',
@@ -137,10 +158,17 @@ export const ARC3_DIALOGUE = {
     start: {
       speaker: 'John',
       text: 'My brother James and I are sons of thunder! Where he goes, I follow.',
+      condition: { flag: 'arc3_started', op: 'eq', value: true },
+      conditionFail: 'not_yet',
       choices: [
         { text: 'Will you follow me as well?', next: 'john_response' },
         { text: 'Sons of thunder?', next: 'thunder' },
       ],
+    },
+    not_yet: {
+      speaker: 'John',
+      text: 'We are helping our father with the boats. Come back later.',
+      next: null,
     },
     thunder: {
       speaker: 'John',

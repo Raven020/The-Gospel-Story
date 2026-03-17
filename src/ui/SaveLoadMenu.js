@@ -135,7 +135,7 @@ export class SaveLoadMenu {
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Panel
-    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
+    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_LIGHT);
 
     // Header
     const headerText = this.mode === 'save' ? 'SAVE GAME' : 'LOAD GAME';
@@ -159,12 +159,13 @@ export class SaveLoadMenu {
       }
 
       // Slot number
-      drawText(ctx, `Slot ${i + 1}`, TEXT_X, y + 2, Colors.TEXT_LIGHT);
+      const slotColor = i === this.cursor ? Colors.TEXT_LIGHT : Colors.TEXT_DARK;
+      drawText(ctx, `Slot ${i + 1}`, TEXT_X, y + 2, slotColor);
 
       if (info) {
         // Leader name and level
         if (info.name) {
-          drawText(ctx, info.name, TEXT_X + 42, y + 2, Colors.TEXT_LIGHT);
+          drawText(ctx, info.name, TEXT_X + 42, y + 2, slotColor);
         }
         drawText(ctx, `Lv ${info.level}`, TEXT_X + 90, y + 2, Colors.TEXT_DIM);
         // Playtime
@@ -183,7 +184,7 @@ export class SaveLoadMenu {
       const promptH = 30;
       const promptX = PANEL_X + Math.floor((PANEL_W - promptW) / 2);
       const promptY = PANEL_Y + PANEL_H - 40;
-      drawPanel(ctx, promptX, promptY, promptW, promptH, Colors.BG_DARK);
+      drawPanel(ctx, promptX, promptY, promptW, promptH, Colors.BG_LIGHT);
       drawText(ctx, 'Overwrite? Z=Yes X=No', promptX + 8, promptY + 10, Colors.TEXT_GOLD);
     }
 
@@ -193,7 +194,7 @@ export class SaveLoadMenu {
       const msgH = 24;
       const msgX = PANEL_X + Math.floor((PANEL_W - msgW) / 2);
       const msgY = PANEL_Y + Math.floor((PANEL_H - msgH) / 2);
-      drawPanel(ctx, msgX, msgY, msgW, msgH, Colors.BG_DARK);
+      drawPanel(ctx, msgX, msgY, msgW, msgH, Colors.BG_LIGHT);
       const savedText = 'Saved!';
       const savedX = msgX + Math.floor((msgW - savedText.length * 6) / 2);
       drawText(ctx, savedText, savedX, msgY + 8, Colors.TEXT_GOLD);

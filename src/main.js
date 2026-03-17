@@ -7,7 +7,7 @@ import { Display } from './engine/Display.js';
 import { GameLoop } from './engine/GameLoop.js';
 import { SceneManager } from './engine/SceneManager.js';
 import { TransitionManager } from './engine/TransitionManager.js';
-import { InputSystem } from './systems/InputSystem.js';
+import { InputSystem, InputContext } from './systems/InputSystem.js';
 import { audioManager } from './audio/AudioManager.js';
 import { OverworldScene } from './scenes/OverworldScene.js';
 import { BattleScene } from './scenes/BattleScene.js';
@@ -140,7 +140,7 @@ const titleScene = new TitleScene({
     // Fade in from black so the scene doesn't pop in abruptly.
     // Also ensures transitions.active blocks input briefly while the
     // overworld initializes, preventing any one-frame input glitches.
-    transitions.fadeIn();
+    transitions.fadeIn(() => { input.context = InputContext.OVERWORLD; });
   },
   onContinue: () => {
     // Load the most recent save (first occupied slot)
@@ -152,7 +152,7 @@ const titleScene = new TitleScene({
           overworld.loadMap(mapEntry.map, mapEntry.tileset, gameState.playerX, gameState.playerY);
         }
         scenes.switch('overworld');
-        transitions.fadeIn();
+        transitions.fadeIn(() => { input.context = InputContext.OVERWORLD; });
         return;
       }
     }

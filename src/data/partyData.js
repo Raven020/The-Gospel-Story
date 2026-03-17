@@ -64,7 +64,7 @@ export const ROSTER = {
     sprite: 'andrew',
     baseStats: { hp: 140, sp: 80, str: 30, def: 20, wis: 35, fai: 45, spd: 32 },
     growth: { hp: 10, sp: 7, str: 2, def: 2, wis: 3, fai: 4, spd: 3 },
-    abilities: ['rally_cry', 'recruit_aid'],
+    abilities: ['rally_cry', 'recruit_aid', 'prayer_rebuke'],
   },
   james: {
     id: 'james',

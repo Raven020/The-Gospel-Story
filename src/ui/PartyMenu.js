@@ -216,7 +216,7 @@ export class PartyMenu {
     }
 
     // Main panel
-    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
+    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_LIGHT);
 
     // Header
     let headerText = 'PARTY';
@@ -258,7 +258,7 @@ export class PartyMenu {
       drawText(ctx, tag, TEXT_X + 18, y + 2, i < activeLen ? Colors.TEXT_GOLD : Colors.TEXT_DIM);
 
       // Name (dimmed for bench members)
-      const nameColor = i < activeLen ? Colors.TEXT_LIGHT : Colors.TEXT_DIM;
+      const nameColor = i < activeLen ? Colors.TEXT_DARK : Colors.TEXT_DIM;
       drawText(ctx, member.name, TEXT_X + 28, y + 2, nameColor);
 
       // Level
@@ -292,13 +292,13 @@ export class PartyMenu {
     const member = this._getMemberAt(this.cursor);
     if (!member) return;
 
-    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
+    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_LIGHT);
 
     // Member sprite in detail view
     this._renderMemberSprite(ctx, member, PANEL_X + 10, 8);
 
     // Name and role (shifted right for sprite)
-    drawText(ctx, member.name, PANEL_X + 28, 10, Colors.TEXT_LIGHT);
+    drawText(ctx, member.name, PANEL_X + 28, 10, Colors.TEXT_DARK);
     drawText(ctx, member.role, PANEL_X + 96, 10, Colors.TEXT_DIM);
     drawText(ctx, `Lv ${member.level}`, PANEL_X + 152, 10, Colors.TEXT_GOLD);
 
@@ -313,22 +313,22 @@ export class PartyMenu {
     let sy = 28;
 
     // HP / SP with bars
-    drawText(ctx, `HP ${member.currentHp}/${stats.hp}`, col1X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `HP ${member.currentHp}/${stats.hp}`, col1X, sy, Colors.TEXT_DARK);
     drawBar(ctx, col1X + 90, sy + 1, member.currentHp, stats.hp, 60, 5, 'hp');
     sy += 12;
 
-    drawText(ctx, `SP ${member.currentSp}/${stats.sp}`, col1X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `SP ${member.currentSp}/${stats.sp}`, col1X, sy, Colors.TEXT_DARK);
     drawBar(ctx, col1X + 90, sy + 1, member.currentSp, stats.sp, 60, 5, Colors.SP_BAR);
     sy += 14;
 
     // Core stats
-    drawText(ctx, `STR ${stats.str}`, col1X, sy, Colors.TEXT_LIGHT);
-    drawText(ctx, `DEF ${stats.def}`, col2X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `STR ${stats.str}`, col1X, sy, Colors.TEXT_DARK);
+    drawText(ctx, `DEF ${stats.def}`, col2X, sy, Colors.TEXT_DARK);
     sy += 12;
-    drawText(ctx, `WIS ${stats.wis}`, col1X, sy, Colors.TEXT_LIGHT);
-    drawText(ctx, `FAI ${stats.fai}`, col2X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `WIS ${stats.wis}`, col1X, sy, Colors.TEXT_DARK);
+    drawText(ctx, `FAI ${stats.fai}`, col2X, sy, Colors.TEXT_DARK);
     sy += 12;
-    drawText(ctx, `SPD ${stats.spd}`, col1X, sy, Colors.TEXT_LIGHT);
+    drawText(ctx, `SPD ${stats.spd}`, col1X, sy, Colors.TEXT_DARK);
     sy += 14;
 
     // EXP
@@ -346,7 +346,7 @@ export class PartyMenu {
     for (let i = 0; i < member.abilities.length; i++) {
       const abX = (i % 2 === 0) ? col1X : col2X;
       const abY = sy + Math.floor(i / 2) * 10;
-      drawText(ctx, member.abilities[i], abX, abY, Colors.TEXT_LIGHT);
+      drawText(ctx, member.abilities[i], abX, abY, Colors.TEXT_DARK);
     }
 
     // Footer hint

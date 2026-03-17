@@ -238,10 +238,10 @@ describe('DialogueSystem', () => {
   // --- T6: autoAdvanceSingleChoice path ---
   it('auto-advances past a single filtered choice without player input', () => {
     const dialogue = {
+      autoAdvanceSingleChoice: true,
       start: {
         speaker: 'NPC',
         text: 'Ready to go?',
-        autoAdvanceSingleChoice: true,
         choices: [
           // This choice is hidden by its condition
           { text: 'No way', next: 'refuse', condition: { flag: 'can_refuse', op: 'eq', value: true } },
@@ -274,10 +274,10 @@ describe('DialogueSystem', () => {
   it('auto-advances single choice and fires choice effects before navigating', () => {
     const onEffect = vi.fn();
     const dialogue = {
+      autoAdvanceSingleChoice: true,
       start: {
         speaker: 'NPC',
         text: 'Proceed?',
-        autoAdvanceSingleChoice: true,
         choices: [
           {
             text: 'Continue',
@@ -302,10 +302,10 @@ describe('DialogueSystem', () => {
 
   it('does NOT auto-advance when multiple choices remain after filtering', () => {
     const dialogue = {
+      autoAdvanceSingleChoice: true,
       start: {
         speaker: 'NPC',
         text: 'Choose wisely.',
-        autoAdvanceSingleChoice: true,
         choices: [
           { text: 'Option A', next: 'a' },
           { text: 'Option B', next: 'b' },

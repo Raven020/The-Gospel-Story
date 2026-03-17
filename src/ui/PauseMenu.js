@@ -129,7 +129,7 @@ export class PauseMenu {
     if (this._activeSubMenu) {
       ctx.fillStyle = Colors.BG_OVERLAY;
       ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-      drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
+      drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_LIGHT);
       this._activeSubMenu.render(ctx, frameCount);
       return;
     }
@@ -139,7 +139,7 @@ export class PauseMenu {
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Panel
-    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_DARK);
+    drawPanel(ctx, PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Colors.BG_LIGHT);
 
     // Header
     const headerText = 'PAUSE MENU';
@@ -161,7 +161,7 @@ export class PauseMenu {
         drawCursor(ctx, CURSOR_X, y + 1, frameCount, Colors.TEXT_LIGHT);
         drawText(ctx, OPTIONS[i], TEXT_X, y, Colors.TEXT_LIGHT);
       } else {
-        drawText(ctx, OPTIONS[i], TEXT_X, y, Colors.TEXT_LIGHT);
+        drawText(ctx, OPTIONS[i], TEXT_X, y, Colors.TEXT_DARK);
       }
     }
   }

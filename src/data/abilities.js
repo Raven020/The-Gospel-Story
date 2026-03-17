@@ -28,7 +28,6 @@ export const ABILITIES = {
     spCost: 15,
     power: 60,
     description: 'Restore HP to one ally.',
-    bonusVsWeakness: 'prayer',
   },
   love_heal: {
     id: 'love_heal',
@@ -59,6 +58,17 @@ export const ABILITIES = {
     description: 'Reduce damage to one ally for 3 turns.',
     effectType: 'shield',
     duration: 3,
+  },
+
+  prayer_rebuke: {
+    id: 'prayer_rebuke',
+    name: 'Rebuke',
+    category: AbilityCategory.PRAYER,
+    target: TargetType.SINGLE_ENEMY,
+    spCost: 14,
+    power: 50,
+    description: 'Rebuke an enemy with fervent prayer.',
+    bonusVsWeakness: 'prayer',
   },
 
   // Miracle abilities (offensive/utility)
