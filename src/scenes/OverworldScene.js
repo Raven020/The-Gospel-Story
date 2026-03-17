@@ -611,10 +611,6 @@ export class OverworldScene {
     }
   }
 
-  _handleMenuSelect(_option) {
-    // Fallback for unhandled menu options (e.g. "Options" has no sub-screen yet)
-  }
-
   _triggerEncounter(enemyId) {
     this._inBattle = true;
     audioManager.stopBGM();

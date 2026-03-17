@@ -180,8 +180,8 @@ export class EventSystem {
           speed: cmd.speed || 2,
         };
         this._cameraOverride = {
-          x: this.camera.x + 112, // current center approximation
-          y: this.camera.y + 72,
+          x: this.camera.x + 120, // SCREEN_WIDTH / 2
+          y: this.camera.y + 80,  // SCREEN_HEIGHT / 2
         };
         break;
 

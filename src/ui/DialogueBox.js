@@ -21,7 +21,6 @@ const BODY_Y = 130;
 const LINE_HEIGHT = 9;
 const MAX_CHARS_PER_LINE = 38;
 const LINES_PER_PAGE = 2;
-const CHARS_PER_FRAME = 2;
 const ARROW_X = 231;
 const ARROW_Y = 149;
 

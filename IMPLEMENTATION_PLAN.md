@@ -63,10 +63,7 @@ All P1 gaps resolved.
 - **T10:** `main.js` has zero test coverage
 - **T11:** `demo.js` excluded from map validation (intentional — placeholder NPC keys)
 
-- **CODE-01:** `CHARS_PER_FRAME` constant is dead code in `DialogueBox.js` line 24 (update() uses `gameSettings.textSpeed`)
-- **CODE-02:** `panCamera` initial position uses hardcoded 112 instead of `SCREEN_WIDTH/2` (120) in `EventSystem.js` line 183
-- **CODE-03:** `_handleMenuSelect()` is dead code in `OverworldScene.js` lines 614-616 (empty method, all options handled by sub-menus)
-- **CODE-04:** Dead exports never imported in production: `getSpriteSize`/`clearSpriteCache` (renderSprite.js), `drawChar`/`GLYPH_W`/`GLYPH_H` (drawText.js), `expForLevel`/`calcDamage`/`calcHeal` (exported but only used internally + tests)
+- **CODE-04:** Exports used only by tests: `getSpriteSize`/`clearSpriteCache` (renderSprite.js), `drawChar`/`GLYPH_W`/`GLYPH_H` (drawText.js), `expForLevel`/`calcDamage`/`calcHeal` — acceptable, kept for test coverage
 
 ### P4 — Post-MVP (Tracked for Reference)
 
@@ -111,6 +108,11 @@ All P1 gaps resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Code Quality Fixes (P7 Audit)
+- **CODE-01** — Removed dead `CHARS_PER_FRAME` constant from DialogueBox.js.
+- **CODE-02** — Fixed panCamera offset from hardcoded 112/72 to correct 120/80 (SCREEN_WIDTH/2, SCREEN_HEIGHT/2).
+- **CODE-03** — Removed dead `_handleMenuSelect()` empty stub from OverworldScene.js.
 
 ### GAP-03 & TEST-01 Fixes (P7 Audit)
 - **GAP-03** — All 4 maps (temple, capernaum, wilderness, mountain) now have populated detail and above layers using their tileset-defined tiles. Tree canopy footprints collision-blocked.
