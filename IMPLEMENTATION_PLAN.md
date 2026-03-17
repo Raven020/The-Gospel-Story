@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 638 tests passing across 42 test suites (vitest)
+- **Tests:** 653 tests passing across 43 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -29,9 +29,8 @@ All P2 content gaps resolved.
 
 ### P3 — Test & Code Quality
 
-- **TEST-05:** No test for follower creation/breadcrumb/rendering (note: Follower.test.js has 7 tests — this gap may be about OverworldScene-level follower integration)
-- **TEST-07:** No test for cross-map warp integration (tile event → loadMap)
-- **T10:** `main.js` has zero test coverage
+All P3 test gaps resolved.
+
 - **T11:** `demo.js` excluded from map validation (intentional — placeholder NPC keys)
 
 - **CODE-04:** Exports used only by tests: `getSpriteSize`/`clearSpriteCache` (renderSprite.js), `drawChar`/`GLYPH_W`/`GLYPH_H` (drawText.js), `expForLevel`/`calcDamage`/`calcHeal` — acceptable, kept for test coverage
@@ -79,6 +78,11 @@ All P2 content gaps resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Test Coverage Gaps (P7 Audit — Batch 3)
+- **TEST-05** — Follower integration tests added at OverworldScene level: creates Mary in arc 1, positions 1 tile behind player, nulls in arc 2+, feeds breadcrumbs on movement, updates each frame, nulls on arc1_complete dialogue effect. 6 tests.
+- **TEST-07** — Cross-map warp integration test: player steps on warp tile, transition completes, verifies target map loaded, player at correct coordinates, location name updated. End-to-end tile-event-triggered path.
+- **T10** — main.js test coverage added: validates exports, scene registration (title/battle/overworld), all 8 maps registered with correct tilesets, all 14 sprite registry entries with palette/front/back/left, gameState initialization, requestAnimationFrame called. 8 tests.
 
 ### Additional Test Fixes (P7 Audit)
 - **TEST-06** — Added test for arc-blocked warp feedback dialogue: verifies `canAccessMap` check, dialogue opens with feedback text, no warp initiated.

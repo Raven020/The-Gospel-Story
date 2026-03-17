@@ -980,6 +980,212 @@ describe('OverworldScene', () => {
     expect(onComplete).toHaveBeenCalled();
   });
 
+  // --- TEST-07: cross-map warp integration (tile event → loadMap) ---
+  it('cross-map warp loads target map after transition completes', () => {
+    const gameState = {
+      questFlags: { current_arc: 3 },
+      currentMap: 'test',
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+      canAccessMap: vi.fn(() => true),
+    };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+    });
+
+    // Set up source map with a warp at (5,6)
+    const sourceMap = createTestMap();
+    sourceMap.id = 'source';
+    sourceMap.name = 'Source Map';
+    sourceMap.layers.event[6 * 10 + 5] = 'warp_dest';
+    sourceMap.events.warp_dest = {
+      type: 'warp',
+      targetMap: 'destination',
+      targetX: 2,
+      targetY: 3,
+      transition: 'fade',
+    };
+    scn.loadMap(sourceMap, createTestTileset(), 5, 5);
+
+    // Register target map
+    const destMap = createTestMap();
+    destMap.id = 'destination';
+    destMap.name = 'Destination Map';
+    const destTileset = createTestTileset();
+    scn.registerMap('destination', destMap, destTileset);
+
+    // Move player down onto warp tile (5,5) → (5,6)
+    input.getDirectionalHeld.mockReturnValue(Actions.DOWN);
+    scn.update(1 / 60);
+    input.getDirectionalHeld.mockReturnValue(null);
+    for (let i = 0; i < 20; i++) scn.update(1 / 60);
+
+    // Transition should have started
+    expect(transitions.active).toBe(true);
+
+    // Complete transition through midpoint (FADE_OUT ~30 frames) where loadMap fires
+    for (let i = 0; i < 30; i++) transitions.update();
+
+    // After midpoint: map should have changed to destination
+    expect(scn.map).toBe(destMap);
+    expect(scn.player.tileX).toBe(2);
+    expect(scn.player.tileY).toBe(3);
+    expect(scn._locName).toBe('Destination Map');
+    expect(scn._showLocName).toBe(true);
+  });
+
+  // --- TEST-05: Follower integration at OverworldScene level ---
+  describe('follower integration', () => {
+    it('creates Mary follower in arc 1 on loadMap', () => {
+      const gameState = {
+        questFlags: { current_arc: 1 },
+        currentMap: 'test',
+        inventory: { add: vi.fn(), remove: vi.fn() },
+        recruitMember: vi.fn(),
+        party: { active: [], bench: [] },
+      };
+      const scn = new OverworldScene({
+        input,
+        transitions,
+        sceneManager: { switch: vi.fn() },
+        spriteRegistry: {},
+        gameState,
+      });
+      scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+      expect(scn.follower).not.toBeNull();
+      expect(scn.follower.spriteKey).toBe('mary');
+    });
+
+    it('positions follower 1 tile behind player on load', () => {
+      const gameState = {
+        questFlags: { current_arc: 1 },
+        currentMap: 'test',
+        inventory: { add: vi.fn(), remove: vi.fn() },
+        recruitMember: vi.fn(),
+        party: { active: [], bench: [] },
+      };
+      const scn = new OverworldScene({
+        input,
+        transitions,
+        sceneManager: { switch: vi.fn() },
+        spriteRegistry: {},
+        gameState,
+      });
+      scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+      // Default facing is 'down', so follower should be 1 tile above (y - 1)
+      const f = scn.follower;
+      expect(f.tileX).toBe(5);
+      expect(f.tileY).toBe(4);
+    });
+
+    it('nulls follower in arc 2+', () => {
+      const gameState = {
+        questFlags: { current_arc: 2 },
+        currentMap: 'test',
+        inventory: { add: vi.fn(), remove: vi.fn() },
+        recruitMember: vi.fn(),
+        party: { active: [], bench: [] },
+      };
+      const scn = new OverworldScene({
+        input,
+        transitions,
+        sceneManager: { switch: vi.fn() },
+        spriteRegistry: {},
+        gameState,
+      });
+      scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+      expect(scn.follower).toBeNull();
+    });
+
+    it('feeds breadcrumbs to follower on player movement', () => {
+      const gameState = {
+        questFlags: { current_arc: 1 },
+        currentMap: 'test',
+        inventory: { add: vi.fn(), remove: vi.fn() },
+        recruitMember: vi.fn(),
+        party: { active: [], bench: [] },
+      };
+      const mockInput = createMockInput();
+      const scn = new OverworldScene({
+        input: mockInput,
+        transitions,
+        sceneManager: { switch: vi.fn() },
+        spriteRegistry: {},
+        gameState,
+      });
+      scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+      const follower = scn.follower;
+      const spy = vi.spyOn(follower, 'onPlayerMove');
+
+      // Move player down
+      mockInput.getDirectionalHeld.mockReturnValue(Actions.DOWN);
+      scn.update(1 / 60);
+
+      expect(spy).toHaveBeenCalledWith(5, 5, Actions.DOWN);
+      spy.mockRestore();
+    });
+
+    it('updates follower each frame', () => {
+      const gameState = {
+        questFlags: { current_arc: 1 },
+        currentMap: 'test',
+        inventory: { add: vi.fn(), remove: vi.fn() },
+        recruitMember: vi.fn(),
+        party: { active: [], bench: [] },
+      };
+      const mockInput = createMockInput();
+      const scn = new OverworldScene({
+        input: mockInput,
+        transitions,
+        sceneManager: { switch: vi.fn() },
+        spriteRegistry: {},
+        gameState,
+      });
+      scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+
+      const spy = vi.spyOn(scn.follower, 'update');
+      mockInput.getDirectionalHeld.mockReturnValue(null);
+      scn.update(1 / 60);
+
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it('nulls follower when arc1_complete is set via dialogue effect', () => {
+      const gameState = {
+        questFlags: { current_arc: 1 },
+        currentMap: 'test',
+        inventory: { add: vi.fn(), remove: vi.fn() },
+        recruitMember: vi.fn(),
+        advanceArc: vi.fn(),
+        transitionToArc2: vi.fn(),
+        party: { active: [], bench: [] },
+      };
+      const scn = new OverworldScene({
+        input,
+        transitions,
+        sceneManager: { switch: vi.fn() },
+        spriteRegistry: {},
+        gameState,
+      });
+      scn.loadMap(createTestMap(), createTestTileset(), 5, 5);
+      expect(scn.follower).not.toBeNull();
+
+      scn._handleDialogueEffect({ type: 'setFlag', flag: 'arc1_complete', value: true });
+      expect(scn.follower).toBeNull();
+    });
+  });
+
   // --- TEST-06: arc-blocked warp feedback dialogue ---
   it('arc-blocked warp shows feedback dialogue instead of warping', () => {
     const gameState = {
