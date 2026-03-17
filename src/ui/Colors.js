@@ -27,4 +27,7 @@ export const Colors = {
   DMG_HEAL: '#40F840',
   DMG_CRIT: '#F84040',
   DMG_MISS: '#F8F8F8',
+  MORALE_HIGH: '#FFD878',
+  MORALE_MID: '#C0C020',
+  MORALE_LOW: '#C02020',
 };

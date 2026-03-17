@@ -91,4 +91,28 @@ describe('Follower', () => {
     f.update(10);
     expect(f.facing).toBe(Actions.RIGHT);
   });
+
+  it('pause() stops breadcrumb processing', () => {
+    const f = new Follower('mary', 5, 10, Actions.DOWN);
+    f.onPlayerMove(5, 9, Actions.UP);
+    f.pause();
+    f.update(10);
+    // Should not have moved
+    expect(f.tileX).toBe(5);
+    expect(f.tileY).toBe(10);
+    expect(f.moving).toBe(false);
+  });
+
+  it('resume() re-enables breadcrumb processing after pause', () => {
+    const f = new Follower('mary', 5, 10, Actions.DOWN);
+    f.onPlayerMove(5, 9, Actions.UP);
+    f.pause();
+    f.update(10);
+    expect(f.tileY).toBe(10); // still paused
+
+    f.resume();
+    f.update(0.001); // dequeue
+    f.update(10);    // complete move
+    expect(f.tileY).toBe(9); // now moved
+  });
 });

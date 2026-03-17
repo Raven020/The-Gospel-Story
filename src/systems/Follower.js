@@ -39,6 +39,7 @@ export class Follower {
     // When player moves from A→B, A is enqueued. When queue has entries,
     // follower dequeues and moves to that tile.
     this._breadcrumbs = [];
+    this._paused = false;
   }
 
   get moving() {
@@ -62,7 +63,7 @@ export class Follower {
    * then dequeues next breadcrumb when arrived.
    */
   update(dt) {
-    if (!this.visible) return;
+    if (!this.visible || this._paused) return;
 
     if (this._moving) {
       const dx = this._targetPixelX - this.pixelX;
@@ -98,6 +99,22 @@ export class Follower {
         this._moving = true;
       }
     }
+  }
+
+  /**
+   * Pause the follower — stops consuming breadcrumbs.
+   * Called when the player opens dialogue so Mary "stops and waits" per spec.
+   */
+  pause() {
+    this._paused = true;
+  }
+
+  /**
+   * Resume the follower — resumes breadcrumb processing.
+   * Called when dialogue closes.
+   */
+  resume() {
+    this._paused = false;
   }
 
   /**

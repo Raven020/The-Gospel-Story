@@ -39,6 +39,23 @@ export function calcHeal(casterWis, power, casterFai) {
   return Math.floor((stat * power) / 50);
 }
 
+/**
+ * Get morale-based combat modifier for a party member.
+ * Morale 100 = 1.0x (normal), morale 50 = 0.75x, morale 0 = 0.5x.
+ * Enemies (no morale field) always return 1.0.
+ */
+export function getMoraleModifier(entity) {
+  if (entity.morale === undefined) return 1.0;
+  return 0.5 + (entity.morale / 200);
+}
+
+/**
+ * Clamp morale to valid range [0, 100].
+ */
+function clampMorale(entity, value) {
+  entity.morale = Math.max(0, Math.min(100, value));
+}
+
 export class BattleEngine {
   constructor(party, enemies) {
     this.party = party;        // array of member objects
@@ -152,6 +169,12 @@ export class BattleEngine {
         exp = Math.floor(exp * 1.5);
       }
       this.expGained = exp;
+      // Victory morale boost: surviving party members gain +2 morale
+      for (const m of this.party) {
+        if (m.currentHp > 0 && m.morale !== undefined) {
+          clampMorale(m, m.morale + 2);
+        }
+      }
       this.phase = BattlePhase.VICTORY;
       return 'victory';
     }
@@ -205,7 +228,7 @@ export class BattleEngine {
   }
 
   _doAttack(attacker, target, power) {
-    let str = attacker.stats.str;
+    let str = Math.floor(attacker.stats.str * getMoraleModifier(attacker));
     const def = target.stats.def ?? 0;
 
     // Apply buff_str to attacker
@@ -244,10 +267,17 @@ export class BattleEngine {
 
   _doScriptureAttack(attacker, target, correct) {
     const basePower = correct ? 150 : 60;
-    const str = attacker.stats.fai || attacker.stats.wis;
+    const rawStat = attacker.stats.fai || attacker.stats.wis;
+    const str = Math.floor(rawStat * getMoraleModifier(attacker));
     const damage = calcDamage(str, basePower, target.stats.wis || 0);
 
     target.currentHp = Math.max(0, target.currentHp - damage);
+
+    // Morale shift: correct Scripture boosts morale, wrong answer reduces it
+    if (attacker.morale !== undefined) {
+      clampMorale(attacker, attacker.morale + (correct ? 5 : -10));
+    }
+
     this.lastResult = {
       type: 'scripture',
       actor: attacker,
@@ -314,8 +344,9 @@ export class BattleEngine {
       ability.target === TargetType.ALL_ALLIES ||
       ability.target === TargetType.SELF
     ) {
-      // Healing
-      const heal = calcHeal(caster.stats.wis, ability.power, caster.stats.fai);
+      // Healing — morale modifier scales healing effectiveness
+      const moraleMod = getMoraleModifier(caster);
+      const heal = Math.floor(calcHeal(caster.stats.wis, ability.power, caster.stats.fai) * moraleMod);
       const targets =
         ability.target === TargetType.ALL_ALLIES ? this.party.filter((m) => m.currentHp > 0) :
         ability.target === TargetType.SELF ? [caster] :
@@ -338,8 +369,9 @@ export class BattleEngine {
         if (ability.bonusVsWeakness && t.weakness === ability.bonusVsWeakness) {
           power = Math.floor(power * 1.5);
         }
-        const atkStat = ability.category === AbilityCategory.MIRACLE
+        const rawAtkStat = ability.category === AbilityCategory.MIRACLE
           ? caster.stats.str : caster.stats.wis;
+        const atkStat = Math.floor(rawAtkStat * getMoraleModifier(caster));
         const damage = calcDamage(atkStat, power, t.stats.wis || 0);
         t.currentHp = Math.max(0, t.currentHp - damage);
         totalDamage += damage;

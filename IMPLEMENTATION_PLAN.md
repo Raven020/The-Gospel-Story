@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 672 tests passing across 43 test suites (vitest)
+- **Tests:** 683 tests passing across 43 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -40,7 +40,6 @@ All major P3 UI gaps resolved. See "Resolved Items" section below. Remaining low
 - Healing Encounters not implemented (combat.md — requires non-hostile encounter mode)
 - Debate/Riddle Battles not implemented (combat.md — Pharisee confrontations)
 - Legion boss absent from enemy data (combat.md, story.md Arc 6)
-- Morale system gameplay integration (stubbed only — party-system.md)
 - Narrative party locking not implemented (party-system.md — arc-specific party restrictions)
 - 5 disciples have `role: 'tbd'` and empty abilities (james_alphaeus, thaddaeus, simon_zealot + 2 post-MVP)
 - Judas `betrayalStat` never incremented (post-MVP, Arc 11+)
@@ -49,7 +48,6 @@ All major P3 UI gaps resolved. See "Resolved Items" section below. Remaining low
 - Per-character dialogue files (currently 3 flat arc files)
 - Decorative border around canvas (technical.md — "decorative border" mentioned but not implemented)
 - WebGL rendering (technical.md says "canvas/WebGL" — implementation uses 2D canvas only)
-- Follower `pause()`/`resume()` during NPC dialogue (party-system.md)
 - Follower scripted `moveTo()` for cutscenes (only `teleport()` exists)
 - Battle-duration item use path in combat (oil item has `duration: 'battle'` but no in-battle use code)
 
@@ -88,6 +86,10 @@ All major P3 UI gaps resolved. See "Resolved Items" section below. Remaining low
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Morale System & Follower Pause/Resume (2026-03-17)
+- **MORALE-SYSTEM** — Per-member morale (0-100) now fully integrated into combat. `getMoraleModifier()` scales attack STR, ability damage, healing effectiveness, and scripture attack power (formula: 0.5 + morale/200). Correct Scripture answers grant +5 morale; wrong answers reduce by -10. Victory grants +2 morale to surviving party members. Morale clamped to [0,100]. Party detail screen shows morale bar with color thresholds (gold/yellow/red). `drawMoraleBar()` added to UIChrome. 3 new morale color tokens in Colors.js. 9 new tests.
+- **FOLLOWER-PAUSE** — `Follower.pause()` / `resume()` methods added. `_paused` flag halts `update()` breadcrumb processing. OverworldScene calls `pause()` in `_openNPCDialogue()` and `resume()` when dialogue closes, so Mary "stops and waits" during NPC conversations per party-system.md spec. 2 new tests.
 
 ### P3 UI Gap Fixes & CONTENT-11 (2026-03-17)
 - **UI-03** — Advance arrow fixed from 5×3 to 3×5 downward-pointing triangle in UIChrome.js `drawAdvanceArrow`, matching spec §2.

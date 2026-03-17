@@ -93,3 +93,36 @@ export function drawBar(ctx, x, y, current, max, maxW, h, barColor) {
   ctx.fillRect(x, y, 1, h);
   ctx.fillRect(x + maxW - 1, y, 1, h);
 }
+
+/**
+ * Draw a morale bar with color thresholds per party-system.md morale system.
+ * @param {number} morale - 0-100 morale value
+ * @param {number} maxW - max bar width in pixels
+ * @param {number} h - bar height in pixels
+ */
+export function drawMoraleBar(ctx, x, y, morale, maxW, h) {
+  const ratio = morale / 100;
+  const filledW = Math.floor(ratio * maxW);
+
+  let color;
+  if (morale >= 70) color = Colors.MORALE_HIGH;
+  else if (morale >= 40) color = Colors.MORALE_MID;
+  else color = Colors.MORALE_LOW;
+
+  // Background track
+  ctx.fillStyle = Colors.BAR_TRACK;
+  ctx.fillRect(x, y, maxW, h);
+
+  // Filled portion
+  if (filledW > 0) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, filledW, h);
+  }
+
+  // 1px border
+  ctx.fillStyle = Colors.BAR_BORDER;
+  ctx.fillRect(x, y, maxW, 1);
+  ctx.fillRect(x, y + h - 1, maxW, 1);
+  ctx.fillRect(x, y, 1, h);
+  ctx.fillRect(x + maxW - 1, y, 1, h);
+}

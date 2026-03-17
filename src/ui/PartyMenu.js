@@ -4,7 +4,7 @@
  * Supports viewing member details and swapping between active/bench.
  */
 
-import { drawPanel, drawCursor, drawBar } from './UIChrome.js';
+import { drawPanel, drawCursor, drawBar, drawMoraleBar } from './UIChrome.js';
 import { drawText } from '../lib/drawText.js';
 import { renderSprite } from '../lib/renderSprite.js';
 import { Colors } from './Colors.js';
@@ -351,6 +351,11 @@ export class PartyMenu {
     drawText(ctx, `FAI ${stats.fai}`, col2X, sy, Colors.TEXT_DARK);
     sy += 12;
     drawText(ctx, `SPD ${stats.spd}`, col1X, sy, Colors.TEXT_DARK);
+    // Morale display
+    if (member.morale !== undefined) {
+      drawText(ctx, `Morale`, col2X, sy, Colors.TEXT_DARK);
+      drawMoraleBar(ctx, col2X + 42, sy + 1, member.morale, 60, 5);
+    }
     sy += 14;
 
     // EXP

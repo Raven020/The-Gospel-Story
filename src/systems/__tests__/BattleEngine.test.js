@@ -5,6 +5,7 @@ import {
   ActionType,
   calcDamage,
   calcHeal,
+  getMoraleModifier,
 } from '../BattleEngine.js';
 import { createEnemy } from '../../data/enemies.js';
 
@@ -65,6 +66,24 @@ describe('calcHeal', () => {
 
   it('works without fai parameter (backwards compat)', () => {
     expect(calcHeal(15, 60)).toBe(18);
+  });
+});
+
+describe('getMoraleModifier', () => {
+  it('returns 1.0 for morale 100', () => {
+    expect(getMoraleModifier({ morale: 100 })).toBe(1.0);
+  });
+
+  it('returns 0.75 for morale 50', () => {
+    expect(getMoraleModifier({ morale: 50 })).toBe(0.75);
+  });
+
+  it('returns 0.5 for morale 0', () => {
+    expect(getMoraleModifier({ morale: 0 })).toBe(0.5);
+  });
+
+  it('returns 1.0 for entities without morale (enemies)', () => {
+    expect(getMoraleModifier({ stats: { str: 10 } })).toBe(1.0);
   });
 });
 
@@ -543,6 +562,85 @@ describe('BattleEngine', () => {
       expect(damageWithout).toBe(expectedWithout);
       expect(damageWithBonus).toBe(expectedWith);
       expect(damageWithBonus).toBeGreaterThan(damageWithout);
+    });
+
+    it('morale modifier scales attack damage', () => {
+      // Party member with low morale (50) should deal less damage than one with full morale (100)
+      const lowMorale = makeMember({ id: 'low', morale: 50, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 10, spd: 25, def: 10 }, currentHp: 100, currentSp: 50 });
+      const fullMorale = makeMember({ id: 'full', morale: 100, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 10, spd: 25, def: 10 }, currentHp: 100, currentSp: 50 });
+
+      const enemy1 = createEnemy('doubt');
+      const enemy2 = createEnemy('doubt');
+      enemy1.currentHp = enemy1.stats.hp;
+      enemy2.currentHp = enemy2.stats.hp;
+
+      const eng1 = new BattleEngine([lowMorale], [enemy1]);
+      eng1.buildTurnOrder();
+      eng1.nextTurn();
+      eng1.setAction(ActionType.ATTACK, { target: enemy1 });
+      eng1.execute();
+      const lowDmg = eng1.lastResult.damage;
+
+      const eng2 = new BattleEngine([fullMorale], [enemy2]);
+      eng2.buildTurnOrder();
+      eng2.nextTurn();
+      eng2.setAction(ActionType.ATTACK, { target: enemy2 });
+      eng2.execute();
+      const fullDmg = eng2.lastResult.damage;
+
+      expect(fullDmg).toBeGreaterThanOrEqual(lowDmg);
+    });
+
+    it('scripture correct answer boosts morale by 5', () => {
+      const member = makeMember({ morale: 80, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 30, spd: 25, def: 10 }, currentHp: 100, currentSp: 50 });
+      const enemy = createEnemy('doubt');
+      const eng = new BattleEngine([member], [enemy]);
+      eng.buildTurnOrder();
+      eng.nextTurn();
+      eng.setAction(ActionType.SCRIPTURE, { target: enemy, correct: true });
+      eng.execute();
+      expect(member.morale).toBe(85);
+    });
+
+    it('scripture wrong answer reduces morale by 10', () => {
+      const member = makeMember({ morale: 80, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 30, spd: 25, def: 10 }, currentHp: 100, currentSp: 50 });
+      const enemy = createEnemy('doubt');
+      const eng = new BattleEngine([member], [enemy]);
+      eng.buildTurnOrder();
+      eng.nextTurn();
+      eng.setAction(ActionType.SCRIPTURE, { target: enemy, correct: false });
+      eng.execute();
+      expect(member.morale).toBe(70);
+    });
+
+    it('morale does not exceed 100 or drop below 0', () => {
+      const highMorale = makeMember({ morale: 98, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 30, spd: 25, def: 10 }, currentHp: 100, currentSp: 50 });
+      const enemy1 = createEnemy('doubt');
+      const eng1 = new BattleEngine([highMorale], [enemy1]);
+      eng1.buildTurnOrder();
+      eng1.nextTurn();
+      eng1.setAction(ActionType.SCRIPTURE, { target: enemy1, correct: true });
+      eng1.execute();
+      expect(highMorale.morale).toBe(100); // capped at 100
+
+      const lowMorale = makeMember({ morale: 5, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 30, spd: 25, def: 10 }, currentHp: 100, currentSp: 50 });
+      const enemy2 = createEnemy('doubt');
+      const eng2 = new BattleEngine([lowMorale], [enemy2]);
+      eng2.buildTurnOrder();
+      eng2.nextTurn();
+      eng2.setAction(ActionType.SCRIPTURE, { target: enemy2, correct: false });
+      eng2.execute();
+      expect(lowMorale.morale).toBe(0); // floored at 0
+    });
+
+    it('victory grants +2 morale to surviving party members', () => {
+      const alive = makeMember({ id: 'alive', morale: 80, currentHp: 50, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 10, spd: 25, def: 10 }, currentSp: 50 });
+      const dead = makeMember({ id: 'dead', morale: 80, currentHp: 0, stats: { hp: 100, sp: 50, str: 20, wis: 15, fai: 10, spd: 25, def: 10 }, currentSp: 50 });
+      const eng = new BattleEngine([alive, dead], enemies);
+      enemies[0].currentHp = 0;
+      eng.checkEnd();
+      expect(alive.morale).toBe(82);
+      expect(dead.morale).toBe(80); // dead members don't get boost
     });
 
     it('AoE heal heals all allies', () => {

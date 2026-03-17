@@ -269,6 +269,8 @@ export class OverworldScene {
 
       if (!this.dialogue.isOpen) {
         this.input.context = InputContext.OVERWORLD;
+        // Resume follower when dialogue closes (party-system.md)
+        if (this.follower) this.follower.resume();
         // Fire pending arc-transition cutscene after dialogue closes
         if (this._pendingArcCutscene) {
           const scriptKey = this._pendingArcCutscene;
@@ -509,6 +511,9 @@ export class OverworldScene {
   }
 
   _openNPCDialogue(npc) {
+    // Pause follower so Mary "stops and waits" during dialogue (party-system.md)
+    if (this.follower) this.follower.pause();
+
     const dialogueData = this._dialogueCache[npc.dialogue];
     if (dialogueData) {
       this.input.context = InputContext.DIALOGUE;
