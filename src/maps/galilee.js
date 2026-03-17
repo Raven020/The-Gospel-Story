@@ -109,7 +109,9 @@ for (let y = 0; y < H; y++) {
     const idx = y * W + x;
     const tile = ground[idx];
     const det = detail[idx];
-    if (tile === 2 || tile === 3) {
+    if (above[idx] !== 0) {
+      collision.push(1); // above-layer footprint tiles are blocked (reeds)
+    } else if (tile === 2 || tile === 3) {
       collision.push(1); // water is blocked
     } else if (tile === 6 || det === 6) {
       collision.push(1); // boats blocked

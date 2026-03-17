@@ -52,6 +52,20 @@ describe('calcHeal', () => {
   it('scales with wisdom', () => {
     expect(calcHeal(30, 60)).toBeGreaterThan(calcHeal(15, 60));
   });
+
+  it('uses fai when higher than wis (GAP-06)', () => {
+    // wis=15, power=60, fai=30 → uses fai → floor(30*60/50) = 36
+    expect(calcHeal(15, 60, 30)).toBe(36);
+  });
+
+  it('uses wis when fai is lower', () => {
+    // wis=30, power=60, fai=15 → uses wis → floor(30*60/50) = 36
+    expect(calcHeal(30, 60, 15)).toBe(36);
+  });
+
+  it('works without fai parameter (backwards compat)', () => {
+    expect(calcHeal(15, 60)).toBe(18);
+  });
 });
 
 describe('BattleEngine', () => {

@@ -87,6 +87,14 @@ describe('Inventory', () => {
     expect(inv.useItem('temple_scroll', member)).toBe(false);
   });
 
+  it('useItem blocks battle-only items from field use (GAP-07)', () => {
+    const inv = new Inventory();
+    inv.add('oil', 1);
+    const member = { currentHp: 50, currentSp: 50, stats: { hp: 200, sp: 100 } };
+    expect(inv.useItem('oil', member)).toBe(false);
+    expect(inv.count('oil')).toBe(1); // item not consumed
+  });
+
   it('serializes and deserializes', () => {
     const inv = new Inventory();
     inv.add('bread', 3);

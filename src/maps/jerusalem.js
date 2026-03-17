@@ -114,7 +114,9 @@ for (let y = 0; y < H; y++) {
   for (let x = 0; x < W; x++) {
     const idx = y * W + x;
     const tile = ground[idx];
-    if (tile === 5) {
+    if (above[idx] !== 0) {
+      collision.push(1); // above-layer footprint tiles are blocked (trees)
+    } else if (tile === 5) {
       collision.push(1); // walls and stalls are blocked
     } else if (y === 0 || y === H - 1 || x === 0 || x === W - 1) {
       // Edge tiles that aren't gates are blocked

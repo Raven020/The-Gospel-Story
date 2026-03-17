@@ -34,8 +34,9 @@ export function calcDamage(attackerStr, power, defenderDef) {
 /**
  * Calculate healing amount.
  */
-export function calcHeal(casterWis, power) {
-  return Math.floor((casterWis * power) / 50);
+export function calcHeal(casterWis, power, casterFai) {
+  const stat = casterFai ? Math.max(casterWis, casterFai) : casterWis;
+  return Math.floor((stat * power) / 50);
 }
 
 export class BattleEngine {
@@ -314,7 +315,7 @@ export class BattleEngine {
       ability.target === TargetType.SELF
     ) {
       // Healing
-      const heal = calcHeal(caster.stats.wis, ability.power);
+      const heal = calcHeal(caster.stats.wis, ability.power, caster.stats.fai);
       const targets =
         ability.target === TargetType.ALL_ALLIES ? this.party.filter((m) => m.currentHp > 0) :
         ability.target === TargetType.SELF ? [caster] :

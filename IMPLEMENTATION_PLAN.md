@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 628 tests passing across 42 test suites (vitest)
+- **Tests:** 632 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -21,51 +21,11 @@ All P0 bugs resolved.
 
 ### P1 — Major Functional Gaps
 
-- **GAP-01: Jordan River `warp_south` lands at wrong end of Jerusalem**
-  - `jordan_river.js` sends player to `jerusalem` at (14, 1) — the NORTH side
-  - Should land near SOUTH gate (14, 18)
-  - Fix: change `targetY` from 1 to 18 in jordan_river.js `warp_south`
-
-- **GAP-02: Above-layer footprint tiles not collision-blocked**
-  - Jerusalem trees (rows 7, 17) and Galilee reeds are in the above layer but ground tiles have `collision=0`
-  - Spec §4 requires above-layer footprint tiles to be blocked
-  - Fix: add `collision=1` for above-layer occupied tiles in `jerusalem.js` and `galilee.js`
-
 - **GAP-03: Temple, Capernaum, Wilderness, Mountain have empty detail/above layers**
   - `interior.js` defines floor patterns (100), rug borders (101), pillar tops (200), arches (201) — ALL unused in `temple.js`
   - `desert.js` defines scattered rocks (100), sand ripples (101), rock overhangs (200) — ALL unused in `wilderness.js`
   - `overworld.js` has detail/above tiles unused in `capernaum.js` and `mountain.js`
   - Fix: populate detail/above layers in these 4 maps
-
-- **GAP-04: Wilderness `temptation_3` tile at (13,16) blocked by cactus**
-  - Cactus at x=13, y=16 sets `collision=1`, but event `temptation_3` is placed there
-  - Two of three trigger tiles still work, so not fully game-breaking
-  - Fix: move the cactus or the event tile
-
-- **GAP-05: Effect parameter naming mismatches vs. spec**
-  - `giveItem`/`removeItem`: code reads `effect.itemId`/`effect.count`, spec says `effect.item`/`effect.qty`
-  - `playSound`: code reads `effect.sfxId`, spec says `effect.soundId`
-  - Latent — no arc data currently exercises these effects
-  - Fix: accept both naming conventions in code, or update spec
-
-- **GAP-06: Healing formula ignores `fai` stat**
-  - `BattleEngine._executeAbility` calcHeal uses only `caster.stats.wis`
-  - John (healer) has `fai: 55` but healing calculated off `wis: 50` only
-  - Fix: use `Math.max(caster.stats.wis, caster.stats.fai)` or spec-appropriate formula
-
-- **GAP-07: Oil item consumed silently from field menu**
-  - `inventory.js useItem()` skips STR buff for battle-duration items
-  - Using oil from pause menu wastes the item with no effect and no feedback
-  - Fix: prevent using battle-only items from field menu, or show a message
-
-- **GAP-08: Mary follower initialization on New Game — verify**
-  - `main.js onNewGame` sets `arc1_started` and loads jerusalem, but never explicitly assigns follower
-  - `_updateFollowerForArc()` creates Mary if arc=1 and gameState exists on loadMap
-  - Needs verification: does loadMap trigger _updateFollowerForArc after gameState is set?
-
-- **GAP-09: BGM ID mismatch — `'battle_boss'` vs spec `'boss'`**
-  - `OverworldScene.js` line 708 uses `'battle_boss'`; spec names it `'boss'`
-  - Low priority (audio stubbed), but should be fixed before audio implementation
 
 ### P2 — Content & Narrative Gaps
 
@@ -160,6 +120,16 @@ All P0 bugs resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### P1 Gap Fixes (P7 Audit)
+- **GAP-01** — Jordan River `warp_south` targetY changed from 1 to 18 (south gate).
+- **GAP-02** — Above-layer footprint tiles now blocked in jerusalem.js (trees) and galilee.js (reeds).
+- **GAP-04** — Wilderness cactus moved from (13,16) to (14,16), no longer blocking `temptation_3` event.
+- **GAP-05** — Effect parameter naming accepts both spec (`item`/`qty`/`soundId`) and legacy (`itemId`/`count`/`sfxId`).
+- **GAP-06** — `calcHeal` now uses `Math.max(wis, fai)` so John's fai stat contributes to healing. Tests added.
+- **GAP-07** — Battle-only items (oil) blocked from field use; `useItem()` returns false for `duration: 'battle'` items. Test added.
+- **GAP-08** — Verified: Mary follower initializes correctly via `_updateFollowerForArc()` called from `loadMap()` (current_arc defaults to 1).
+- **GAP-09** — BGM ID changed from `'battle_boss'` to `'boss'` to match spec.
 
 ### P0 Bug Fixes (P7 Audit)
 - **BUG-01** — `setFlag` effects now forwarded to `onEffect` callback in `DialogueSystem._executeEffect`. Arc-advancement via dialogue setFlag (e.g., `arc1_complete` → `advanceArc(2)`) now works. Test added.

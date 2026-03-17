@@ -119,12 +119,14 @@ export class Inventory {
     if (!this.has(itemId)) return false;
 
     const effect = def.effect;
+    if (effect.duration === 'battle') {
+      return false; // battle-only items cannot be used from field menu
+    }
     if (effect.stat === 'hp') {
       member.currentHp = Math.min(member.stats.hp, member.currentHp + effect.amount);
     } else if (effect.stat === 'sp') {
       member.currentSp = Math.min(member.stats.sp, member.currentSp + effect.amount);
     }
-    // Battle-duration buffs handled by combat system
 
     this.remove(itemId);
     return true;

@@ -78,7 +78,7 @@ for (let y = 0; y < H; y++) {
       ground.push(7); // dry grass approach
     }
     // Scattered obstacles
-    else if ((x === 6 && y === 13) || (x === 20 && y === 4) || (x === 13 && y === 16)) {
+    else if ((x === 6 && y === 13) || (x === 20 && y === 4) || (x === 14 && y === 16)) {
       ground.push(4); // cactus
     } else if ((x === 11 && y === 2) || (x === 19 && y === 15) || (x === 3 && y === 14)) {
       ground.push(3); // dune

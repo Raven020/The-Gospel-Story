@@ -108,7 +108,7 @@ export const MAP = {
       type: 'warp',
       targetMap: 'jerusalem',
       targetX: 14,
-      targetY: 1,
+      targetY: 18,
       transition: 'fade',
     },
     warp_east: {

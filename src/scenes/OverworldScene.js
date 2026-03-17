@@ -551,13 +551,13 @@ export class OverworldScene {
         this.gameState.recruitMember(effect.memberId);
         break;
       case 'giveItem':
-        this.gameState.inventory.add(effect.itemId, effect.count || 1);
+        this.gameState.inventory.add(effect.item || effect.itemId, effect.qty || effect.count || 1);
         break;
       case 'removeItem':
-        this.gameState.inventory.remove(effect.itemId, effect.count || 1);
+        this.gameState.inventory.remove(effect.item || effect.itemId, effect.qty || effect.count || 1);
         break;
       case 'playSound':
-        audioManager.playSFX(effect.sfxId);
+        audioManager.playSFX(effect.soundId || effect.sfxId);
         break;
       case 'playMusic':
         audioManager.playBGM(effect.trackId);
@@ -705,7 +705,7 @@ export class OverworldScene {
 
     this._inBattle = true;
     this.sceneManager.switch('battle');
-    audioManager.playBGM('battle_boss');
+    audioManager.playBGM('boss');
     this.battleScene.startBattle(party, [enemy], (result) => {
       if (result === 'victory') {
         // EXP already awarded by BattleScene
