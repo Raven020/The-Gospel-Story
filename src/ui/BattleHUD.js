@@ -18,12 +18,16 @@ const ACTION_PANEL_W = 96;
 
 const ACTION_OPTIONS = ['Prayer', 'Miracles', 'Truth', 'Scripture', 'Items', 'Defend'];
 
+const HP_SHOW_FRAMES = 30;
+
 export class BattleHUD {
   constructor() {
     this.actionCursor = 0;
     this.targetCursor = 0;
     this.showActionMenu = false;
     this.damageFloaters = [];
+    /** @type {Map<string, number>} enemy id → frames remaining */
+    this._hpShowTimers = new Map();
   }
 
   /**
@@ -40,12 +44,28 @@ export class BattleHUD {
     });
   }
 
+  /**
+   * Trigger HP number display for an enemy for 30 frames.
+   * @param {string} enemyId
+   */
+  showEnemyHp(enemyId) {
+    this._hpShowTimers.set(enemyId, HP_SHOW_FRAMES);
+  }
+
   updateFloaters() {
     this.damageFloaters = this.damageFloaters.filter((f) => {
       f.frame++;
       f.y -= 1;
       return f.frame < f.maxFrames;
     });
+    // Tick down HP show timers
+    for (const [id, frames] of this._hpShowTimers) {
+      if (frames <= 1) {
+        this._hpShowTimers.delete(id);
+      } else {
+        this._hpShowTimers.set(id, frames - 1);
+      }
+    }
   }
 
   /**
@@ -113,6 +133,13 @@ export class BattleHUD {
 
       // HP bar
       drawBar(ctx, cx - 20, y + 42, enemy.currentHp, enemy.stats.hp, 40, 3, 'hp');
+
+      // HP number shown briefly on hit (30-frame timer)
+      if (this._hpShowTimers.has(enemy.id)) {
+        const hpText = `${enemy.currentHp}/${enemy.stats.hp}`;
+        const hpTextX = cx - Math.floor(hpText.length * 3);
+        drawText(ctx, hpText, hpTextX, y + 47, Colors.TEXT_LIGHT);
+      }
     }
   }
 

@@ -731,6 +731,10 @@ export class BattleScene {
       } else {
         this.hud.addFloater(x, y, String(result.damage), Colors.DMG_NORMAL);
       }
+      // Show enemy HP number briefly on hit
+      if (result.targetType !== 'party' && result.target && result.target.id) {
+        this.hud.showEnemyHp(result.target.id);
+      }
     } else if (result.type === 'heal') {
       audioManager.playSFX('heal');
       this.hud.addFloater(100, 110, `+${result.heal}`, Colors.DMG_HEAL);
@@ -738,6 +742,10 @@ export class BattleScene {
       const color = result.correct ? Colors.DMG_HEAL : Colors.DMG_CRIT;
       const text = result.correct ? `${result.damage}!` : String(result.damage);
       this.hud.addFloater(100, 40, text, color);
+      // Show enemy HP after scripture hit
+      if (result.target && result.target.id) {
+        this.hud.showEnemyHp(result.target.id);
+      }
     } else if (result.type === 'scan') {
       const enemy = result.enemy;
       if (enemy) {

@@ -110,4 +110,66 @@ describe('BattleHUD', () => {
     hud.addFloater(100, 50, 42, '#ff0000');
     expect(hud.damageFloaters[0].text).toBe('42');
   });
+
+  describe('enemy HP on-hit display', () => {
+    it('showEnemyHp sets a 30-frame timer', () => {
+      hud.showEnemyHp('doubt');
+      expect(hud._hpShowTimers.get('doubt')).toBe(30);
+    });
+
+    it('updateFloaters ticks down HP show timers', () => {
+      hud.showEnemyHp('doubt');
+      hud.updateFloaters();
+      expect(hud._hpShowTimers.get('doubt')).toBe(29);
+    });
+
+    it('HP show timer is removed after 30 frames', () => {
+      hud.showEnemyHp('doubt');
+      for (let i = 0; i < 30; i++) {
+        hud.updateFloaters();
+      }
+      expect(hud._hpShowTimers.has('doubt')).toBe(false);
+    });
+
+    it('showEnemyHp resets timer on repeated hits', () => {
+      hud.showEnemyHp('doubt');
+      for (let i = 0; i < 15; i++) {
+        hud.updateFloaters();
+      }
+      expect(hud._hpShowTimers.get('doubt')).toBe(15);
+      hud.showEnemyHp('doubt');
+      expect(hud._hpShowTimers.get('doubt')).toBe(30);
+    });
+
+    it('renderEnemies draws HP text when timer is active', () => {
+      const ctx = mockCtx();
+      // Use id not in ENEMY_BATTLE_SPRITES to avoid OffscreenCanvas dependency
+      const enemies = [
+        { id: 'test_enemy', name: 'Test', currentHp: 40, stats: { hp: 60 }, isBoss: false },
+      ];
+      hud.showEnemyHp('test_enemy');
+      hud.renderEnemies(ctx, enemies, 0);
+      // fillRect is called for the fallback sprite rect + HP bar + HP text chars
+      expect(ctx.fillRect.mock.calls.length).toBeGreaterThan(2);
+    });
+
+    it('renderEnemies does not draw HP text when no timer', () => {
+      const ctx = mockCtx();
+      // Use id not in ENEMY_BATTLE_SPRITES to avoid OffscreenCanvas dependency
+      const enemies = [
+        { id: 'test_enemy', name: 'Test', currentHp: 40, stats: { hp: 60 }, isBoss: false },
+      ];
+      hud.renderEnemies(ctx, enemies, 0);
+      const callsWithout = ctx.fillRect.mock.calls.length;
+
+      // Now with timer
+      const ctx2 = mockCtx();
+      hud.showEnemyHp('test_enemy');
+      hud.renderEnemies(ctx2, enemies, 0);
+      const callsWith = ctx2.fillRect.mock.calls.length;
+
+      // With timer should have more fillRect calls (from drawText rendering HP numbers)
+      expect(callsWith).toBeGreaterThan(callsWithout);
+    });
+  });
 });

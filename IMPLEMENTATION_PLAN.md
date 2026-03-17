@@ -44,9 +44,7 @@ All P3 test gaps resolved.
 - P5.36: Debate/Riddle Battles not implemented (post-MVP, Arc 4+)
 - P5.37: Narrative party locking not implemented (post-MVP, Arc 8)
 - Morale system gameplay integration (stubbed only)
-- Enemy HP number on hit (30-frame timer) not in BattleHUD
-- Victory/defeat fade overlays use timers not actual globalAlpha fades
-- 9-slice speaker name plate with min/max width scaling
+- Dynamic speaker name plate with 9-slice and min/max width (spec does not require this — cosmetic only)
 - Dynamic import for dialogue modules (currently pre-loaded)
 - Per-character dialogue files (currently 3 flat arc files)
 
@@ -78,6 +76,11 @@ All P3 test gaps resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Battle HUD Enhancements
+- **HP-ON-HIT** — Enemy HP number now displayed for 30 frames after taking damage. BattleHUD tracks per-enemy timers via `_hpShowTimers` Map. `showEnemyHp(id)` triggered from BattleScene `_showResult()` for both damage and scripture hit types. 6 tests added.
+- **FADE-VERIFY** — Victory/defeat fade overlays confirmed to already use real `globalAlpha` fades (not just timers). Victory: 30-frame fade, Defeat: 60-frame fade. P4 item was outdated.
+- **NAMEPLATE-VERIFY** — 9-slice speaker name plate is not in the spec (ui-hud.md specifies plain gold text + 1px rule). Implementation matches spec. P4 item was a false gap.
 
 ### Test Coverage Gaps (P7 Audit — Batch 3)
 - **TEST-05** — Follower integration tests added at OverworldScene level: creates Mary in arc 1, positions 1 tile behind player, nulls in arc 2+, feeds breadcrumbs on movement, updates each frame, nulls on arc1_complete dialogue effect. 6 tests.
