@@ -979,4 +979,48 @@ describe('OverworldScene', () => {
     expect(scn.player.tileY).toBe(7);
     expect(onComplete).toHaveBeenCalled();
   });
+
+  // --- TEST-06: arc-blocked warp feedback dialogue ---
+  it('arc-blocked warp shows feedback dialogue instead of warping', () => {
+    const gameState = {
+      questFlags: { current_arc: 1 },
+      currentMap: 'test',
+      inventory: { add: vi.fn(), remove: vi.fn(), getAll: () => [] },
+      recruitMember: vi.fn(),
+      party: { active: [], bench: [] },
+      canAccessMap: vi.fn(() => false),
+    };
+    const mockSceneManager = { switch: vi.fn() };
+    const scn = new OverworldScene({
+      input,
+      transitions,
+      sceneManager: mockSceneManager,
+      spriteRegistry: {},
+      gameState,
+    });
+
+    const map = createTestMap();
+    // Place a warp event at (5,6) that requires a higher arc
+    map.layers.event[6 * 10 + 5] = 'warp_blocked';
+    map.events.warp_blocked = {
+      type: 'warp',
+      targetMap: 'wilderness',
+      targetX: 5,
+      targetY: 10,
+      transition: 'fade',
+    };
+    scn.loadMap(map, createTestTileset(), 5, 5);
+
+    // Move player onto the warp tile
+    input.getDirectionalHeld.mockReturnValue(Actions.DOWN);
+    scn.update(1 / 60);
+    input.getDirectionalHeld.mockReturnValue(null);
+    for (let i = 0; i < 20; i++) scn.update(1 / 60);
+
+    // Warp should be blocked — dialogue opened instead
+    expect(gameState.canAccessMap).toHaveBeenCalledWith('wilderness');
+    expect(scn.dialogue.isOpen).toBe(true);
+    // No transition should have started
+    expect(scn._pendingWarp).toBeFalsy();
+  });
 });

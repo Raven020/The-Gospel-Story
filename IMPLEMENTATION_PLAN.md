@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 637 tests passing across 42 test suites (vitest)
+- **Tests:** 638 tests passing across 42 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -25,15 +25,11 @@ All P1 gaps resolved.
 
 ### P2 — Content & Narrative Gaps
 
-- **CONTENT-01: Scripture-selection combat not implemented (MVP System #6)**
-  - Satan temptation battles use standard `startBattle` — no Scripture choice mechanic
-  - Scripture challenges exist in `scriptures.js` but not wired to a choice UI
-  - Listed as MVP system in `mvp-scope.md`
+All P2 content gaps resolved.
 
 ### P3 — Test & Code Quality
 
-- **TEST-05:** No test for follower creation/breadcrumb/rendering
-- **TEST-06:** No test for arc-blocked warp feedback dialogue
+- **TEST-05:** No test for follower creation/breadcrumb/rendering (note: Follower.test.js has 7 tests — this gap may be about OverworldScene-level follower integration)
 - **TEST-07:** No test for cross-map warp integration (tile event → loadMap)
 - **T10:** `main.js` has zero test coverage
 - **T11:** `demo.js` excluded from map validation (intentional — placeholder NPC keys)
@@ -83,6 +79,12 @@ All P1 gaps resolved.
 ---
 
 ## Resolved Items (Prior Audits)
+
+### Additional Test Fixes (P7 Audit)
+- **TEST-06** — Added test for arc-blocked warp feedback dialogue: verifies `canAccessMap` check, dialogue opens with feedback text, no warp initiated.
+
+### CONTENT-01 Verification (P7 Audit)
+- **CONTENT-01** — Scripture-selection combat is FULLY IMPLEMENTED. BattleScene has complete scripture UI (challenge display, 3 verse options, cursor, correct/wrong feedback). BattleEngine._doScriptureAttack uses fai stat with 150/60 power for correct/wrong. 9 challenges defined in scriptures.js with ENEMY_SCRIPTURE mapping. IMPLEMENTATION_PLAN description was outdated.
 
 ### Content & Test Fixes (P7 Audit — Batch 2)
 - **CONTENT-02** — Baptism power-up: Jesus gains +10 WIS, +10 FAI, +5 SP when `baptism_complete` is set.
