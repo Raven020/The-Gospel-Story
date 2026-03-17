@@ -21,6 +21,7 @@ const EXECUTE_FRAMES = 30;
 const VICTORY_FADE_FRAMES = 30;
 const DEFEAT_FADE_FRAMES = 60;
 const AUTO_ADVANCE_FRAMES = 180; // 3 sec at 60fps
+const SUB_MENU_SLIDE_SPEED = 16; // pixels per frame for slide-in animation
 
 export class BattleScene {
   constructor({ input, transitions, sceneManager, frameCountFn, gameState }) {
@@ -58,6 +59,9 @@ export class BattleScene {
     this._selectingItemTarget = false;
     this._itemTargetCursor = 0;
     this._pendingItemId = null;
+
+    // Sub-menu slide-in animation per spec §5
+    this._subMenuSlideOffset = 0;
 
     // Defeat menu state
     this._defeatCursor = 0;
@@ -118,6 +122,11 @@ export class BattleScene {
 
     this._stateFrames++;
     this.hud.updateFloaters();
+
+    // Tick sub-menu slide-in animation
+    if (this._subMenuSlideOffset > 0) {
+      this._subMenuSlideOffset = Math.max(0, this._subMenuSlideOffset - SUB_MENU_SLIDE_SPEED);
+    }
 
     switch (this.engine.phase) {
       case BattlePhase.INTRO:
@@ -233,8 +242,9 @@ export class BattleScene {
       this._renderItemMenu(ctx, fc);
     }
 
-    // Item target selection
+    // Item target selection (with party strip highlight per spec §5)
     if (this._selectingItemTarget) {
+      this.hud.renderPartyTargetCursor(ctx, this.engine.party, this._itemTargetCursor, fc);
       this._renderItemTargetMenu(ctx, fc);
     }
 
@@ -318,6 +328,7 @@ export class BattleScene {
         if (this._abilityList.length > 0) {
           this._selectingAbility = true;
           this._abilityCursor = 0;
+          this._subMenuSlideOffset = 96;
         }
         break;
       }
@@ -329,6 +340,7 @@ export class BattleScene {
           this._selectingScripture = true;
           this._scriptureChallenge = challenge;
           this._scriptureCursor = 0;
+          this._subMenuSlideOffset = 96;
         }
         break;
       }
@@ -341,6 +353,7 @@ export class BattleScene {
         if (this._itemList.length > 0) {
           this._selectingItem = true;
           this._itemCursor = 0;
+          this._subMenuSlideOffset = 96;
         }
         break;
       }
@@ -435,6 +448,7 @@ export class BattleScene {
         // HP/SP items need a target party member
         this._selectingItemTarget = true;
         this._itemTargetCursor = 0;
+        this._subMenuSlideOffset = 96;
       }
     }
 
@@ -761,7 +775,7 @@ export class BattleScene {
   }
 
   _renderAbilityMenu(ctx, frameCount) {
-    const x = 144;
+    const x = 144 + this._subMenuSlideOffset;
     const y = 100;
     const w = 96;
     const h = Math.min(58, this._abilityList.length * 10 + 4);
@@ -786,7 +800,7 @@ export class BattleScene {
   }
 
   _renderItemMenu(ctx, frameCount) {
-    const x = 144;
+    const x = 144 + this._subMenuSlideOffset;
     const y = 100;
     const w = 96;
     const h = Math.min(58, this._itemList.length * 10 + 4);
@@ -810,7 +824,7 @@ export class BattleScene {
 
   _renderItemTargetMenu(ctx, frameCount) {
     const alive = this.engine.party.filter((m) => m.currentHp > 0);
-    const x = 144;
+    const x = 144 + this._subMenuSlideOffset;
     const y = 100;
     const w = 96;
     const h = alive.length * 10 + 4;

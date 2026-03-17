@@ -135,9 +135,55 @@ describe('PartyMenu', () => {
     menu.update();
     expect(menu.state).toBe('detail');
 
-    // Try confirm again - should stay in detail since Jesus can't swap
+    // For Jesus, only "Back" option is available (no Swap).
+    // Pressing confirm selects "Back" and returns to list.
+    menu.update();
+    expect(menu.state).toBe('list');
+  });
+
+  it('detail view for Jesus has only Back option (no Swap)', () => {
+    const input = createMockInput();
+    const gs = createMockGameState();
+    const menu = new PartyMenu({ input, gameState: gs });
+    menu.open();
+    menu.cursor = 0; // Jesus
+
+    // Go to detail
+    input.pressed.mockImplementation(a => a === Actions.CONFIRM);
     menu.update();
     expect(menu.state).toBe('detail');
+    // _detailCursor=0 is "Back" for Jesus (only option)
+    expect(menu._detailCursor).toBe(0);
+
+    // Navigate down should wrap (only 1 option)
+    input.pressed.mockImplementation(a => a === Actions.DOWN);
+    menu.update();
+    expect(menu._detailCursor).toBe(0);
+    expect(menu.state).toBe('detail');
+  });
+
+  it('detail view navigates Swap/Back for non-Jesus member', () => {
+    const input = createMockInput();
+    const gs = createMockGameState();
+    const menu = new PartyMenu({ input, gameState: gs });
+    menu.open();
+    menu.cursor = 1; // Peter
+
+    // Go to detail
+    input.pressed.mockImplementation(a => a === Actions.CONFIRM);
+    menu.update();
+    expect(menu.state).toBe('detail');
+    expect(menu._detailCursor).toBe(0); // Swap
+
+    // Navigate to Back
+    input.pressed.mockImplementation(a => a === Actions.DOWN);
+    menu.update();
+    expect(menu._detailCursor).toBe(1); // Back
+
+    // Confirm on Back → returns to list
+    input.pressed.mockImplementation(a => a === Actions.CONFIRM);
+    menu.update();
+    expect(menu.state).toBe('list');
   });
 
   it('cancel closes menu from list', () => {

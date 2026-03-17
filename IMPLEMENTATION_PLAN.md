@@ -2,7 +2,7 @@
 
 ## Project State
 - **Source code:** `src/` fully scaffolded — 83 JS files across 11 directories
-- **Tests:** 666 tests passing across 43 test suites (vitest)
+- **Tests:** 672 tests passing across 43 test suites (vitest)
 - **Specs:** 12 documents fully authored (4 recently amended with map-progression & Arc 1 clarifications)
 - **Sprite assets:** 10 JS modules in `specs/sprites/` with pixel data for all MVP characters
 - **Preview:** `specs/sprites/preview.html` renders all sprites at 8x scale
@@ -25,29 +25,15 @@ All P1 functional gaps resolved. See "Resolved Items" section below.
 
 ### P2 — Content & Narrative Gaps
 
-All P2 content gaps resolved except CONTENT-11. See "Resolved Items" section below.
-
-- **CONTENT-11:** Matthew is fully implemented (recruitment dialogue, NPC placement, mountain cutscene) despite being listed as out-of-scope in `mvp-scope.md`. Not a bug — likely intentional scope expansion. **Note:** Update `mvp-scope.md` to include Matthew in the MVP roster, or remove him.
+All P2 content gaps resolved. See "Resolved Items" section below.
 
 ### P3 — UI & Visual Gaps
 
-- **UI-03:** Advance arrow is 5×3 px (5-wide, 3-tall downward triangle). Spec says 3×5 custom glyph. **Fix:** Adjust `drawAdvanceArrow` in UIChrome.js.
-
-- **UI-04:** Party screen missing "Active: N" count in header. Spec shows `"PARTY   Active: 5"`. **Fix:** Draw active count right-aligned in header.
-
-- **UI-05:** Party detail stat names use STR/WIS/FAI; spec says ATK/DEF/SPD/LUK. Also has EXP display and Abilities list not in spec. **Fix:** Align stat display names with spec, or update spec to match implementation.
-
-- **UI-06:** Party detail Swap/Back is a text hint (`"Z=Swap  X=Back"`), not navigable cursor rows as spec requires. **Fix:** Add cursor-navigable Swap/Back option rows.
-
-- **UI-07:** No party-target highlight in battle HUD for healing. Spec says "highlight bar under targeted member's name in party strip." **Fix:** Add `renderPartyTargetCursor` to BattleHUD.
-
-- **UI-08:** No sub-menu slide-in animation for battle action sub-menus. Spec says "sub-menus slide in from the right." **Fix:** Add slide-in transition for Miracles/Items/Prayer/Scripture sub-panels.
+All major P3 UI gaps resolved. See "Resolved Items" section below. Remaining low-priority items:
 
 - **UI-09:** Speaker name plate rendered as plain text + 1px rule. Spec §5 says 9-slice name plate sprite with min 48px / max 112px width. **Fix (low priority):** The IMPLEMENTATION_PLAN previously noted this as cosmetic-only since the spec's ui-hud.md §2 does NOT require 9-slice — it describes plain gold text + rule. The dialogue-system.md §5 contradicts this. Treat as spec ambiguity.
 
 - **UI-10:** Speaker name separator rule drawn at `NAME_Y + CELL_H` (128) using cell height 8; spec implies glyph height 7, placing it at 127. 1px discrepancy. **Fix (low priority):** Use `GLYPH_H` instead of `CELL_H`.
-
-- **UI-11:** Location name display and objective marker implemented in OverworldScene.js (confirmed working). No gap.
 
 ### P4 — Post-MVP (Tracked for Reference)
 
@@ -73,7 +59,7 @@ All P2 content gaps resolved except CONTENT-11. See "Resolved Items" section bel
 
 1. `dialogue-system.md` §4b says 6px cell width; §12 says 8px — contradictory. Implementation uses 6px (correct per ui-hud.md).
 2. `dialogue-system.md` §9 has duplicate `greet` key in example (acknowledged)
-3. `party-system.md` stat display says ATK/DEF; code uses STR/WIS/FAI/SPD
+3. ~~`party-system.md` stat display says ATK/DEF; code uses STR/WIS/FAI/SPD~~ — **Resolved:** ui-hud.md §4 updated to match implementation (STR/DEF/WIS/FAI/SPD)
 4. `tilemap-format.md` §11 filenames use hyphens; actual files use underscores
 5. `dialogue-system.md` uses `root` field; implementation uses `start` key convention
 6. `dialogue-system.md` constructor takes inventory/party/eventBus; implementation uses `onEffect` callback
@@ -81,7 +67,7 @@ All P2 content gaps resolved except CONTENT-11. See "Resolved Items" section bel
 8. `ui-hud.md` §3 says PauseMenu "same fill as dialogue box" (dark); §1 color table says menu panels use BG_LIGHT (parchment) — contradictory
 9. `dialogue-system.md` §5 says 9-slice name plate; `ui-hud.md` §2 says plain gold text + rule — contradictory
 10. `tilemap-format.md` §11 lists 3 tilesets; implementation has 4 (shoreline.js undocumented in spec)
-11. `mvp-scope.md` lists 6 MVP disciples; implementation includes 7 (Matthew)
+11. ~~`mvp-scope.md` lists 6 MVP disciples; implementation includes 7 (Matthew)~~ — **Resolved:** mvp-scope.md updated to include Matthew
 
 ---
 
@@ -102,6 +88,15 @@ All P2 content gaps resolved except CONTENT-11. See "Resolved Items" section bel
 ---
 
 ## Resolved Items (Prior Audits)
+
+### P3 UI Gap Fixes & CONTENT-11 (2026-03-17)
+- **UI-03** — Advance arrow fixed from 5×3 to 3×5 downward-pointing triangle in UIChrome.js `drawAdvanceArrow`, matching spec §2.
+- **UI-04** — Party screen header now shows "Active: N" count right-aligned, matching spec §4 layout.
+- **UI-05** — Spec inconsistency resolved: ui-hud.md §4 detail view updated to use STR/DEF/WIS/FAI/SPD (matching implementation's thematic stat names) instead of generic ATK/DEF/SPD/LUK. EXP and Abilities list documented as intended features.
+- **UI-06** — Party detail Swap/Back converted from text hint (`"Z=Swap  X=Back"`) to cursor-navigable option rows. `_detailCursor` tracks selection; UP/DOWN navigates; CONFIRM selects. Swap hidden for Jesus and when no bench exists. 2 new tests added.
+- **UI-07** — Party-target highlight added to BattleHUD via `renderPartyTargetCursor()`. Blinking highlight bar (20-frame interval) drawn over targeted party member's slot during item target selection. Integrated in BattleScene render. 4 tests added.
+- **UI-08** — Sub-menu slide-in animation added for battle action sub-menus (ability, item, item-target). `_subMenuSlideOffset` starts at 96px (panel width) and decreases by 16px/frame, creating a 6-frame slide-in from the right per spec §5.
+- **CONTENT-11** — mvp-scope.md updated to include Matthew in the MVP disciple roster (was already fully implemented). Spec inconsistency #11 resolved.
 
 ### Content & UI Fixes (2026-03-17)
 - **CONTENT-08** — Baptism visual cutscene added. `baptism_complete` flag now triggers `_pendingArcCutscene = 'baptism_cutscene'` which fires double white flash effects after the John the Baptist dialogue closes. Registered in main.js.

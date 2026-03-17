@@ -41,14 +41,18 @@ export function drawCursor(ctx, x, y, frameCount, color = Colors.TEXT_LIGHT) {
 
 /**
  * Draw down-pointing advance arrow (3x5 pixels) for dialogue box.
+ * Per specs/ui-hud.md §2: 3 wide, 5 tall downward-pointing triangle.
  */
 export function drawAdvanceArrow(ctx, x, y, frameCount, color = Colors.TEXT_LIGHT) {
   if (Math.floor(frameCount / 30) % 2 !== 0) return;
 
   ctx.fillStyle = color;
-  ctx.fillRect(x, y, 5, 1);
-  ctx.fillRect(x + 1, y + 1, 3, 1);
-  ctx.fillRect(x + 2, y + 2, 1, 1);
+  // 3x5 down-pointing triangle
+  ctx.fillRect(x, y, 3, 1);
+  ctx.fillRect(x, y + 1, 3, 1);
+  ctx.fillRect(x, y + 2, 3, 1);
+  ctx.fillRect(x, y + 3, 2, 1);
+  ctx.fillRect(x + 1, y + 4, 1, 1);
 }
 
 /**

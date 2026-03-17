@@ -231,6 +231,36 @@ export class BattleHUD {
     }
   }
 
+  /**
+   * Render a highlight bar under the targeted party member's name in the party strip.
+   * Per specs/ui-hud.md §5: "highlight bar under targeted member's name in party strip."
+   */
+  renderPartyTargetCursor(ctx, party, targetIndex, frameCount) {
+    const alive = party.filter((m) => m.currentHp > 0);
+    if (targetIndex >= alive.length) return;
+
+    // Map alive-index back to party-slot index for correct positioning
+    let aliveCount = 0;
+    let slotIndex = 0;
+    for (let i = 0; i < party.length && i < 5; i++) {
+      if (party[i].currentHp > 0) {
+        if (aliveCount === targetIndex) {
+          slotIndex = i;
+          break;
+        }
+        aliveCount++;
+      }
+    }
+
+    const x = slotIndex * SLOT_WIDTH;
+
+    // Blinking highlight bar (20-frame interval, matching enemy target cursor)
+    if (Math.floor(frameCount / 20) % 2 === 0) {
+      ctx.fillStyle = Colors.CURSOR_BG;
+      ctx.fillRect(x, PARTY_STRIP_Y + 2, SLOT_WIDTH, 10);
+    }
+  }
+
   getSelectedAction() {
     return ACTION_OPTIONS[this.actionCursor].toLowerCase();
   }

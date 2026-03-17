@@ -40,6 +40,7 @@ export class PartyMenu {
     this._swapSource = -1;
     this._scrollOffset = 0;
     this.onClose = null;
+    this._detailCursor = 0; // 0=Swap, 1=Back (navigable options in detail view)
   }
 
   open() {
@@ -102,6 +103,7 @@ export class PartyMenu {
 
     if (this.input.pressed(Actions.CONFIRM)) {
       this.state = State.DETAIL;
+      this._detailCursor = 0;
     }
 
     if (this.input.pressed(Actions.CANCEL)) {
@@ -116,11 +118,25 @@ export class PartyMenu {
       return;
     }
 
-    // Press confirm to enter swap mode (if not Jesus)
+    const hasBench = this.gameState.party.bench.length > 0;
+    const canSwap = hasBench && !member.isJesus;
+    const optionCount = canSwap ? 2 : 1; // Swap+Back or just Back
+
+    if (this.input.pressed(Actions.UP)) {
+      this._detailCursor = (this._detailCursor - 1 + optionCount) % optionCount;
+    }
+    if (this.input.pressed(Actions.DOWN)) {
+      this._detailCursor = (this._detailCursor + 1) % optionCount;
+    }
+
     if (this.input.pressed(Actions.CONFIRM)) {
-      if (!member.isJesus) {
+      if (canSwap && this._detailCursor === 0) {
+        // Swap selected
         this._swapSource = this.cursor;
         this.state = State.SWAP;
+      } else {
+        // Back selected (or only option)
+        this.state = State.LIST;
       }
     }
 
@@ -221,8 +237,14 @@ export class PartyMenu {
     // Header
     let headerText = 'PARTY';
     if (this.state === State.SWAP) headerText = 'SWAP WITH...';
-    const headerX = PANEL_X + Math.floor((PANEL_W - headerText.length * 6) / 2);
-    drawText(ctx, headerText, headerX, HEADER_Y, Colors.TEXT_GOLD);
+    drawText(ctx, headerText, PANEL_X + 8, HEADER_Y, Colors.TEXT_GOLD);
+
+    // Active count right-aligned per spec §4
+    if (this.state !== State.SWAP) {
+      const activeCount = `Active: ${this.gameState.party.active.length}`;
+      const acX = PANEL_X + PANEL_W - 8 - activeCount.length * 6;
+      drawText(ctx, activeCount, acX, HEADER_Y, Colors.TEXT_GOLD);
+    }
 
     // Separator
     ctx.fillStyle = Colors.BORDER;
@@ -349,7 +371,36 @@ export class PartyMenu {
       drawText(ctx, member.abilities[i], abX, abY, Colors.TEXT_DARK);
     }
 
-    // Footer hint
-    drawText(ctx, 'Z=Swap  X=Back', PANEL_X + 10, PANEL_Y + PANEL_H - 14, Colors.TEXT_DIM);
+    // Navigable Swap/Back option rows per spec §4
+    const footerY = PANEL_Y + PANEL_H - 28;
+    ctx.fillStyle = Colors.BORDER;
+    ctx.fillRect(PANEL_X + 4, footerY - 2, PANEL_W - 8, 1);
+
+    const hasBench = this.gameState.party.bench.length > 0;
+    const canSwap = hasBench && !member.isJesus;
+    let optIdx = 0;
+
+    if (canSwap) {
+      const swapY = footerY + 2;
+      if (this._detailCursor === optIdx) {
+        ctx.fillStyle = Colors.CURSOR_BG;
+        ctx.fillRect(PANEL_X + 6, swapY - 1, PANEL_W - 12, 10);
+        drawCursor(ctx, PANEL_X + 8, swapY + 1, frameCount, Colors.TEXT_LIGHT);
+        drawText(ctx, 'Swap', PANEL_X + 16, swapY, Colors.TEXT_LIGHT);
+      } else {
+        drawText(ctx, 'Swap', PANEL_X + 16, swapY, Colors.TEXT_DARK);
+      }
+      optIdx++;
+    }
+
+    const backY = footerY + 2 + optIdx * 12;
+    if (this._detailCursor === optIdx) {
+      ctx.fillStyle = Colors.CURSOR_BG;
+      ctx.fillRect(PANEL_X + 6, backY - 1, PANEL_W - 12, 10);
+      drawCursor(ctx, PANEL_X + 8, backY + 1, frameCount, Colors.TEXT_LIGHT);
+      drawText(ctx, 'Back', PANEL_X + 16, backY, Colors.TEXT_LIGHT);
+    } else {
+      drawText(ctx, 'Back', PANEL_X + 16, backY, Colors.TEXT_DARK);
+    }
   }
 }

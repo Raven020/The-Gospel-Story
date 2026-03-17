@@ -40,7 +40,7 @@ Build Arcs 1-3 as a playable demo to dial in the art style, core gameplay mechan
 11. Tilemap and world loading
 
 ## Out of Scope for MVP
-- Full 12-disciple roster (only early recruits: Peter, Andrew, James, John, Philip, Nathanael)
+- Full 12-disciple roster (only early recruits: Peter, Andrew, James, John, Philip, Nathanael, Matthew)
 - Parables side quests
 - Advanced mini-games (fishing, stealth, platforming, resource management)
 - Morale system (can be stubbed but not fully implemented)

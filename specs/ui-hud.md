@@ -189,13 +189,20 @@ Selecting a member opens a stat panel:
 ┌─────────────────────────────┐
 │ Jesus              Lv.30    │
 │ HP   145/200   SP   80/100  │
-│ ATK  48        DEF  42      │
-│ SPD  35        LUK  60      │
-│ [Swap Active/Bench]  [Back] │
+│ STR  48        DEF  42      │
+│ WIS  30        FAI  60      │
+│ SPD  35                     │
+│ EXP  120/500                │
+│ Abilities: heal, smite      │
+│ ▶ Swap                      │
+│   Back                      │
 └─────────────────────────────┘
 ```
 
-"Swap" option is only shown if bench exists and is navigable by cursor.
+- Stats use thematic names: STR (Strength), DEF (Defense), WIS (Wisdom), FAI (Faith), SPD (Speed)
+- EXP progress and ability list shown for player reference
+- "Swap" and "Back" are cursor-navigable option rows
+- "Swap" option is only shown if bench exists and member is not Jesus
 
 ---
 

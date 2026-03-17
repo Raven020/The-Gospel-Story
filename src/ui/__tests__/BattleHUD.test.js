@@ -172,4 +172,48 @@ describe('BattleHUD', () => {
       expect(callsWith).toBeGreaterThan(callsWithout);
     });
   });
+
+  describe('party target cursor', () => {
+    it('renderPartyTargetCursor draws highlight on visible frame', () => {
+      const ctx = mockCtx();
+      const party = [
+        { id: 'p1', name: 'Hero', currentHp: 100, stats: { hp: 100 } },
+        { id: 'p2', name: 'Ally', currentHp: 80, stats: { hp: 80 } },
+      ];
+      hud.renderPartyTargetCursor(ctx, party, 0, 0); // frame 0 → visible
+      expect(ctx.fillRect).toHaveBeenCalled();
+    });
+
+    it('renderPartyTargetCursor does not draw on blink-off frame', () => {
+      const ctx = mockCtx();
+      const party = [
+        { id: 'p1', name: 'Hero', currentHp: 100, stats: { hp: 100 } },
+      ];
+      hud.renderPartyTargetCursor(ctx, party, 0, 20); // frame 20 → hidden (Math.floor(20/20)%2===1)
+      expect(ctx.fillRect).not.toHaveBeenCalled();
+    });
+
+    it('renderPartyTargetCursor handles out-of-range index', () => {
+      const ctx = mockCtx();
+      const party = [
+        { id: 'p1', name: 'Hero', currentHp: 100, stats: { hp: 100 } },
+      ];
+      hud.renderPartyTargetCursor(ctx, party, 5, 0);
+      expect(ctx.fillRect).not.toHaveBeenCalled();
+    });
+
+    it('renderPartyTargetCursor skips dead members for slot positioning', () => {
+      const ctx = mockCtx();
+      const party = [
+        { id: 'p1', name: 'Hero', currentHp: 0, stats: { hp: 100 } },
+        { id: 'p2', name: 'Alive', currentHp: 50, stats: { hp: 80 } },
+      ];
+      // Target alive index 0 → should highlight slot 1 (p2)
+      hud.renderPartyTargetCursor(ctx, party, 0, 0);
+      expect(ctx.fillRect).toHaveBeenCalled();
+      // The x position should be 47 (slot 1 * 47px width)
+      const call = ctx.fillRect.mock.calls[0];
+      expect(call[0]).toBe(47); // x = slotIndex(1) * SLOT_WIDTH(47)
+    });
+  });
 });
